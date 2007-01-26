@@ -1,0 +1,45 @@
+Lingua-YaTeA version 0.1
+================================
+
+(Yet Another Term ExtrActor)
+
+YaTeA is a module implrementing a configurable term extractor. It 
+detecting term candidates in corpora. It can also take into account
+testified terms issued from terminological resources.
+
+Contains this script :
+
+    yatear
+
+(see MANIFEST for all the files)
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires these other modules and libraries:
+
+ Pod::Usage
+
+DOCUMENTATION
+
+Please see documentation Yatea_user_manual.pdf in the DOC
+subdirectory.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library and this program are free software; you can redistribute
+them and/or modify it under the same terms as Perl itself, either Perl
+version 5.8.6 or, at your option, any later version of Perl 5 you may
+have available.
+
+

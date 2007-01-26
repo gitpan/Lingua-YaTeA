@@ -1,0 +1,41 @@
+- Delete the Options_EN and Options_FR. 
+
+  Replace it by the loading of the file share/YaTeA/yatea.conf
+
+  (function LoadOptions)
+
+  use of Config::General for config management
+
+- in ParsingPatterns_EN, take into account to the tag NP (?)
+
+- wrtite tests for CPAN installation
+
+- Add a prefix while making RESULTS directory
+
+- Other method to load config data (rather than change ROOT at the
+  installation step) :
+
+
+sub openunicode {
+    my ($rfh, @path) = @_;
+    my $f;
+    unless (defined $$rfh) {
+	for my $d (@INC) {
+	    use File::Spec;
+	    $f = File::Spec->catfile($d, "unicore", @path);
+	    last if open($$rfh, $f);
+	    undef $f;
+	}
+	croak __PACKAGE__, ": failed to find ",
+              File::Spec->catfile(@path), " in @INC"
+	    unless defined $f;
+    }
+    return $f;
+}
+
+- Move bin/.config information in yatea.conf (?)
+
+- Write a more explicit message when corpus file does not exist
+
+- Move the Option MESSAGE_DISPLAY in the yatea.rc
+
