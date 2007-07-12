@@ -194,3 +194,139 @@ sub print
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::ForbiddenStructureStartOrEnd - Perl extension for forbidden
+structures in at the start or end position of a chunk.
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::ForbiddenStructureStartOrEnd;
+  Lingua::YaTeA::ForbiddenStructureStartOrEnd->new(\@infos_a, $triggerSet);
+
+=head1 DESCRIPTION
+
+The module describes the forbidden structures that can be used in the start or end
+position in the chunk. This is a specialisation of the
+C<Lingua::YaTeA::ForbiddenStructure> module. Two fields are added:
+
+=over
+
+=item *
+
+C<POSITION>: the field contains the position of the forbiedden structure (C<START> or C<END>).
+
+
+=item *
+
+C<ITEMS>: this field contains the reference of the array of the
+linguistic items.
+
+
+
+=back
+
+=head1 METHODS
+
+
+=head2 new()
+
+    new($infos_a, $triggerSet);
+
+The method creates a forbidden structure that can be found at the
+start or end position of a chunk. The forbidden structure is defined
+from the array given by reference C<$infos_a>.  All fields are set.  A
+trigger is added to the trigger Set C<triggerSet>.
+
+
+=head2 getFirstItem()
+
+    getFirstItem();
+
+The method returns the first item of the linguistic item set.
+
+
+=head2 getItemSet()
+
+    getItemSet()
+
+The method returns the linguistic item set.
+
+=head2 parse()
+
+    parse($string);
+
+The method parses the pattern of the forbidden structure C<$string>
+and returns the C<$form> of the forbidden structure and the
+corresponding regular expression.
+
+
+=head2 getItem()
+
+    getItem($index);
+
+The method returns the linguistic item at he index C<$index>.
+
+=head2 isStart()
+
+    isStart();
+
+The method indicates if the forbidden structure should be used in the
+start position. It returns 1 if yes.
+
+=head2 isEnd()
+
+    isEnd();
+
+The method indicates if the forbidden structure should be used in the
+end position. It returns 1 if yes.
+
+=head2 getPosition()
+
+    getPosition()
+
+
+The method returns the position if the forbidden structure (C<START>
+or C<END>).
+
+
+=head2 apply()
+
+    apply($word_a);
+
+This method applies the given forbidden structure of the array of
+words given by reference C<$word_a>.
+
+=head2 print()
+
+    print();
+
+This method prints the description of the forbidden structure,
+i.e. its form and its position.
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

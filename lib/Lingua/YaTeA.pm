@@ -1,17 +1,16 @@
-package Lingua::YaTeA::YaTeA;
+package Lingua::YaTeA;
 
 =head1 NAME
 
-Lingua::YaTeA::YaTeA - Perl extension for extracting terms from a
-corpus and providing a syntactic analysis in a head-modifier format.
+Lingua::YaTeA - Perl extension for extracting terms from a corpus and providing a syntactic analysis in a head-modifier format.
 
 =head1 SYNOPSIS
 
 use Lingua::YaTeA::YaTeA;
 
-my %config = Lingua::YaTeA::YaTeA::load_config($rcfile);
+my %config = Lingua::YaTeA::load_config($rcfile);
 
-$yatea = Lingua::YaTeA::YaTeA->new($config{"OPTIONS"}, \%config);
+$yatea = Lingua::YaTeA->new($config{"OPTIONS"}, \%config);
 
 $corpus = Lingua::YaTeA::Corpus->new($corpus_path,$yatea->getOptionSet,$yatea->getMessageSet);
 
@@ -73,7 +72,162 @@ is found.
     load_config($rcfile);
 
 The method loads the configuration of the NLP Platform by reading the
-configuration file given in argument.
+configuration file given in argument. It returns the hashtable
+containing the configuration.
+
+=head2 new()
+
+    new($command_line_options_h,$system_config_h);
+
+The methods creates a new term extractor and sets oprtions from the
+command line (C<$commend_line_options_h>) and options defined in the
+hashtable (C<$system_config_h>) given by address. The methods returns
+the created object.
+
+=head2 termExtraction()
+
+    termExtraction($corpus);
+
+This method applies a extraction process on the corpus C<$corpus>
+given as parameter, and stores results in the directories specified in
+the configuration files.
+
+
+=head2 setOptions()
+
+    setOptions($command_line_options_h);
+
+This method creates an option set. It sets the options defined in the
+hashtable C<$command_line_options_h> (given by reference) and checks
+if the C<language> parameter is defined in the configuration.
+
+
+=head2 setConfigFiles()
+
+    setConfigFiles($this,$system_config_h);
+
+
+=head2 setLocaleFiles()
+
+    setLocaleFiles($this,$system_config_h);
+
+=head2 addOptionsFromFile()
+
+    addOptionsFromFile($this);
+
+
+=head2 setMessageSet()
+
+    setMessageSet($this,$system_config_h);
+
+
+=head2 setTagSet()
+
+    setTagSet($this);
+
+=head2 setParsingPatterns()
+
+    setParsingPatterns($this);
+
+
+=head2 setChunkingDataSet()
+
+    setChunkingDataSet($this);
+
+=head2 setForbiddenStructureSet()
+
+    setForbiddenStructureSet($this);
+
+
+
+=head2 loadTestifiedTerms()
+
+    loadTestifiedTerms($this,$process_counter_r,$corpus,$sentence_boundary,$document_boundary,$match_type,$message_set,$display_language);
+
+
+
+=head2 setTestifiedTermSet()
+
+    setTestifiedTermSet($this,$filtering_lexicon_h,$sentence_boundary,$match_type);
+
+
+
+=head2 getTestifiedTermSet()
+
+    getTestifiedTermSet($this);
+
+
+
+=head2 getFSSet()
+
+    getFSSet($this);
+
+
+
+=head2 getConfigFileSet
+
+    getConfigFileSet($this);
+
+
+
+=head2 getLocaleFileSet()
+
+    getLocaleFileSet($this);
+
+
+
+=head2 getResultFileSet()
+
+    getResultFileSet($this);
+
+
+
+=head2 getOptionSet()
+
+    getOptionSet($this);
+
+This method returns the field C<OPTION_SET>.
+
+=head2 getTagSet()
+
+    getTagSet($this);
+
+
+
+=head2 getChunkingDataSet()
+
+    getChunkingDataSet($this);
+
+
+
+=head2 getParsingPatternSet()
+
+    getParsingPatternSet($this);
+
+
+=head2 getMessageSet()
+
+    getMessageSet($this);
+
+
+
+=head2 getTestifiedSet()
+
+    getTestifiedSet($this);
+
+
+
+=head2 addMessageSetFile()
+
+    addMessageSetFile($this);
+
+
+
+=head2 displayExtractionResults()
+
+    displayExtractionResults($this,$phrase_set,$corpus,$message_set,$display_language,$default_output);
+
+
 
 
 =head1 CONFIGURATION
@@ -252,7 +406,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.1';
+our $VERSION='0.2';
 
 our $process_counter = 1;
 
@@ -263,7 +417,7 @@ sub load_config
  
 # Read de configuration file
 
-    if ($rcfile eq "") {
+    if ((! defined $rcfile) || ($rcfile eq "")) {
 	$rcfile = "/etc/yatea/yatea.rc";
     }
     
@@ -331,6 +485,10 @@ sub termExtraction
     print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('CHUNKING')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
     $corpus->chunk($phrase_set,$sentence_boundary,$document_boundary,$this->getChunkingDataSet,$this->getFSSet,$this->getTagSet,$this->getParsingPatternSet,$this->getTestifiedTermSet,$this->getOptionSet);
 
+    $phrase_set->printPhrases($corpus->getOutputFileSet->getFile('unparsed'));
+
+#     print STDERR Dumper($phrase_set);
+
     $phrase_set->printChunkingStatistics($this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
     if ((! defined $this->getOptionSet->getOption('annotate-only')) || ($this->getOptionSet->getOption('annotate-only')->getValue() == 0))
     {
@@ -338,7 +496,8 @@ sub termExtraction
 	
 	print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('PARSING')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
 	
-	$phrase_set->parseProgressively($this->getTagSet,$this->getOptionSet->getParsingDirection,$this->getParsingPatternSet,$this->getChunkingDataSet,$corpus->getLexicon,$corpus->getSentenceSet);
+	my $fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('debug')->getPath);
+	$phrase_set->parseProgressively($this->getTagSet,$this->getOptionSet->getParsingDirection,$this->getParsingPatternSet,$this->getChunkingDataSet,$corpus->getLexicon,$corpus->getSentenceSet,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$fh);
 	
 	$phrase_set->printParsingStatistics($this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
 	
@@ -488,11 +647,12 @@ sub setTestifiedTermSet
     my ($this,$filtering_lexicon_h,$sentence_boundary,$match_type) = @_;
     my $file_path;
     $this->{TESTIFIED_SET} = Lingua::YaTeA::TestifiedTermSet->new; 
-    
-    foreach $file_path (@{$this->getOptionSet->getOption('termino')->getValue})
-    {
+
+    $file_path = $this->getOptionSet->getOption('termino')->getValue; # modified by Thierry Hamon 05/02/2007
+#     foreach $file_path (@{$this->getOptionSet->getOption('termino')->getValue})
+#     {
 	$this->getTestifiedSet->addSubset($file_path,$filtering_lexicon_h,$sentence_boundary,$match_type,$this->getTagSet);  
-    }
+#     }
 }
 
 
@@ -597,6 +757,7 @@ sub displayExtractionResults
 	print STDERR "\t-" . ($this->getMessageSet->getMessage('DISPLAY_RAW')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('debug')->getPath . "'\n";
 	$phrase_set->printPhrases($corpus->getOutputFileSet->getFile('debug'));
 	$phrase_set->printUnparsable($corpus->getOutputFileSet->getFile('unparsable'));
+#	$phrase_set->printUnparsed($corpus->getOutputFileSet->getFile('unparsed'));
     }
 
     if 

@@ -327,13 +327,18 @@ sub append
 	{
 	    $index_set = Lingua::YaTeA::IndexSet->new;
 	    $root = $this->getNodeSet->searchRootNodeForLeaf($pivot);
-	    $root->fillIndexSet($index_set);
+	    if (defined $root) { # Added by Thierry 02/03/2007
+# 		warn "==> $root\n";
+		$root->fillIndexSet($index_set);
+	    }
 	}
 	else
 	{
 	    $index_set = $this->getIndexSet;
 	}
+# 	warn "===>$index_set\n";
 	$mode = $index_set->defineAppendMode($added_index_set,$pivot);
+# 	warn "<<<<\n";
 	if(defined $mode)
 	{
 
@@ -393,17 +398,19 @@ sub appendAdjuncts
 	my $tree2 = $tree_save->copy;
 	my $added2 = $added_save->copy;
 	$root2 = $tree2->getNodeSet->searchRootNodeForLeaf($pivot);
-	($above,$place) = $root2->searchLeaf($pivot); 
-	if($above->{"LINKED_TO_ISLAND"} == 0)
-	{
-	    if($above->hitch($place,$added2->getRoot,$words_a))
+	if (defined $root) { # Added by Thierry 02/03/2007
+	    ($above,$place) = $root2->searchLeaf($pivot); 
+	    if($above->{"LINKED_TO_ISLAND"} == 0)
 	    {
-		$tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot);	
-		$tree2->addNodes($added2);
-		$root2->searchRoot->hitchMore($tree2->getNodeSet->searchFreeNodes($words_a),$tree2,$words_a);
-		$tree2->updateRoot;
-		push @$concurrent_trees_a,$tree2;
-
+		if($above->hitch($place,$added2->getRoot,$words_a))
+		{
+		    $tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot);	
+		    $tree2->addNodes($added2);
+		    $root2->searchRoot->hitchMore($tree2->getNodeSet->searchFreeNodes($words_a),$tree2,$words_a);
+		    $tree2->updateRoot;
+		    push @$concurrent_trees_a,$tree2;
+		    
+		}
 	    }
 	}
 	
@@ -411,6 +418,7 @@ sub appendAdjuncts
     if($root->searchHead->getIndex == $pivot)
     {
 	($above,$place) = $added_node_set->getRoot->searchLeaf($pivot);
+	if (defined $above) { # Added by Thierry Hamon 31/01/2007 - to check
 	if($above->hitch($place,$root,$words_a))
 	{
 	    $this->addNodes($added_node_set);
@@ -419,6 +427,7 @@ sub appendAdjuncts
 	    return 1;
 
 	}
+    }
     }
 
     return 0;
@@ -516,8 +525,10 @@ sub getAppendContexts
 		my $added2 = $added_save->copy;
 		($above,$place) =   $tree2->getNodeSet->getNodeWithPivot($pivot);
 		$below = $added2->searchRootNodeForLeaf($pivot);
-		my $context2 = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$tree2, "INDEX_SET"=>$sub_index_set_save, "ADDED_NODE_SET"=>$added2, "ADDED_INDEX_SET"=>$added_index_set_save};
-		push @contexts, $context2;
+		if (defined $below) { # Added by Thierry 02/03/2007
+		    my $context2 = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$tree2, "INDEX_SET"=>$sub_index_set_save, "ADDED_NODE_SET"=>$added2, "ADDED_INDEX_SET"=>$added_index_set_save};
+		    push @contexts, $context2;
+		}
 	    }
 	}
 	
@@ -525,8 +536,10 @@ sub getAppendContexts
 	{
 	    ($above,$place) =  $added_node_set->getRoot->searchLeaf($pivot);
 	    $below = $this->getNodeSet->searchRootNodeForLeaf($pivot);
-	    my $context = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$this, "INDEX_SET"=>$index_set, "ADDED_NODE_SET"=>$added_node_set, "ADDED_INDEX_SET"=>$added_index_set};
-	    push @contexts, $context;
+	    if (defined $below) { # Added by Thierry 02/03/2007
+		my $context = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$this, "INDEX_SET"=>$index_set, "ADDED_NODE_SET"=>$added_node_set, "ADDED_INDEX_SET"=>$added_index_set};
+		push @contexts, $context;
+	    }
 	}
     }
     return \@contexts;
@@ -549,3 +562,130 @@ sub updateIndexes
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::Tree - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::Tree;
+  Lingua::YaTeA::Tree->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+
+=head2 new()
+
+
+=head2 setHead()
+
+
+=head2 setReliability()
+
+
+=head2 fillNodeLeaves()
+
+
+=head2 getIndexSet()
+
+
+=head2 getNodeSet()
+
+
+=head2 setSimplifiedIndexSet()
+
+
+=head2 copy()
+
+
+=head2 getSimplifiedIndexSet()
+
+
+=head2 getRoot()
+
+
+=head2 updateRoot()
+
+
+=head2 setNodeSet()
+
+
+=head2 addNodes()
+
+
+=head2 print()
+
+
+=head2 printParenthesised()
+
+
+=head2 getHead()
+
+
+=head2 getReliability()
+
+
+=head2 setIndexSet()
+
+
+=head2 check()
+
+
+=head2 completeDiscontinuousNodes()
+
+
+=head2 getDiscontinuousNodes()
+
+
+=head2 removeDiscontinuousNodes()
+
+
+=head2 integrateIslandNodeSets()
+
+
+=head2 append()
+
+
+=head2 appendAdjuncts()
+
+
+=head2 appendIncluded()
+
+
+=head2 appendDisjuncted()
+
+
+=head2 getAppendContexts()
+
+
+=head2 updateIndexes()
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

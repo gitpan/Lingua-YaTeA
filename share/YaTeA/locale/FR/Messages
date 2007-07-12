@@ -71,3 +71,6 @@ UNPARSED_MNPS = "MNPs non analysés"
 
 DISPLAY_BASIC_TERM_LIST = " Affichage de la liste des termes elementaires (chaque paire de mots qui entretiennent une relation Tete-Modifieur) dans le fichier "
 CANNOT_OPEN = "Impossible d'ouvrir "
+
+UNPARSED_PHRASES = "Syntagmes non analysés"
+

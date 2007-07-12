@@ -364,7 +364,7 @@ sub getParsingMethod
 
 sub parseProgressively
 {
-    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set) = @_;
+    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set, $debugFile) = @_;
     my $tree;
     my $pattern;
     my $position;
@@ -372,6 +372,9 @@ sub parseProgressively
     my $node_set;
     my @concurrent_trees;
     my $parsed = 0;
+
+#     $this->printDebug($debugFile);
+
     if(!defined $this->getForest)
     {
 	$tree = Lingua::YaTeA::Tree->new;
@@ -417,6 +420,8 @@ sub parseProgressively
 	    }
 	}
     }
+#     $this->printDebug($debugFile);
+
     return $parsed;
 }
 
@@ -456,6 +461,7 @@ sub printForestParenthesised
 	    print $fh " number of trees: " . scalar @{$this->getForest} . "\n";
 	    foreach $tree (@{$this->getForest})
 	    {
+#	    print STDERR "$tree\n";
 		print $fh "\tT" . $tree_counter++ .": ";
 		$tree->printParenthesised($this->getWords,$fh);
 	    }
@@ -484,3 +490,112 @@ sub printForestParenthesised
 
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::MultiWordUnit - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::MultiWordUnit;
+  Lingua::YaTeA::MultiWordUnit->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+=head2 new()
+
+
+=head2 getContentWordNumber()
+
+
+=head2 getLength()
+
+
+=head2 addTree()
+
+
+=head2 getForest()
+
+
+=head2 forestSize()
+
+
+=head2 emptyForest()
+
+
+=head2 getTree()
+
+
+=head2 exportNodeSets()
+
+
+=head2 searchParsingPattern()
+
+
+=head2 getParseFromPattern()
+
+
+=head2 getPartialPattern()
+
+
+=head2 getPatternsLeftFirst()
+
+
+=head2 getPatternsRightFirst()
+
+
+=head2 getPatternOnTheLeft()
+
+
+=head2 getPatternOnTheRight()
+
+
+=head2 chooseBestPattern()
+
+
+=head2 sortPatternsByPriority()
+
+
+=head2 setParsingMethod()
+
+
+=head2 getParsingMethod()
+
+
+=head2 parseProgressively()
+
+
+=head2 printForest()
+
+
+=head2 printForestParenthesised()
+
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

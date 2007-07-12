@@ -182,32 +182,37 @@ sub linkToFather
 
 sub fillLeaves
 {
-    my ($this,$counter_r,$index_set) = @_;
+    my ($this,$counter_r,$index_set, $deep) = @_;
 
-    if ($this->getLeftEdge eq "")
-    {
-	$this->{LEFT_EDGE} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
-    }
-    else
-    {
-	$this->getLeftEdge->fillLeaves($counter_r,$index_set);
-    }
-    
-    if (defined $this->getPreposition)
-    {
-	$this->{PREP} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
-    }
-    if (defined $this->getDeterminer)
-    {
-	$this->{DET} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
-    }
-    if ($this->getRightEdge eq "")
-    {
-	$this->{RIGHT_EDGE} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
-    }
-    else
-    {
-	$this->getRightEdge->fillLeaves($counter_r,$index_set);
+    $deep++;
+    if ($deep < 50) { # Temporary added by Thierry Hamon 02/03/2007
+	if ($this->getLeftEdge eq "")
+	{
+	    $this->{LEFT_EDGE} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
+	}
+	else
+	{
+	    $this->getLeftEdge->fillLeaves($counter_r,$index_set, $deep);
+	}
+	
+	if (defined $this->getPreposition)
+	{
+	    $this->{PREP} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
+	}
+	if (defined $this->getDeterminer)
+	{
+	    $this->{DET} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
+	}
+	if ($this->getRightEdge eq "")
+	{
+	    $this->{RIGHT_EDGE} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
+	}
+	else
+	{
+	    $this->getRightEdge->fillLeaves($counter_r,$index_set, $deep);
+	}
+    } else {
+	warn "fillLeaves: Going out a deep recursive method call (more than 50 calls)\n";
     }
 }
 
@@ -341,7 +346,7 @@ sub hitchMore
     my $mode;
     my $place;
     my $sub_index_set = Lingua::YaTeA::IndexSet->new;
-    $this->fillIndexSet($sub_index_set);
+    $this->fillIndexSet($sub_index_set,0);
     my $added_index_set;
     foreach my $n (@$free_nodes_a)
     {
@@ -349,7 +354,7 @@ sub hitchMore
 	{
 	    $pivot = $n->searchHead->getIndex;
 	    $added_index_set = Lingua::YaTeA::IndexSet->new;
-	    $n->fillIndexSet($added_index_set);
+	    $n->fillIndexSet($added_index_set,0);
 	    
 	    ($node,$position) = $this->searchLeaf($pivot);
 	    if(isa($node,'Lingua::YaTeA::Node'))
@@ -515,7 +520,7 @@ sub checkNonCrossing
     my $previous = -1;
     my $gap;
     my $above_index_set = Lingua::YaTeA::IndexSet->new;
-    $this->fillIndexSet($above_index_set);
+    $this->fillIndexSet($above_index_set,0);
     my $above_gaps_a = $above_index_set->getGaps;
     my $to_add_index_set;
     my $index;
@@ -529,7 +534,7 @@ sub checkNonCrossing
     if(scalar @$above_gaps_a > 1)
     {
 	$to_add_index_set = Lingua::YaTeA::IndexSet->new;
-	$to_add->fillIndexSet($to_add_index_set);
+	$to_add->fillIndexSet($to_add_index_set,0);
 	foreach $index (@{$to_add_index_set->getIndexes})
 	{
 	    foreach $gap (@$above_gaps_a)
@@ -1070,30 +1075,39 @@ sub searchRightMostNode
 
 sub fillIndexSet
 {
-    my ($this,$index_set) = @_;
-    if(isa($this->getLeftEdge,'Lingua::YaTeA::TermLeaf'))
-    {
-	$index_set->addIndex($this->getLeftEdge->getIndex);	
-    }
-    else
-    {
-	$this->getLeftEdge->fillIndexSet($index_set);
-    }
-    if (defined $this->getPreposition)
-    {
-	$index_set->addIndex($this->getPreposition->getIndex);
-    }
-    if (defined $this->getDeterminer)
-    {
-	$index_set->addIndex($this->getDeterminer->getIndex);
-    }
-    if(isa($this->getRightEdge,'Lingua::YaTeA::TermLeaf'))
-    {
-	$index_set->addIndex($this->getRightEdge->getIndex);	
-    }
-    else
-    {
-	$this->getRightEdge->fillIndexSet($index_set);
+    my ($this,$index_set, $deep) = @_;
+    $deep++;
+    if ($deep < 50) { # Temporary added by thierry Hamon 02/03/2007
+	if(isa($this->getLeftEdge,'Lingua::YaTeA::TermLeaf'))
+	{
+	    $index_set->addIndex($this->getLeftEdge->getIndex);	
+	}
+	else
+	{
+	    $this->getLeftEdge->fillIndexSet($index_set,$deep);
+	}
+	if (defined $this->getPreposition)
+	{
+	    $index_set->addIndex($this->getPreposition->getIndex);
+	}
+	if (defined $this->getDeterminer)
+	{
+	    $index_set->addIndex($this->getDeterminer->getIndex);
+	}
+	if(isa($this->getRightEdge,'Lingua::YaTeA::TermLeaf'))
+	{
+	    $index_set->addIndex($this->getRightEdge->getIndex);	
+	}
+	else
+	{
+# 	warn "vvvvv\n";
+# 	warn $this->getRightEdge->getRightEdge . "\n";
+# 	warn "$this\n";
+# 	warn "-----\n";
+	    $this->getRightEdge->fillIndexSet($index_set,$deep);
+	}
+    } else {
+	warn "fillIndexSet: Going out a deep recursive method call (more than 50 calls)\n";
     }
 }
 
@@ -1632,7 +1646,7 @@ sub insertOneWord
 	{
 
 	    ($node,$place) = $this->searchRoot->getNodeOfLeaf($previous,$index,$words_a);
-	    if($place =~ /EDGE/)
+	    if ((defined $place) && ($place =~ /EDGE/))
 	    {
 		if(!defined $node)
 		{
@@ -1652,7 +1666,7 @@ sub insertOneWord
 	    }
 	    ($node,$place) = $this->searchRoot->getNodeOfLeaf($next,$index,$words_a);
 
-	    if($place =~ /EDGE/)
+	    if ((defined $place) && ($place =~ /EDGE/))
 	    {
 		if(!defined $node)
 		{
@@ -2044,3 +2058,229 @@ sub linkToIsland
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::Node - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::Node;
+  Lingua::YaTeA::Node->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+=head2 new()
+
+
+=head2 addEdge()
+
+
+=head2 getEdgeStatus()
+
+
+=head2 getLeftEdgeStatus()
+
+
+=head2 getRightEdgeStatus()
+
+
+=head2 getNodeStatus()
+
+
+=head2 getNodePosition()
+
+
+=head2 getHead()
+
+
+=head2 getModifier()
+
+
+=head2 getLeftEdge()
+
+
+=head2 getRightEdge()
+
+
+=head2 getEdge()
+
+
+=head2 getID()
+
+
+=head2 getLevel()
+
+
+=head2 getDeterminer()
+
+
+=head2 getPreposition()
+
+
+=head2 linkToFather()
+
+
+=head2 fillLeaves()
+
+
+=head2 searchHead()
+
+
+=head2 printSimple()
+
+
+=head2 printRecursively()
+
+
+=head2 searchRoot()
+
+
+=head2 hitchMore()
+
+
+=head2 hitch()
+
+
+=head2 freeFromFather()
+
+
+=head2 plugSubNodeSet()
+
+
+=head2 checkCompatibility()
+
+
+=head2 checkNonCrossing()
+
+
+=head2 copyRecursively()
+
+
+=head2 searchLeftMostLeaf()
+
+
+=head2 searchRightMostLeaf()
+
+
+=head2 getPreviousWord()
+
+
+=head2 getNextWord()
+
+
+=head2 findWordContext()
+
+
+=head2 buildIF()
+
+
+=head2 buildParenthesised()
+
+
+=head2 searchLeaf()
+
+
+=head2 updateLeaves()
+
+
+=head2 buildTermList()
+
+
+=head2 getHeadPosition()
+
+
+=head2 getModifierPosition()
+
+
+=head2 searchLeftMostNode()
+
+
+=head2 searchRightMostNode()
+
+
+=head2 fillIndexSet()
+
+
+=head2 plugInternalNode()
+
+
+=head2 getNodeOfLeaf()
+
+
+=head2 getParseFromPattern()
+
+
+=head2 chooseBestPattern()
+
+
+=head2 isDiscontinuous()
+
+
+=head2 adjustPreviousAndNext()
+
+
+=head2 completeGap()
+
+
+=head2 insertProgressively()
+
+
+=head2 insertOneWord()
+
+
+=head2 getPartialPattern()
+
+
+=head2 getPatternsLeftFirst()
+
+
+=head2 getPatternsRightFirst()
+
+
+=head2 getPatternOnTheLeft()
+
+
+=head2 getPatternOnTheRight()
+
+
+=head2 sortPatternsByPriority()
+
+
+=head2 addDeterminer()
+
+
+=head2 getHookNode()
+
+
+=head2 linkToIsland()
+
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

@@ -39,3 +39,7 @@ sub openunicode {
 
 - Move the Option MESSAGE_DISPLAY in the yatea.rc
 
+- Decription of the terminology format
+
+- rewrite the method
+  Lingua::YaTeA::ForbiddenStructureAny::setSplitAfter and its calls

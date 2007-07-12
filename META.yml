@@ -1,0 +1,19 @@
+--- #YAML:1.0
+name:                Lingua-YaTeA
+version:             0.2
+abstract:            Perl extension for extracting terms from a corpus and providing a syntactic analysis in a head-modifier format.
+license:             ~
+generated_by:        ExtUtils::MakeMaker version 6.36
+distribution_type:   module
+requires:     
+    Config::General:               2.3
+    Data::Dumper:                  0
+    File::Compare:                 0
+    Getopt::Long:                  0
+    Parse::Lex:                    0
+    Pod::Usage:                    0
+meta-spec:
+    url:     http://module-build.sourceforge.net/META-spec-v1.2.html
+    version: 1.2
+author:
+    - Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>

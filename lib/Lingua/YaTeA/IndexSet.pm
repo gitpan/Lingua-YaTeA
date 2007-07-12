@@ -785,83 +785,91 @@ sub defineAppendMode
     my ($this,$to_append,$pivot) = @_;
     my $mode;
 
-    if(
-	($this->getLast < $to_append->getFirst)
-	||
-	($this->getFirst > $to_append->getLast)
-	)
-    {    
-	return "DISJUNCTION"; # external disjunction
-    }
+#     warn "-> $this\n";
+#     warn $this->getLast . "\n";
+#     warn $this->getFirst . "\n";
+#     warn $to_append->getFirst . "\n";
+#     warn $to_append->getLast . "\n";
 
-    if(
-	($this->getLast == $to_append->getFirst)
-	||
-	($this->getFirst == $to_append->getLast)
-	)
-    {
-	return "ADJUNCTION";
-    }
-
-    if($this->getFirst <= $to_append->getFirst)
-    {
-	if($this->getLast >= $to_append->getLast)
-	{
-	    if(defined $pivot)
-	    {
-
-		return "INCLUSION";
-	    }
-	    return "DISJUNCTION"; # internal disjunction
+#    if (defined $this->getFirst) {
+    if (defined @{$this->getIndexes}) {
+	if(
+	   ($this->getLast < $to_append->getFirst)
+	   ||
+	   ($this->getFirst > $to_append->getLast)
+	   )
+	{    
+	    return "DISJUNCTION"; # external disjunction
 	}
-	else
+	
+	if(
+	   ($this->getLast == $to_append->getFirst)
+	   ||
+	   ($this->getFirst == $to_append->getLast)
+	   )
 	{
-	    if($this->getLast < $to_append->getLast)
+	    return "ADJUNCTION";
+	}
+
+	if($this->getFirst <= $to_append->getFirst)
+	{
+	    if($this->getLast >= $to_append->getLast)
 	    {
-		if (defined $pivot)
+		if(defined $pivot)
 		{
-		    if($pivot == $this->getLast)
-			
+
+		    return "INCLUSION";
+		}
+		return "DISJUNCTION"; # internal disjunction
+	    }
+	    else
+	    {
+		if($this->getLast < $to_append->getLast)
+		{
+		    if (defined $pivot)
 		    {
-			return "INCLUSION";
-		    }
-		    else
-		    {
-			return "REVERSED_INCLUSION";
+			if($pivot == $this->getLast)
+			    
+			{
+			    return "INCLUSION";
+			}
+			else
+			{
+			    return "REVERSED_INCLUSION";
+			}
 		    }
 		}
 	    }
 	}
-    }
-    if($this->getFirst >= $to_append->getFirst)
-    {
-	if($this->getLast <= $to_append->getLast)
+	if($this->getFirst >= $to_append->getFirst)
 	{
-	    if(defined $pivot)
+	    if($this->getLast <= $to_append->getLast)
 	    {
-		return "REVERSED_INCLUSION";
-	    }
-	    return "DISJUNCTION"; # internal disjunction
-	}
-	else
-	{
-	    if($this->getLast > $to_append->getLast)
-	    {
-		if (defined $pivot)
+		if(defined $pivot)
 		{
-		    if ($pivot == $this->getFirst)
+		    return "REVERSED_INCLUSION";
+		}
+		return "DISJUNCTION"; # internal disjunction
+	    }
+	    else
+	    {
+		if($this->getLast > $to_append->getLast)
+		{
+		    if (defined $pivot)
 		    {
-			return "INCLUSION";  
-		    }
-		    else
-		    {
-			return "REVERSED_INCLUSION";
+			if ($pivot == $this->getFirst)
+			{
+			    return "INCLUSION";  
+			}
+			else
+			{
+			    return "REVERSED_INCLUSION";
+			}
 		    }
 		}
 	    }
 	}
-    }
-   
+    }   
     return $mode;
 }
 
@@ -966,3 +974,174 @@ sub removeDoubles
 
 1;
 
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::IndexSet - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::IndexSet;
+  Lingua::YaTeA::IndexSet->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+=head2 new()
+
+
+=head2 copy()
+
+
+=head2 getIndex()
+
+
+=head2 getIndexes()
+
+
+=head2 getLast()
+
+
+=head2 getFirst()
+
+
+=head2 appearsIn()
+
+
+=head2 searchSubIndexesSet()
+
+
+=head2 isCoveredBy()
+
+
+=head2 isDisjuncted()
+
+
+=head2 getIncluded()
+
+
+=head2 isIncluded()
+
+
+=head2 checkInclusion()
+
+
+=head2 appendPosition()
+
+
+=head2 adjunctionType()
+
+
+=head2 moreThanOneInCommon()
+
+
+=head2 searchSubIndexes()
+
+
+=head2 testSyntacticBreakAndRepetition()
+
+
+=head2 buildIFSequence()
+
+
+=head2 buildPOSSequence()
+
+
+=head2 buildLFSequence()
+
+
+=head2 buildLinguisticKey()
+
+
+=head2 chooseBestSource()
+
+
+=head2 sortIslands()
+
+
+=head2 joinAll()
+
+
+=head2 fill()
+
+
+=head2 getSize()
+
+
+=head2 addIndex()
+
+
+=head2 getPartial()
+
+
+=head2 simplify()
+
+
+=head2 simplifyWithSeveralPivots()
+
+
+=head2 searchPivot()
+
+
+=head2 print ()
+
+
+=head2 mergeWith()
+
+
+=head2 contains()
+
+
+=head2 indexExists()
+
+
+=head2 getIncludedContext()
+
+
+=head2 findPrevious()
+
+
+=head2 findNext()
+
+
+=head2 removeIndex()
+
+
+=head2 defineAppendMode()
+
+
+=head2 crosses()
+
+
+=head2 getGaps()
+
+
+=head2 removeDoubles()
+
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

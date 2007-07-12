@@ -15,6 +15,148 @@
 ########################################################################
 
 
+use strict;
+use Getopt::Long;
+use Config::General;
+use Pod::Usage;
+use Data::Dumper;
+
+use Lingua::YaTeA::Corpus;
+# use Lingua::YaTeA::Config;
+use Lingua::YaTeA;
+
+
+# Process Option
+
+my $man = 0;
+my $help = 0;
+my $rcfile = "";
+
+GetOptions('help|?' => \$help, man => \$man, "rcfile=s" => \$rcfile) or pod2usage(2);
+pod2usage(1) if $help;
+pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+
+
+my %config = Lingua::YaTeA::load_config($rcfile);
+
+# print STDERR Dumper(%config);
+
+# my $rcfile;
+
+# $| = 1; # forces a flush after every write
+
+#my %command_line_options;
+
+# #unless (&GetOptions(\%command_line_options, "LANGUAGE=s", "synoterm", "termino:s@", "xmlout", "MNPhtml", "printChunking", "compareChunking:s", "suffix=s", "correction", "TTforLGP", "TCforLGP", "annotate", "termList", "debug", "basicTerms","printChunking")
+# unless (&GetOptions(\%command_line_options, "language=s", "xmlout", "printChunking", "suffix=s", "TC-for-BioLG", "debug", "termList:s", "termino=s@", "TTG-style-term-candidates:s", 'h', 'help', 'monolexical-included','monolexical-all', "rcfile=s" => \$rcfile, 'match-type=s','TT-for-BioLG', 'XML-corpus-for-BioLG', 'annotate-only')
+# 	&& (scalar @ARGV == 1)
+# 	&& (!defined $command_line_options{'help'})
+# 	&& (!defined $command_line_options{'h'})
+#     ) {
+    
+#     &usage($0);
+# }
+
+
+my $current_dir = `pwd`;
+my $corpus_path = $ARGV[$#ARGV];
+
+# warn "$corpus_path\n";
+
+    print STDERR  "\n
+\n
+#     #     #    #########  #######     #
+ #   #     # #       #      #          # #
+  # #     #   #      #      #         #   #
+   #     #     #     #      #####    #     #
+   #     #######     #      #        #######
+   #     #     #     #      #        #     #
+   #     #     #     #      #######  #     #
+\n\n";
+
+my $sys_config ;
+my $yatea;
+my $corpus;
+
+# if (defined $rcfile) {
+#     $sys_config = Config::General->new('-ConfigFile' => $rcfile,
+# 				       '-InterPolateVars' => 1,
+# 				       '-InterPolateEnv' => 1
+# 				       );
+# } else {
+#     $sys_config = Config::General->new('-ConfigFile' => ".config",
+# 				       '-InterPolateVars' => 1,
+# 				       '-InterPolateEnv' => 1
+# 				       );
+# }
+
+
+
+$yatea = Lingua::YaTeA->new($config{"OPTIONS"}, \%config);
+
+# warn $yatea->getOptionSet->getDisplayLanguage . "\n";
+
+if (defined $corpus_path) {
+    if (-f $corpus_path)
+    {
+	$corpus = Lingua::YaTeA::Corpus->new($corpus_path,$yatea->getOptionSet,$yatea->getMessageSet);
+    }
+    else
+    {
+	die("\"".$corpus_path . "\"". $yatea->getMessageSet->getMessage("NO_FILE")->getContent($yatea->getOptionSet->getDisplayLanguage) . "\n");
+    }
+    $yatea->termExtraction($corpus);
+} else {
+    die( $yatea->getMessageSet->getMessage("NO_FILE_ARG")->getContent($yatea->getOptionSet->getDisplayLanguage) . "\n");
+}
+
+# sub usage
+# {
+#     my ($program_name) = @_;
+#     $program_name =~ s/^\s*\.\///;
+
+#      warn "\n
+#            ********************************************
+#            *                Using " . $program_name . "               *
+#            ******************************************** 
+# \nCommand : ". $program_name . " fichier.ttg 
+# Options :
+# \t-help or -h : displays this message
+# \t-rcfile <File> : name of the file containing the configuration
+# \t-lang <language> : language of the corpus : FR: French ou EN: English
+# \t-suffix <suffix> : specification of a name for the current version of the analysis. Results are gathered in a specific directory of this name and result files also carry this suffix
+# \t-termino <File> : name of a file containing a list of testified terms. To specify several files, repeat the -termino switch for each
+# \t-monolexical-all : all occurrences of monolexical phrases are considered as term candidates
+# \t-monolexical-included : occurrences of monolexical term candidates that appear in complex term candidates are also displayed
+# \t-match-type [\"loose\" or \"strict\"]: \n\t\t-loose: testified terms match either inflected or lemmatized forms of each word\n\t\t-strict: testified terms match the combination of inflected form and POS tag of each word\n\t\t-unspecified option: testified terms match match inflected forms of words
+
+# Options for result display:
+# \t-xmlout :  display of the parsed term candidates in XML format
+# \t-termList : display of a list of terms and sub-terms along with their frequency. To extract only term candidates containing more than one word (multi-word term candidates), specify the option \"multi\". By default, all term candidates will be extracted, monolexical and multi-word term candidates
+# \t-printChunking : displays of the corpus marked with phrases in a HTML file along with the indication that they are term candidates or not 
+# \t-TC-for-BioLG : annotation of the corpus with term candidates in a XML format compatible with the \"biolg\" version of the Link Grammar Parse
+# \t-TT-for-BioLG : annotation of the corpus with testified terms in a XML format compatible with the \"biolg\" version of the Link Grammar Parser
+# \t-XML-corpus-for-BioLG : creation of a BioLG compatible XML version of the corpus with PoS tags marked form each word
+# \t-debug : displays informations on parsed phrases (i.e. term candidates) in a text format
+# \t-TTG-style-term-candidates : term candidates are displayed in TreeTagger output format. Term separator is the sentence boundary tag \"SENT\". To extract only term candidates containing more than one word (multi-word term candidates), specify the option \"multi\". By default, all term candidates will be extracted, monolexical and multi-word term candidates
+
+#    \n";
+#     die "\n";
+# }
+
+# TODO (?):
+
+# (OUI)\t-correction: allows the correction of POS or lemma information of the MNPs according to the testified terms provided
+
+
+# (OUI)\t-basicTerms: display of the list of basic term candidates (every pairs of words in a Head-Modifier relationship)
+# (NON?)\t-MNPhtml : display of the corpus with the occurrences of the MNPs marked in a HTML file. Information on each MNP is provided. 
+# (NON?)\t-compareChunking <File>: comparison of the current chunking of the corpus with a previous version specified as <File> (CORPUS_Chunking_corpus.html)
+# (OUI) \t-annotate : only annotate testified terms (no acquisition)
+
+__END__
+
+
 =head1 NAME
 
 yatea - Perl script for extracting terms from a corpus and providing a
@@ -105,144 +247,5 @@ it under the same terms as Perl itself, either Perl version 5.8.6 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
-
-use strict;
-use Getopt::Long;
-use Config::General;
-use Pod::Usage;
-use Data::Dumper;
-
-use Lingua::YaTeA::Corpus;
-use Lingua::YaTeA::Config;
-use Lingua::YaTeA::YaTeA;
-
-
-# Process Option
-
-my $man = 0;
-my $help = 0;
-my $rcfile = "";
-
-GetOptions('help|?' => \$help, man => \$man, "rcfile=s" => \$rcfile) or pod2usage(2);
-pod2usage(1) if $help;
-pod2usage(-exitstatus => 0, -verbose => 2) if $man;
-
-
-my %config = Lingua::YaTeA::YaTeA::load_config($rcfile);
-
-# print STDERR Dumper(%config);
-
-# my $rcfile;
-
-# $| = 1; # forces a flush after every write
-
-#my %command_line_options;
-
-# #unless (&GetOptions(\%command_line_options, "LANGUAGE=s", "synoterm", "termino:s@", "xmlout", "MNPhtml", "printChunking", "compareChunking:s", "suffix=s", "correction", "TTforLGP", "TCforLGP", "annotate", "termList", "debug", "basicTerms","printChunking")
-# unless (&GetOptions(\%command_line_options, "language=s", "xmlout", "printChunking", "suffix=s", "TC-for-BioLG", "debug", "termList:s", "termino=s@", "TTG-style-term-candidates:s", 'h', 'help', 'monolexical-included','monolexical-all', "rcfile=s" => \$rcfile, 'match-type=s','TT-for-BioLG', 'XML-corpus-for-BioLG', 'annotate-only')
-# 	&& (scalar @ARGV == 1)
-# 	&& (!defined $command_line_options{'help'})
-# 	&& (!defined $command_line_options{'h'})
-#     ) {
-    
-#     &usage($0);
-# }
-
-
-my $current_dir = `pwd`;
-my $corpus_path = $ARGV[$#ARGV];
-
-# warn "$corpus_path\n";
-
-    print STDERR  "\n
-\n
-#     #     #    #########  #######     #
- #   #     # #       #      #          # #
-  # #     #   #      #      #         #   #
-   #     #     #     #      #####    #     #
-   #     #######     #      #        #######
-   #     #     #     #      #        #     #
-   #     #     #     #      #######  #     #
-\n\n";
-
-my $sys_config ;
-my $yatea;
-my $corpus;
-
-# if (defined $rcfile) {
-#     $sys_config = Config::General->new('-ConfigFile' => $rcfile,
-# 				       '-InterPolateVars' => 1,
-# 				       '-InterPolateEnv' => 1
-# 				       );
-# } else {
-#     $sys_config = Config::General->new('-ConfigFile' => ".config",
-# 				       '-InterPolateVars' => 1,
-# 				       '-InterPolateEnv' => 1
-# 				       );
-# }
-
-
-
-$yatea = Lingua::YaTeA::YaTeA->new($config{"OPTIONS"}, \%config);
-
-# warn $yatea->getOptionSet->getDisplayLanguage . "\n";
-
-if (defined $corpus_path) {
-    if (-f $corpus_path)
-    {
-	$corpus = Lingua::YaTeA::Corpus->new($corpus_path,$yatea->getOptionSet,$yatea->getMessageSet);
-    }
-    else
-    {
-	die("\"".$corpus_path . "\"". $yatea->getMessageSet->getMessage("NO_FILE")->getContent($yatea->getOptionSet->getDisplayLanguage) . "\n");
-    }
-    $yatea->termExtraction($corpus);
-} else {
-    die( $yatea->getMessageSet->getMessage("NO_FILE_ARG")->getContent($yatea->getOptionSet->getDisplayLanguage) . "\n");
-}
-
-# sub usage
-# {
-#     my ($program_name) = @_;
-#     $program_name =~ s/^\s*\.\///;
-
-#      warn "\n
-#            ********************************************
-#            *                Using " . $program_name . "               *
-#            ******************************************** 
-# \nCommand : ". $program_name . " fichier.ttg 
-# Options :
-# \t-help or -h : displays this message
-# \t-rcfile <File> : name of the file containing the configuration
-# \t-lang <language> : language of the corpus : FR: French ou EN: English
-# \t-suffix <suffix> : specification of a name for the current version of the analysis. Results are gathered in a specific directory of this name and result files also carry this suffix
-# \t-termino <File> : name of a file containing a list of testified terms. To specify several files, repeat the -termino switch for each
-# \t-monolexical-all : all occurrences of monolexical phrases are considered as term candidates
-# \t-monolexical-included : occurrences of monolexical term candidates that appear in complex term candidates are also displayed
-# \t-match-type [\"loose\" or \"strict\"]: \n\t\t-loose: testified terms match either inflected or lemmatized forms of each word\n\t\t-strict: testified terms match the combination of inflected form and POS tag of each word\n\t\t-unspecified option: testified terms match match inflected forms of words
-
-# Options for result display:
-# \t-xmlout :  display of the parsed term candidates in XML format
-# \t-termList : display of a list of terms and sub-terms along with their frequency. To extract only term candidates containing more than one word (multi-word term candidates), specify the option \"multi\". By default, all term candidates will be extracted, monolexical and multi-word term candidates
-# \t-printChunking : displays of the corpus marked with phrases in a HTML file along with the indication that they are term candidates or not 
-# \t-TC-for-BioLG : annotation of the corpus with term candidates in a XML format compatible with the \"biolg\" version of the Link Grammar Parse
-# \t-TT-for-BioLG : annotation of the corpus with testified terms in a XML format compatible with the \"biolg\" version of the Link Grammar Parser
-# \t-XML-corpus-for-BioLG : creation of a BioLG compatible XML version of the corpus with PoS tags marked form each word
-# \t-debug : displays informations on parsed phrases (i.e. term candidates) in a text format
-# \t-TTG-style-term-candidates : term candidates are displayed in TreeTagger output format. Term separator is the sentence boundary tag \"SENT\". To extract only term candidates containing more than one word (multi-word term candidates), specify the option \"multi\". By default, all term candidates will be extracted, monolexical and multi-word term candidates
-
-#    \n";
-#     die "\n";
-# }
-
-# TODO (?):
-
-# (OUI)\t-correction: allows the correction of POS or lemma information of the MNPs according to the testified terms provided
-
-
-# (OUI)\t-basicTerms: display of the list of basic term candidates (every pairs of words in a Head-Modifier relationship)
-# (NON?)\t-MNPhtml : display of the corpus with the occurrences of the MNPs marked in a HTML file. Information on each MNP is provided. 
-# (NON?)\t-compareChunking <File>: comparison of the current chunking of the corpus with a previous version specified as <File> (CORPUS_Chunking_corpus.html)
-# (OUI) \t-annotate : only annotate testified terms (no acquisition)
 
 

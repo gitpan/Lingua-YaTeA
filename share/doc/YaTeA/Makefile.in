@@ -2,7 +2,7 @@
 # TransFig makefile
 #
 
-all: affichage.tex analyseDefinis.tex AnalyseProgressive.tex analyseSSDefinis.tex chargementPatrons.tex chargementTAtt.tex ChercheIlots.tex classes_supprimees.tex Classes_Yatea_dvlpt.tex Classes_Yatea.tex Classes_Yatea_v1.tex ct.tex decoupage.tex endogenous.tex entreeLex.tex exogenous.tex foret.tex generalExtracteur.tex gnms.tex ilot.tex pat_decomp.tex PlaceInsert.tex SatureEtMAJ.tex TAtt.tex Yatea_Classes_Config.tex Yatea_Classes_Process.tex 
+all: affichage.tex analyseDefinis.tex AnalyseProgressive.tex analyseSSDefinis.tex chargementPatrons.tex chargementTAtt.tex ChercheIlots.tex classes_supprimees.tex Classes_Yatea_dvlpt.tex Classes_Yatea.tex Classes_Yatea_v1.tex ct.tex decoupage.tex endogenous.tex entreeLex.tex exogenous.tex foret.tex generalExtracteur.tex gnms.tex ilot.tex pat_decomp.tex PlaceInsert.tex SatureEtMAJ.tex TAtt.tex TC_tree.tex Yatea_Classes_Config.tex Yatea_Classes_Process.tex 
 
 # translation into pdf
 
@@ -194,6 +194,14 @@ TAtt.pdf: TAtt.fig Makefile.in
 	fig2dev -L pdf TAtt.fig TAtt.pdf
 clean::
 	rm -f TAtt.tex
+
+
+# translation into pdf
+
+TC_tree.pdf: TC_tree.fig Makefile.in
+	fig2dev -L pdf TC_tree.fig TC_tree.pdf
+clean::
+	rm -f TC_tree.tex
 
 
 # translation into pdf

@@ -2,12 +2,12 @@ AUTHORS
 bin/Genfig.sh
 bin/yatea
 bin/.config
+Build.PL
 Changes
 lib/Lingua/YaTeA/XMLEntities.pm
 lib/Lingua/YaTeA/AnnotationMark.pm
 lib/Lingua/YaTeA/ChunkingDataSet.pm
 lib/Lingua/YaTeA/ChunkingDataSubset.pm
-lib/Lingua/YaTeA/Config.pm
 lib/Lingua/YaTeA/Corpus.pm
 lib/Lingua/YaTeA/Document.pm
 lib/Lingua/YaTeA/DocumentSet.pm
@@ -56,7 +56,7 @@ lib/Lingua/YaTeA/Trigger.pm
 lib/Lingua/YaTeA/TriggerSet.pm
 lib/Lingua/YaTeA/WordFromCorpus.pm
 lib/Lingua/YaTeA/WordOccurrence.pm
-lib/Lingua/YaTeA/YaTeA.pm
+lib/Lingua/YaTeA.pm
 lib/Lingua/YaTeA/MonolexicalTermCandidate.pm
 lib/Lingua/YaTeA/TestifiedTermSet.pm
 lib/Lingua/YaTeA/MultiWordTestifiedTerm.pm
@@ -141,4 +141,7 @@ share/YaTeA/samples/termsPhB.termsgt
 share/YaTeA/samples/transcript-epure-Genia.bootstrap
 share/YaTeA/yatea.conf
 t/0-creation.t
+t/pod.t
+t/pod-coverage.t
 TODO
+META.yml                                 Module meta-data (added by MakeMaker)

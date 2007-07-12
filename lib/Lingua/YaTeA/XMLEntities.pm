@@ -3,6 +3,37 @@
 package Lingua::YaTeA::XMLEntities;
 use strict;
 
+
+sub encode
+{
+    $_[0]=~s/&/&amp;/g;
+    $_[0]=~s/\"/&quot;/g;
+    $_[0]=~s/\'/&apos;/g;
+    $_[0]=~s/</&lt;/g;
+    $_[0]=~s/>/&gt;/g;
+}
+
+
+=head2 decode($line)
+
+This method decodes XML entities corresponding to special XML characters in the line C<$line> .
+
+=cut
+
+
+sub decode
+{
+    $_[0]=~s/&quot;/\"/g;
+    $_[0]=~s/&apos;/\'/g;
+    $_[0]=~s/&amp;/&/g;
+    $_[0]=~s/&lt;/</g;
+    $_[0]=~s/&gt;/>/g;
+}
+
+1;
+
+__END__
+
 =head1 NAME
 
 Lingua::YaTeA::XMLEntities - Perl extension for managing characters which can not be used in a  XML
@@ -32,32 +63,6 @@ This method encodes special XML characters as XML entities in the line C<$line>.
 
 =cut
 
-sub encode
-{
-    $_[0]=~s/&/&amp;/g;
-    $_[0]=~s/\"/&quot;/g;
-    $_[0]=~s/\'/&apos;/g;
-    $_[0]=~s/</&lt;/g;
-    $_[0]=~s/>/&gt;/g;
-}
-
-
-=head2 decode($line)
-
-This method decodes XML entities corresponding to special XML characters in the line C<$line> .
-
-=cut
-
-
-sub decode
-{
-    $_[0]=~s/&quot;/\"/g;
-    $_[0]=~s/&apos;/\'/g;
-    $_[0]=~s/&amp;/&/g;
-    $_[0]=~s/&lt;/</g;
-    $_[0]=~s/&gt;/>/g;
-}
-
 
 =head1 SEE ALSO
 
@@ -81,4 +86,3 @@ at your option, any later version of Perl 5 you may have available.
 
 =cut
 
-1;

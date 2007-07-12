@@ -10,7 +10,7 @@ use warnings;
 # change 'tests => 1' to 'tests => last_test_to_print';
 use Test::More tests => 2;
 
-BEGIN { use_ok('Lingua::YaTeA::YaTeA') }
+BEGIN { use_ok('Lingua::YaTeA') }
 
 #########################
 
@@ -19,7 +19,7 @@ BEGIN { use_ok('Lingua::YaTeA::YaTeA') }
 
 # Instantiation of abstract subclass
 my $factory;
-eval { use Lingua::YaTeA::YaTeA; };
+eval { use Lingua::YaTeA; };
 ok(defined 1);
 
 

@@ -9,7 +9,7 @@ testified terms issued from terminological resources.
 
 Contains this script :
 
-    yatear
+    yatea
 
 (see MANIFEST for all the files)
 
@@ -22,11 +22,24 @@ To install this module type the following:
    make test
    make install
 
+Or if you don't have the "make" program:
+
+   perl Build.PL
+   Build
+   Build test
+   Build install
+
+
 DEPENDENCIES
 
 This module requires these other modules and libraries:
 
  Pod::Usage
+ Getopt::Long
+ Config::General >= 2.30
+ Data::Dumper
+ File::Path
+ Parse::Lex
 
 DOCUMENTATION
 

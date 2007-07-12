@@ -1,5 +1,12 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.2     - correction of bugs (or temporary workaround) in the
+          tree/node management
+        - Removing the file Config.pm (no more necessary)
+          and from Makefile.PL
+        - YaTeA.pm has been moved in Lingua (before it was in Lingua/YaTeA)
+        - Addition of a Build.PL file        
+
 0.1  
 	- Version of YaTeA with a CPAN configuration
 

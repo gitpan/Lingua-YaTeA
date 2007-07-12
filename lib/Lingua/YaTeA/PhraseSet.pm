@@ -10,7 +10,7 @@ sub new
     my ($class) = @_;
     my $this = {};
     bless ($this,$class);
-    $this->{PHRASES} = {};
+    $this->{PHRASES} = {}; # contain MultiWordPhrase
     $this->{UNPARSED} = ();
     $this->{UNPARSABLE} = ();
     $this->{IF_ACCESS} = ();
@@ -207,34 +207,51 @@ sub sortUnparsed
     if(defined $this->{UNPARSED})
     {
 	@{$this->{UNPARSED}} = sort{$b->getLength <=> $a->getLength} @{$this->{UNPARSED}}; 
+    } else {
+	my @tmp = ();
+	return(\@tmp);
     }
 }
 
 sub parseProgressively
 {
-    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$lexicon,$sentence_set) = @_;
+    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$lexicon,$sentence_set,$message_set,$display_language, $debugFile) = @_;
     my $phrase;
     my $counter = 0;
     my $complete;
     my $corrected;
     #foreach $phrase (@{$this->getUnparsed})
+
+    my $Unparsed_size = scalar(@{$this->getUnparsed});
+
     if(defined $this->{UNPARSED})
     {
 	while ($phrase = pop @{$this->getUnparsed})
 	{ 
-	    $counter++;
-	    if(($counter % 100) == 0)
-	    {
-		print STDERR "-";
-	    }
+
+# 	    print $debugFile "\n\n";
+# 	    print $debugFile "$phrase\n";
+# 	    print $debugFile $phrase->{'IF'} . "\n";
+# 	    $phrase->print($debugFile);
+# 	    $phrase->printForestParenthesised($debugFile);
+# 	    print $debugFile "\n\n";
+
+#	    print STDERR "$phrase\n";
+#	    print STDERR $phrase->{'IF'} . "\n";
+#  	    if (($phrase->{'IF'} eq "fonction ventriculaire gauche globale") || ($phrase->{'IF'} eq "fonction ventriculaire gauche systolique globale")) {
+# 		print STDERR Dumper($phrase);
+# 	    }
 	    ($complete,$corrected) = $phrase->searchEndogenousIslands($this,$chunking_data,$tag_set,$lexicon,$sentence_set);
 	    if($corrected == 1)
 	    {
 		$this->updateRecord($phrase,$tag_set);
-		print "reenregistre2\n";
+
 	    }
-	    $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set);
-	    if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data))
+ 	    $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set);
+
+
+
+	    if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$message_set,$display_language, $debugFile))
 	    {
 		$phrase->setParsingMethod('PROGRESSIVE');
 		$phrase->setTC(1);
@@ -245,6 +262,7 @@ sub parseProgressively
 		$phrase->setTC(0);
 		$this->addToUnparsable($phrase);
 	    }
+	    printf STDERR $message_set->getMessage('UNPARSED_PHRASES')->getContent($display_language) . "... %0.1f%%   \r", (scalar(@{$this->getUnparsed}) / $Unparsed_size) * 100 ;
 	}
 	print STDERR "\n";
     }
@@ -396,7 +414,25 @@ sub printUnparsable
     my ($this,$file) = @_;
     my $phrase;
     my $fh = FileHandle->new(">".$file->getPath);
+
+    # We should test if there are unparsable or not.
     foreach $phrase (@{$this->getUnparsable})
+    {
+	if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+	{
+	    print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+	}
+    }
+}
+
+sub printUnparsed
+{
+    my ($this,$file) = @_;
+    my $phrase;
+    my $fh = FileHandle->new(">".$file->getPath);
+
+    # We should test if there are unparsable or not.
+    foreach $phrase (@{$this->getUnparsed})
     {
 	if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
 	{
@@ -441,7 +477,13 @@ sub printTermCandidatesXML
 {
     my ($this,$file,$tagset) = @_;
     
-    my $fh = FileHandle->new(">".$file->getPath);
+    my $fh;
+
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	$fh = FileHandle->new(">".$file->getPath);
+    }
     my $term_candidate;
     my $if;
     my $pos;
@@ -451,7 +493,7 @@ sub printTermCandidatesXML
     my $position;
 
     # header
-    print $fh "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n";
+    print $fh "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
     print $fh "<!DOCTYPE TERM_EXTRACTION_RESULTS SYSTEM \"extracteurDeTermes.dtd\">\n";
     print $fh "\n";
     print $fh "<TERM_EXTRACTION_RESULTS>\n";
@@ -476,7 +518,7 @@ sub printTermCandidatesXML
 	{
 	    print $fh "      <OCCURRENCE>\n";
 	    print $fh "        <ID>occ" . $occurrence->getID . "</ID>\n";
-	    print $fh "        <MNP>" .$occurrence->isMaximal .  "</MNP>\n";
+	    print $fh "        <MNP>" . (($occurrence->isMaximal && isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate')) * 1) .  "</MNP>\n";
 	    print $fh "        <DOC>" .$occurrence->getDocument->getID . "</DOC>\n";
 	    print $fh "        <SENTENCE>" .$occurrence->getSentence->getInDocID . "</SENTENCE>\n";
 	    print $fh "        <START_POSITION>";
@@ -572,6 +614,7 @@ sub print
     }
     foreach $phrase (values(%{$this->getPhrases}))
     {
+	print $fh "$phrase\n";
 	$phrase->print($fh);
 	print $fh "\n";
     }
@@ -613,3 +656,124 @@ sub printParsingStatistics
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::PhraseSet - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::PhraseSet;
+  Lingua::YaTeA::PhraseSet->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+
+=head2 new()
+
+
+=head2 recordOccurrence()
+
+
+=head2 addPhrase()
+
+
+=head2 getPhrases()
+
+
+=head2 giveAccess()
+
+
+=head2 searchFromIF()
+
+
+=head2 searchFromLF()
+
+
+=head2 addToUnparsed()
+
+
+=head2 addToUnparsable()
+
+
+=head2 getUnparsed()
+
+
+=head2 sortUnparsed()
+
+
+=head2 parseProgressively()
+
+
+=head2 updateRecord()
+
+
+=head2 getUnparsable()
+
+
+=head2 getIFaccess()
+
+
+=head2 addTermCandidates()
+
+
+=head2 adjustMonolexicalPhrasesSet()
+
+
+=head2 getTermCandidates()
+
+
+=head2 printTermList()
+
+
+=head2 printUnparsable()
+
+
+=head2 printUnparsed()
+
+
+=head2 printTermCandidatesTTG()
+
+
+=head2 printTermCandidatesXML()
+
+
+=head2 print()
+
+
+=head2 printPhrases()
+
+
+=head2 printChunkingStatistics()
+
+
+=head2 printParsingStatistics()
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

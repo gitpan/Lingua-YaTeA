@@ -127,7 +127,7 @@ sub fillNodeLeaves
     my ($this,$index_set) = @_;
     my $counter = 0;
   
-    $this->getRoot->fillLeaves(\$counter,$index_set);
+    $this->getRoot->fillLeaves(\$counter,$index_set, 0);
 }
 
 
@@ -472,6 +472,8 @@ sub printParenthesised
 {
     my ($this,$words_a,$fh) = @_;
     my $analysis = "";
+
+#    print STDERR $this->getRoot;
      if(defined $fh)
     {
 	$this->getRoot->buildParenthesised(\$analysis,$words_a);
@@ -488,7 +490,11 @@ sub searchRootNodeForLeaf
 {
     my ($this,$index) = @_;
     my ($node,$place) = $this->getNodeWithPivot($index);
-    return $node->searchRoot;
+    if (defined $node) {
+	return $node->searchRoot;
+    } else {
+	return ;
+    }
 }
 
 sub fillIndexSet
@@ -521,3 +527,111 @@ sub searchHeads
 }
 
 1;
+
+__END__
+
+=head1 NAME
+
+Lingua::YaTeA::NodeSet - Perl extension for ???
+
+=head1 SYNOPSIS
+
+  use Lingua::YaTeA::NodeSet;
+  Lingua::YaTeA::NodeSet->();
+
+=head1 DESCRIPTION
+
+
+=head1 METHODS
+
+=head2 new()
+
+
+=head2 addNode()
+
+
+=head2 getNodes()
+
+
+=head2 setRoot()
+
+
+=head2 getRoot()
+
+
+=head2 getNode()
+
+
+=head2 updateRoot()
+
+
+=head2 copy()
+
+
+=head2 addFreeNodes()
+
+
+=head2 fillNodeLeaves()
+
+
+=head2 updateLeaves()
+
+
+=head2 searchFreeNodes()
+
+
+=head2 removeNodes{()
+
+
+=head2 hitchMore()
+
+
+=head2 findHierarchy()
+
+
+=head2 getNodeWithPivot()
+
+
+=head2 addNodes()
+
+
+=head2 print()
+
+
+=head2 printAllNodes()
+
+
+=head2 printParenthesised()
+
+
+=head2 searchRootNodeForLeaf()
+
+
+=head2 fillIndexSet()
+
+
+=head2 searchHeads()
+
+
+=head1 SEE ALSO
+
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
+
+
+=head1 AUTHOR
+
+Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.8.6 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

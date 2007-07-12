@@ -72,3 +72,5 @@ UNPARSED_MNPS = "Unparsed MNPs"
 
 DISPLAY_BASIC_TERM_LIST = "Display of the list of basic term candidates (every pairs of words in a Head-Modifier relationship) in file "
 CANNOT_OPEN = "Can not open "
+
+UNPARSED_PHRASES = "Unparsed phrases"
