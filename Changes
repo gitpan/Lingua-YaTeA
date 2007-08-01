@@ -1,11 +1,19 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.3     - removing the .config file
+        - bug fix: check in the hook_node is defined in Node.pm
+        - replacement of the use of the Parse::Lex module by a
+	  module generated from Parse::Yapp
+        - addition of examples in the YaTeA PM
+
+
 0.2     - correction of bugs (or temporary workaround) in the
           tree/node management
         - Removing the file Config.pm (no more necessary)
           and from Makefile.PL
         - YaTeA.pm has been moved in Lingua (before it was in Lingua/YaTeA)
         - Addition of a Build.PL file        
+	- addition of POD tests (pod.t, pod-coverage.t)
 
 0.1  
 	- Version of YaTeA with a CPAN configuration

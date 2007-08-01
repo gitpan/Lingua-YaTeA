@@ -1,7 +1,6 @@
 AUTHORS
 bin/Genfig.sh
 bin/yatea
-bin/.config
 Build.PL
 Changes
 lib/Lingua/YaTeA/XMLEntities.pm
@@ -42,6 +41,8 @@ lib/Lingua/YaTeA/OptionSet.pm
 lib/Lingua/YaTeA/ParsingPattern.pm
 lib/Lingua/YaTeA/ParsingPatternRecord.pm
 lib/Lingua/YaTeA/ParsingPatternRecordSet.pm
+lib/Lingua/YaTeA/ParsingPatternParser.yp
+lib/Lingua/YaTeA/ParsingPatternParser.pm
 lib/Lingua/YaTeA/PatternLeaf.pm
 lib/Lingua/YaTeA/Phrase.pm
 lib/Lingua/YaTeA/PhraseSet.pm
@@ -64,6 +65,10 @@ lib/Lingua/YaTeA/TestifiedTerm.pm
 lib/Lingua/YaTeA/TestifiedTermMark.pm
 lib/Lingua/YaTeA/MonolexicalTestifiedTerm.pm
 etc/yatea/yatea.rc
+examples/load_config
+examples/yatea-test.rc
+examples/yatea-fullexample
+examples/sampleEN.ttg
 LICENSE
 Makefile.PL
 MANIFEST			This list of files

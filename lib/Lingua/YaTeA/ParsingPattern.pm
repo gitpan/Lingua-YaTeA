@@ -1,11 +1,10 @@
 package Lingua::YaTeA::ParsingPattern;
 use strict;
-use Parse::Lex;
 use Lingua::YaTeA::NodeSet;
 use Lingua::YaTeA::InternalNode;
 use Lingua::YaTeA::RootNode;
 use Lingua::YaTeA::PatternLeaf;
-use Data::Dumper;
+# use Data::Dumper;
  
 
 sub new

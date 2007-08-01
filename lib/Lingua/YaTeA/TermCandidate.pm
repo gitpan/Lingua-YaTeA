@@ -69,7 +69,7 @@ sub editKey
 sub setHead
 {
     my ($this) = @_;
-    $this->{HEAD} = $this->searchHead;
+    $this->{HEAD} = $this->searchHead(0);
 }
 
 sub getHead

@@ -145,9 +145,11 @@ sub searchFreeNodes
   my $node;
   my @free_nodes;
  
- 
+  #  print STDERR "sFN1\n";
+
   foreach $node (@{$this->getNodes})
   {
+  #  print STDERR "sFN2\n";
       if(
 	  (isa($node,'Lingua::YaTeA::RootNode'))
 	  )
@@ -155,6 +157,9 @@ sub searchFreeNodes
 	  push @free_nodes, $node;	  
       }
   }
+
+  #  print STDERR "sFN3\n";
+
   return \@free_nodes;
 }
 
@@ -180,7 +185,7 @@ sub removeNodes{
 		    )
 		   
 		{
-		    $node->{FATHER}->{LEFT_EDGE} = $node->searchHead;
+		    $node->{FATHER}->{LEFT_EDGE} = $node->searchHead(0);
 		}
 		else
 		{
@@ -192,7 +197,7 @@ sub removeNodes{
 			)
 			
 		    {
-			$node->{FATHER}->{RIGHT_EDGE} = $node->searchHead;
+			$node->{FATHER}->{RIGHT_EDGE} = $node->searchHead(0);
 		    }
 		}
 	    }
@@ -247,7 +252,7 @@ sub hitchMore
 		(!exists $integrated{$node->getID})
 		)
 	    {
-		$pivot = $node->searchHead->getIndex;
+		$pivot = $node->searchHead(0)->getIndex;
 		if($added_index_set->getLast == $pivot)
 		{
 		    ($hook_node,$hook_place) = $node->getNodeOfLeaf($pivot,$added_index_set->getFirst,$words_a);
@@ -329,7 +334,7 @@ sub findHierarchy
 	if($left_most->getIndex == $added_index_set->getLast)
 	{
 	   
-	    if($added_node_set->getRoot->searchHead->getIndex == $left_most->getIndex)
+	    if($added_node_set->getRoot->searchHead(0)->getIndex == $left_most->getIndex)
 	    {
 		return ($pivot_node,$pivot_place,$added_node_set->getRoot);
 	    }
@@ -373,7 +378,7 @@ sub findHierarchy
 	    {
 		return ($pivot_node,$pivot_place,$added_node_set->getRoot->searchLeftMostNode);  
 	    }
-	    if($recorded->searchHead->getIndex == $pivot)
+	    if($recorded->searchHead(0)->getIndex == $pivot)
  	    {
 		
  		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
@@ -521,7 +526,7 @@ sub searchHeads
 
     foreach $root (@$free_nodes_a)
     {
-	$heads{$root->searchHead->getIndex}++;
+	$heads{$root->searchHead(0)->getIndex}++;
     }
     return \%heads;
 }

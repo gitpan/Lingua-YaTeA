@@ -20,8 +20,9 @@ sub new
 sub setHead
 {
     my ($this) = @_;
+
     my $root = $this->getNodeSet->getRoot;
-    $this->{HEAD} = $root->searchHead;
+    $this->{HEAD} = $root->searchHead(0);
 }
 
 
@@ -49,6 +50,9 @@ sub getIndexSet
 sub getNodeSet
 {
     my ($this) = @_;
+
+#     print STDERR "gNS1\n";
+
     return $this->{NODE_SET};
 }
 
@@ -310,19 +314,23 @@ sub append
     {
 	$this->setNodeSet($added_node_set);
 	$pivot = -1;
-	$this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot);
+	if ($this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot) == -1 ) {return -1;}
 	push @$concurrent_trees_a, $this;
 	return 1;
     }
+
+#     print STDERR "a1\n";
     
     if($added_index_set->testSyntacticBreakAndRepetition($words_a,$tagset))
     {
 	
-	$pivot = $added_node_set->getRoot->searchHead->getIndex;
+	$pivot = $added_node_set->getRoot->searchHead(0)->getIndex;
+# 	print STDERR "a2\n";
 	if(! $this->getIndexSet->indexExists($pivot))
 	{
 	    $pivot = $this->getIndexSet->searchPivot($added_index_set);
 	}
+# 	print STDERR "a3\n";
 	if(defined $pivot)
 	{
 	    $index_set = Lingua::YaTeA::IndexSet->new;
@@ -336,11 +344,17 @@ sub append
 	{
 	    $index_set = $this->getIndexSet;
 	}
+	#  print STDERR "a4\n";
+
 # 	warn "===>$index_set\n";
 	$mode = $index_set->defineAppendMode($added_index_set,$pivot);
+	#  print STDERR "a5\n";
+
 # 	warn "<<<<\n";
 	if(defined $mode)
 	{
+
+	    #  print STDERR "$mode\n";
 
 	    if($mode eq "DISJUNCTION")
 	    {
@@ -348,23 +362,24 @@ sub append
 	    }
 	    else
 	    {
-		if($mode =~ "INCLUSION")
+		if($mode =~ /INCLUSION/)
 		{
 		    $addition = $this->appendIncluded($mode,$root,$index_set,$added_node_set,$added_index_set,$pivot,$words_a);	
+		    
 		}
 		else
 		{
-		    if($mode =~ "ADJUNCTION")
+		    if($mode =~ /ADJUNCTION/)
 		    {
 			$addition = $this->appendAdjuncts($root,$index_set,$added_node_set,$added_index_set,$pivot,$concurrent_trees_a,$words_a);	
-
+			if ($addition == -1) {return -1;}
 		    }
 		}
 	    }
 	    if($addition == 1)
 	    {
 		
-		$this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot);	
+		if ($this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot) == -1) {return -1;}     
 		push @$concurrent_trees_a, $this;
 	    }
 	}
@@ -393,7 +408,7 @@ sub appendAdjuncts
     my $sub_index_set_save = $index_set->copy;
     my $added_index_set_save = $added_index_set->copy;
 
-    if($added_node_set->getRoot->searchHead->getIndex == $pivot )
+    if($added_node_set->getRoot->searchHead(0)->getIndex == $pivot )
     {
 	my $tree2 = $tree_save->copy;
 	my $added2 = $added_save->copy;
@@ -404,7 +419,7 @@ sub appendAdjuncts
 	    {
 		if($above->hitch($place,$added2->getRoot,$words_a))
 		{
-		    $tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot);	
+		    if ($tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot) == -1 ) {return -1;}
 		    $tree2->addNodes($added2);
 		    $root2->searchRoot->hitchMore($tree2->getNodeSet->searchFreeNodes($words_a),$tree2,$words_a);
 		    $tree2->updateRoot;
@@ -415,7 +430,7 @@ sub appendAdjuncts
 	}
 	
     }
-    if($root->searchHead->getIndex == $pivot)
+    if($root->searchHead(0)->getIndex == $pivot)
     {
 	($above,$place) = $added_node_set->getRoot->searchLeaf($pivot);
 	if (defined $above) { # Added by Thierry Hamon 31/01/2007 - to check
@@ -443,9 +458,12 @@ sub appendIncluded
     my $type;
     my $place;
     my $intermediate_node;
+    
+    #  print STDERR "I1\n";
     if($mode =~ /REVERSED/)
     {
 	$above = $added_node_set->getRoot;
+	#  print STDERR "Ib1\n";
 	$above_index_set = $added_index_set;
 	$below = $root;
 	$below_index_set = $index_set;
@@ -455,20 +473,39 @@ sub appendIncluded
 	$above = $root;
 	$above_index_set = $index_set;
 	$below = $added_node_set->getRoot;
+	#  print STDERR "Ic1\n";
 	$below_index_set = $added_index_set;
     }
+    #  print STDERR "I2\n";
+
     $type = $below_index_set->appendPosition($pivot);
+
+        #  print STDERR "$type\n";
 
     ($above,$place) = $above->searchLeaf($pivot);
 
+    #  print STDERR "I3\n";
+
     ($above,$intermediate_node) = $above->getHookNode($type,$place,$below_index_set);
+    #  print STDERR "I4\n";
     if(defined $above)
     {
+	#  print STDERR "I5\n";
+
 	if($above->hitch($place,$below,$words_a))
 	{
+	#  print STDERR "I6\n";
+
 	    $this->addNodes($added_node_set);
+	#  print STDERR "I7\n";
+
+# XXXX
 	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a);
+
+	#  print STDERR "I8\n";
+
 	    $this->updateRoot;
+	#  print STDERR "I9\n";
 	    return 1;
 	}
     }
@@ -555,7 +592,7 @@ sub updateIndexes
     
 
     $heads_h = $this->getNodeSet->searchHeads($words_a);
-    $simplified_index_set->simplifyWithSeveralPivots($index_set,$this->getNodeSet,$this,$heads_h);
+    if ($simplified_index_set->simplifyWithSeveralPivots($index_set,$this->getNodeSet,$this,$heads_h) == -1 ) {return -1;}
 
     @{$this->getIndexSet->getIndexes} = @{$index_set->getIndexes};
     @{$this->getSimplifiedIndexSet->getIndexes} = @{$simplified_index_set->getIndexes};

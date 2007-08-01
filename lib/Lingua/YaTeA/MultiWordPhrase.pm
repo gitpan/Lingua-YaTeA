@@ -405,7 +405,7 @@ sub plugInternalFreeNodes
 		    {
 			$tree->addNodes($additional_node_set);
 		
-			$tree->getSimplifiedIndexSet->removeIndex($pair_a->[1]->searchHead->getIndex);
+			$tree->getSimplifiedIndexSet->removeIndex($pair_a->[1]->searchHead(0)->getIndex);
 			$tree->updateRoot;
 		    }
 		}

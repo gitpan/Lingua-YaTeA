@@ -236,8 +236,8 @@ sub parseProgressively
 # 	    $phrase->printForestParenthesised($debugFile);
 # 	    print $debugFile "\n\n";
 
-#	    print STDERR "$phrase\n";
-#	    print STDERR $phrase->{'IF'} . "\n";
+#  	    print STDERR "$phrase\n";
+# 	    print STDERR $phrase->{'IF'} . "\n";
 #  	    if (($phrase->{'IF'} eq "fonction ventriculaire gauche globale") || ($phrase->{'IF'} eq "fonction ventriculaire gauche systolique globale")) {
 # 		print STDERR Dumper($phrase);
 # 	    }
@@ -249,7 +249,8 @@ sub parseProgressively
 	    }
  	    $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set);
 
-
+#  	    print STDERR $phrase->{'IF'} . "\n";
+	    
 
 	    if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$message_set,$display_language, $debugFile))
 	    {
@@ -387,7 +388,7 @@ sub printTermList
     my $fh = FileHandle->new(">".$file->getPath);
     my $term_candidate;
     
-    print $fh "Inflected form\tFrequency\n";
+    print $fh "# Inflected form\tFrequency\n";
    foreach $term_candidate ( sort ({$b->getFrequency <=> $a->getFrequency} values(%{$this->getTermCandidates})))
    {
 

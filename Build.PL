@@ -1,18 +1,42 @@
 use Module::Build;
 
-my $build = Module::Build->new
+# my $class = Module::Build->subclass(code => <<'EOF');
+# sub process_dat_files {
+#     my $self = shift;
+#     ... locate and process *.dat files,
+#     ... and create something in blib/lib/
+#     }
+# EOF
+ 
+my $class = Module::Build->subclass(
+				    class => "Module::Build::Custom",
+code => <<'SUBCLASS' );
+
+sub ACTION_install {
+    my $self = shift;
+    $self->SUPER::ACTION_install;
+    warn "\nDon't forget to set the variables CONFIG_REP and LOCALE_REP in the configuration file yatea.rc to the right path if necessary.\n\n";
+}
+SUBCLASS
+
+my $build = $class->new
     (
      module_name => 'Lingua::YaTeA',
      dist_version_from => 'lib/Lingua/YaTeA.pm',
      license => 'gpl',
      requires => {'perl' => '5.005',
-		  Parse::Lex => 0,
+		  Parse::Yapp => 0,
 		  Getopt::Long => 0,
 		  File::Compare => 0,
 		  Data::Dumper => 0, 
 		  Pod::Usage => 0,
 		  Config::General => 2.
 		  },
+
+#      $build->add_build_element('dat');
+#      $build->create_build_script;
+
+
      installdirs => 'core',
      conf_files => {'etc/yatea/yatea.rc' => 'conf/yatea/yatea.rc'},
      share_files => {'share/doc/YaTeA/affichage.fig' => 'share/doc/YaTeA/affichage.fig',
@@ -103,3 +127,4 @@ $build->prefix_relpaths('vendor', share => 'share' );
 $build->add_build_element('share');
 
 $build->create_build_script;
+

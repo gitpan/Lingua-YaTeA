@@ -43,3 +43,10 @@ sub openunicode {
 
 - rewrite the method
   Lingua::YaTeA::ForbiddenStructureAny::setSplitAfter and its calls
+
+Check the XML conformity, especially < and > 
+
+
+- Check the computing of the offset. it is assumed that every token
+  are preceded and follow by a space character. But it is not always
+  the case (e.g. commas)

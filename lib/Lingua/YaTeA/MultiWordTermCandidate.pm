@@ -63,15 +63,20 @@ sub getModifierPosition
 
 sub searchHead
 {
-    my ($this) = @_;
+    my ($this, $depth) = @_;
     my $head;
+
+	    $depth++;
+
     if(isa($this->getRootHead,'Lingua::YaTeA::MonolexicalTermCandidate'))
     {
 	$head = $this->getRootHead;	 
     }
     else
     {
-	$head = $this->getRootHead->searchHead;
+	if ($depth < 40) {
+	    $head = $this->getRootHead->searchHead ($depth);
+	}
     }
     return $head;
 }
@@ -229,8 +234,8 @@ sub getHeadAndLinks
     
     foreach $node (@{$phrase->getTree(0)->getNodeSet->getNodes})
     {
-	$left = $node->getLeftEdge->searchHead;	
-	$right = $node->getRightEdge->searchHead;	
+	$left = $node->getLeftEdge->searchHead (0);	
+	$right = $node->getRightEdge->searchHead (0);	
 	$prep = $node->getPreposition;
 	$det = $node->getDeterminer;
 

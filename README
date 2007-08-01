@@ -39,7 +39,7 @@ This module requires these other modules and libraries:
  Config::General >= 2.30
  Data::Dumper
  File::Path
- Parse::Lex
+ Parse::Yapp
 
 DOCUMENTATION
 

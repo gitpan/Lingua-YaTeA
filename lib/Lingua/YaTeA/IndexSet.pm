@@ -590,10 +590,17 @@ sub simplify
 		{
 		    $tree->getIndexSet->addIndex($index);
 		}
-		if($index_partial == $node_set->getRoot->searchHead->getIndex)
+		# hack from TH
+		my $head = $node_set->getRoot->searchHead(0);
+		if(defined $head) {
+		    if ($index_partial == $head->getIndex)
 		{
 		    push  @simplified, $index_partial;
 		    
+		}
+		} else {
+		    warn "The head is undefined\n";
+		    return(-1);
 		}
 		$j++;
 	    }
@@ -932,24 +939,34 @@ sub getGaps
     my $counter = 0;
     my @gaps;
 
+    #  print STDERR "gG1\n";
+
     foreach $index (@{$this->getIndexes})
     {
-	if(
-	    (defined $previous)
-	    &&
-	    ($index != $previous+1)
-	    )
-	{
-	    my %gap;
-	    $counter = $previous+1;
-	    while ($counter != $index)
-	    {
-		$gap{$counter++} = 0;
+	#  print STDERR "gG2 (index = $index)\n";
+	#  print STDERR "gG2 (counter = $counter)\n";
+#	if (defined $previous) {print STDERR "gG2 (previous = $previous)\n";}
+	# TH - 25072007
+	if (defined $previous) {
+
+	    if ($index > $previous+1) {
+		my %gap;
+		$counter = $previous+1;
+		#  print STDERR "gG3\n";
+		while ($counter != $index)
+		{
+		    #  print STDERR "gG3 (counter = $counter)\n";
+		    
+		    $gap{$counter++} = 0;
+		}
+		#  print STDERR "gG4\n";
+		push @gaps, \%gap;
 	    }
-	    push @gaps, \%gap;
 	}
 	$previous = $index;
     }
+    #  print STDERR "gGF\n";
+
     return \@gaps;
 }
 

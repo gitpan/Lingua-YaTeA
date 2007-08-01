@@ -81,8 +81,8 @@ sub getHeadAndLinks
    
     foreach $node (@{$this->getTree(0)->getNodeSet->getNodes})
     {
-	$left = $node->getLeftEdge->searchHead;	
-	$right = $node->getRightEdge->searchHead;	
+	$left = $node->getLeftEdge->searchHead (0);	
+	$right = $node->getRightEdge->searchHead (0);	
 	$prep = $node->getPreposition;
 	$det = $node->getDeterminer;
 

@@ -182,17 +182,17 @@ sub linkToFather
 
 sub fillLeaves
 {
-    my ($this,$counter_r,$index_set, $deep) = @_;
+    my ($this,$counter_r,$index_set, $depth) = @_;
 
-    $deep++;
-    if ($deep < 50) { # Temporary added by Thierry Hamon 02/03/2007
+    $depth++;
+    if ($depth < 50) { # Temporary added by Thierry Hamon 02/03/2007
 	if ($this->getLeftEdge eq "")
 	{
 	    $this->{LEFT_EDGE} = Lingua::YaTeA::TermLeaf->new($index_set->getIndex($$counter_r++));
 	}
 	else
 	{
-	    $this->getLeftEdge->fillLeaves($counter_r,$index_set, $deep);
+	    $this->getLeftEdge->fillLeaves($counter_r,$index_set, $depth);
 	}
 	
 	if (defined $this->getPreposition)
@@ -209,7 +209,7 @@ sub fillLeaves
 	}
 	else
 	{
-	    $this->getRightEdge->fillLeaves($counter_r,$index_set, $deep);
+	    $this->getRightEdge->fillLeaves($counter_r,$index_set, $depth);
 	}
     } else {
 	warn "fillLeaves: Going out a deep recursive method call (more than 50 calls)\n";
@@ -223,9 +223,16 @@ sub fillLeaves
 
 sub searchHead
 {
-    my ($this) = @_;
+    my ($this, $depth) = @_;
     my $head = $this->getHead;
-    return $head->searchHead;
+#    print STDERR "==> $depth\r";
+    $depth++;
+    if ($depth < 50) {
+	return $head->searchHead($depth);
+    } else  {
+	warn "searchHead: Going out a deep recursive method call (more than 50 calls)\n";
+	return undef;
+    }
 }
 
 
@@ -331,6 +338,7 @@ sub searchRoot
     {
 	return $this;
     }
+    #  print STDERR "S1 ($this)\n";
     $this->getFather->searchRoot;
 }
 
@@ -348,11 +356,15 @@ sub hitchMore
     my $sub_index_set = Lingua::YaTeA::IndexSet->new;
     $this->fillIndexSet($sub_index_set,0);
     my $added_index_set;
+
+    #  print STDERR scalar(@$free_nodes_a) . "h1\n";
+
+
     foreach my $n (@$free_nodes_a)
     {
 	if($n->getID != $this->getID)
 	{
-	    $pivot = $n->searchHead->getIndex;
+	    $pivot = $n->searchHead(0)->getIndex;
 	    $added_index_set = Lingua::YaTeA::IndexSet->new;
 	    $n->fillIndexSet($added_index_set,0);
 	    
@@ -363,7 +375,10 @@ sub hitchMore
 		($mode) = $sub_index_set->defineAppendMode($added_index_set,$pivot);
 		if(defined $mode)
 		{
-		    if($mode =~ "INCLUSION")
+		    #  print STDERR "mode1 = $mode\n";
+
+
+		    if($mode =~ /INCLUSION/)
 		    {
 			if($mode =~ /REVERSED/)
 			{
@@ -380,12 +395,17 @@ sub hitchMore
 		    {
 			if($mode eq "ADJUNCTION")
 			{
+			    #  print STDERR "hm1\n";
 			    ($above,$place) = $node->searchLeaf($pivot);
+			    #  print STDERR "hm2\n";
 			    $below = $n;
 			}
 		    }
+		    #  print STDERR "hm3\n";
 		    
 		    $above->hitch($place,$below,$words_a);
+		    #  print STDERR "hm4\n";
+
 		}
 		else
 		{
@@ -395,7 +415,7 @@ sub hitchMore
 	    }
 	    else
 	    {
-		$pivot = $this->searchHead->getIndex;
+		$pivot = $this->searchHead(0)->getIndex;
 		($node,$position) = $n->searchLeaf($pivot);
 		if(isa($node,'Lingua::YaTeA::Node'))
 		{
@@ -403,7 +423,8 @@ sub hitchMore
 
 		    if(defined $mode)
 		    {
-			if($mode =~ "INCLUSION")
+		    #  print STDERR "mode2 = $mode\n";
+			if($mode =~ /INCLUSION/)
 			{
 			    if($mode =~ /REVERSED/)
 			    {
@@ -439,19 +460,27 @@ sub hitch
 {
     my ($this,$place,$to_add,$words_a) = @_;
 
+    #  print STDERR "hi1\n";
+
     if($this->checkCompatibility($place,$to_add))
     {
+    #  print STDERR "hi2\n";
 	if(isa($to_add,'Lingua::YaTeA::RootNode'))
 	{
 	    bless ($to_add,'Lingua::YaTeA::InternalNode');
 	}
+    #  print STDERR "hi3\n";
 	if(isa ($this->{$place."_EDGE"},'Lingua::YaTeA::InternalNode'))
 	{
 	    $to_add->plugSubNodeSet($this->{$place."_EDGE"});
 	}
+    #  print STDERR "hi4\n";
 	$to_add->setFather($this);
+    #  print STDERR "hi5\n";
 	$this->{$place."_EDGE"} = $to_add;
+    #  print STDERR "hi6\n";
 	$to_add->updateLevel($this->getLevel + 1);
+    #  print STDERR "hi7\n";
 	
 	return 1;
 	
@@ -484,7 +513,7 @@ sub plugSubNodeSet
     }
     else
     {
-	($head_node,$head_position) = $this->{$head_position . "_EDGE"}->searchLeaf($to_plug->searchHead->getIndex);
+	($head_node,$head_position) = $this->{$head_position . "_EDGE"}->searchLeaf($to_plug->searchHead(0)->getIndex);
 	$head_node->{$head_position . "_EDGE"} = $to_plug;
 	$to_plug->setFather($head_node);
     }
@@ -494,14 +523,21 @@ sub checkCompatibility
 {
     my ($this,$place,$to_add) = @_;
 
+    #  print STDERR "cC1\n";
+
+
     if($this->getID != $to_add->getID)
     {
-	if($to_add->searchHead->getIndex == $this->getEdge($place)->searchHead->getIndex)
+    #  print STDERR "cC3\n";
+	if($to_add->searchHead(0)->getIndex == $this->getEdge($place)->searchHead(0)->getIndex)
 	{
+    #  print STDERR "cC3\n";
 	    if($this->checkNonCrossing($to_add))
 	    {
+    #  print STDERR "cC4\n";
 		return 1;
 	    }
+    #  print STDERR "cC5\n";
 	    return 0;
 	}
 	return 0;
@@ -520,8 +556,15 @@ sub checkNonCrossing
     my $previous = -1;
     my $gap;
     my $above_index_set = Lingua::YaTeA::IndexSet->new;
+
+    #  print STDERR "cNC1\n";
+
     $this->fillIndexSet($above_index_set,0);
+
+    #  print STDERR "cNC2\n";
+
     my $above_gaps_a = $above_index_set->getGaps;
+    #  print STDERR "cNC2b\n";
     my $to_add_index_set;
     my $index;
     my $pivot;
@@ -531,12 +574,19 @@ sub checkNonCrossing
     my %filled_gaps;
     my @gaps;
 
+    #  print STDERR scalar(@$above_gaps_a) . "\n";
+
+
     if(scalar @$above_gaps_a > 1)
     {
+	#  print STDERR "cNC3a\n";
 	$to_add_index_set = Lingua::YaTeA::IndexSet->new;
+	#  print STDERR "cNC3b\n";
 	$to_add->fillIndexSet($to_add_index_set,0);
+	#  print STDERR "cNC4\n";
 	foreach $index (@{$to_add_index_set->getIndexes})
 	{
+	    #  print STDERR "cNC5\n";
 	    foreach $gap (@$above_gaps_a)
 	    {
 		if(exists $gap->{$index})
@@ -545,20 +595,28 @@ sub checkNonCrossing
 		}
 	    }
 	}
+	#  print STDERR "cNC6\n";
 	@gaps = values %filled_gaps;
+	#  print STDERR "cNC7\n";
+
 	if(scalar @gaps > 1)
 	{
 	    if(scalar @gaps == 2)
 	    {
+		#  print STDERR "cNC8\n";
 		$pivot = $above_index_set->searchPivot($to_add_index_set);
 		if(defined $pivot)
 		{
+		    #  print STDERR "cNC9\n";
 		    push @both, keys %{$gaps[0]};
 		    push @both, keys %{$gaps[1]};
 		    @both = sort (@both);
 		    $previous = -1;
+		    #  print STDERR "cNC10\n";
+
 		    for ($i=0; $i < scalar @both; $i++)
 		    {
+			#  print STDERR "cNC11\n";
 			$index = $both[$i];
 
 			if(
@@ -583,6 +641,8 @@ sub checkNonCrossing
 	    return 0;
 	}
     }
+    #  print STDERR "cNC(F)\n";
+
     return 1;
 }
 
@@ -828,7 +888,7 @@ sub buildParenthesised
     }
     if(isa($this,'Lingua::YaTeA::InternalNode'))
     {
-	$$analysis_r .= ")<=" . $abr{$this->getNodeStatus} . "=" .$this->searchHead->getPOS($words_a) . "> ";
+	$$analysis_r .= ")<=" . $abr{$this->getNodeStatus} . "=" .$this->searchHead(0)->getPOS($words_a) . "> ";
     }
     else
     {
@@ -844,31 +904,40 @@ sub searchLeaf
     my ($this,$index) = @_;
     my $node;
     my $position;
+    #  print STDERR "SL1\n";
+
     if(isa($this->getLeftEdge,'Lingua::YaTeA::Node'))
     {
+    #  print STDERR "SL2a\n";
 	($node,$position) = $this->getLeftEdge->searchLeaf($index);
     }
     else
     {
+    #  print STDERR "SL2b\n";
 	if($this->getLeftEdge->getIndex == $index)
 	{
 	    return ($this,"LEFT");
 	}
     }
+    #  print STDERR "SL3\n";
+
     if(!defined $node)
     {
 	if(isa($this->getRightEdge,'Lingua::YaTeA::Node'))
 	{
+    #  print STDERR "SL4a\n";
 	    ($node,$position) = $this->getRightEdge->searchLeaf($index);
 	}
 	else
 	{
+    #  print STDERR "SL4b\n";
 	    if($this->getRightEdge->getIndex == $index)
 	    {
 		return ($this,"RIGHT");
 	    }
 	}
     }
+    #  print STDERR "SL5\n";
     return ($node,$position); 
 }
 
@@ -943,7 +1012,7 @@ sub buildTermList
     else
     {
 	$left = $this->getLeftEdge->buildTermList($term_candidates_a,$words_a,$phrase_occurrences_a,$phrase_island_set,$offset,0);
-	$term_candidate->editKey($left->getKey . "<=" . $abr{$this->getLeftEdge->getNodeStatus} . "=" .$this->getLeftEdge->searchHead->getPOS($words_a) . "> ");
+	$term_candidate->editKey($left->getKey . "<=" . $abr{$this->getLeftEdge->getNodeStatus} . "=" .$this->getLeftEdge->searchHead(0)->getPOS($words_a) . "> ");
 	push @{$term_candidate->getWords},@{$left->getWords};
 	$term_candidate->addIndexSet($left->getIndexSet);
 
@@ -984,7 +1053,7 @@ sub buildTermList
     else
     {
 	$right = $this->getRightEdge->buildTermList($term_candidates_a,$words_a,$phrase_occurrences_a,$phrase_island_set,$offset,0);
-	$term_candidate->editKey($right->getKey . "<=" . $abr{$this->getRightEdge->getNodeStatus} . "=" .$this->getRightEdge->searchHead->getPOS($words_a) . "> ");
+	$term_candidate->editKey($right->getKey . "<=" . $abr{$this->getRightEdge->getNodeStatus} . "=" .$this->getRightEdge->searchHead(0)->getPOS($words_a) . "> ");
 	push @{$term_candidate->getWords},@{$right->getWords};
 	$term_candidate->addIndexSet($right->getIndexSet);
 
@@ -994,7 +1063,7 @@ sub buildTermList
   
    #  if(isa($this,'Lingua::YaTeA::InternalNode'))
 #     {
-# 	$term_candidate->editKey("<=" . $abr{$this->getNodeStatus} . "=" .$this->searchHead->getPOS($words_a) . "> ");
+# 	$term_candidate->editKey("<=" . $abr{$this->getNodeStatus} . "=" .$this->searchHead(0)->getPOS($words_a) . "> ");
 #     }
    
     if($this->getHeadPosition eq "LEFT")
@@ -1075,16 +1144,16 @@ sub searchRightMostNode
 
 sub fillIndexSet
 {
-    my ($this,$index_set, $deep) = @_;
-    $deep++;
-    if ($deep < 50) { # Temporary added by thierry Hamon 02/03/2007
+    my ($this,$index_set, $depth) = @_;
+    $depth++;
+    if ($depth < 50) { # Temporary added by thierry Hamon 02/03/2007
 	if(isa($this->getLeftEdge,'Lingua::YaTeA::TermLeaf'))
 	{
 	    $index_set->addIndex($this->getLeftEdge->getIndex);	
 	}
 	else
 	{
-	    $this->getLeftEdge->fillIndexSet($index_set,$deep);
+	    $this->getLeftEdge->fillIndexSet($index_set,$depth);
 	}
 	if (defined $this->getPreposition)
 	{
@@ -1104,7 +1173,7 @@ sub fillIndexSet
 # 	warn $this->getRightEdge->getRightEdge . "\n";
 # 	warn "$this\n";
 # 	warn "-----\n";
-	    $this->getRightEdge->fillIndexSet($index_set,$deep);
+	    $this->getRightEdge->fillIndexSet($index_set,$depth);
 	}
     } else {
 	warn "fillIndexSet: Going out a deep recursive method call (more than 50 calls)\n";
@@ -1118,7 +1187,7 @@ sub plugInternalNode
     my $intermediate_node_set;
     my $new_previous_index;
     my $new_next_index;
-    my ($node,$place) = $this->searchRoot->getNodeOfLeaf($previous_index,$internal_node->searchHead->getIndex,$words_a);
+    my ($node,$place) = $this->searchRoot->getNodeOfLeaf($previous_index,$internal_node->searchHead(0)->getIndex,$words_a);
 
     if($place =~ /LEFT|RIGHT/)
     {
@@ -1130,21 +1199,21 @@ sub plugInternalNode
 	    
 	    if($node->getEdgeStatus($place) ne "HEAD")
 	    {
-		$new_previous_index = $node->searchHead;
-		if($new_previous_index < $internal_node->searchHead->getIndex)
+		$new_previous_index = $node->searchHead(0);
+		if($new_previous_index < $internal_node->searchHead(0)->getIndex)
 		{
 		    $previous_index = $new_previous_index;
 		}
 	    }
 	}
     }
-    ($node,$place) = $this->searchRoot->getNodeOfLeaf($next_index,$internal_node->searchHead->getIndex,$words_a);
+    ($node,$place) = $this->searchRoot->getNodeOfLeaf($next_index,$internal_node->searchHead(0)->getIndex,$words_a);
     if($place =~ /LEFT|RIGHT/)
     {
 	if($node->getEdgeStatus($place) ne "HEAD")
 	{
-	    $new_next_index = $node->searchHead;
-	    if($new_next_index < $internal_node->searchHead->getIndex)
+	    $new_next_index = $node->searchHead(0);
+	    if($new_next_index < $internal_node->searchHead(0)->getIndex)
 	    {
 		$next_index = $new_next_index;
 	    }
@@ -1153,14 +1222,14 @@ sub plugInternalNode
 
     my $left_index_set = Lingua::YaTeA::IndexSet->new;
     $left_index_set->addIndex($previous_index);
-    $left_index_set->addIndex($internal_node->searchHead->getIndex);
+    $left_index_set->addIndex($internal_node->searchHead(0)->getIndex);
     my $right_index_set = Lingua::YaTeA::IndexSet->new;
-    $right_index_set->addIndex($internal_node->searchHead->getIndex);
+    $right_index_set->addIndex($internal_node->searchHead(0)->getIndex);
     $right_index_set->addIndex($next_index);
    
     my $attached = 0;
 
-    my $pos = $words_a->[$previous_index]->getPOS . " " .$words_a->[$internal_node->searchHead->getIndex]->getPOS  ;
+    my $pos = $words_a->[$previous_index]->getPOS . " " .$words_a->[$internal_node->searchHead(0)->getIndex]->getPOS  ;
     
     if ($record = $parsing_pattern_set->existRecord($left_index_set->buildPOSSequence($words_a,$tag_set)))
     {
@@ -1191,7 +1260,7 @@ sub plugInternalNode
     }
     if($attached == 0)
     {
-	$pos = $words_a->[$internal_node->searchHead->getIndex]->getPOS  . " " . $words_a->[$next_index]->getPOS ;
+	$pos = $words_a->[$internal_node->searchHead(0)->getIndex]->getPOS  . " " . $words_a->[$next_index]->getPOS ;
 	
 	if ($record = $parsing_pattern_set->existRecord($right_index_set->buildPOSSequence($words_a,$tag_set)))
 	{
@@ -1443,7 +1512,7 @@ sub adjustPreviousAndNext
     my $node;
     my $place;
 
-    if($this->getLeftEdge->searchHead->getIndex != $previous)
+    if($this->getLeftEdge->searchHead(0)->getIndex != $previous)
     {
 
 	($node,$place) = $this->searchLeaf($previous);
@@ -1461,14 +1530,14 @@ sub adjustPreviousAndNext
 		$node = $node->getFather;
 	    }
 	    
-	    $previous = $node->searchHead->getIndex;
+	    $previous = $node->searchHead(0)->getIndex;
 	}
     }
     else
     {
 	$new_prev = $previous;
     }
-    if($this->getRightEdge->searchHead->getIndex != $next)
+    if($this->getRightEdge->searchHead(0)->getIndex != $next)
     {
 	($node,$place) = $this->searchLeaf($next);
 	if(defined $node)
@@ -1484,7 +1553,7 @@ sub adjustPreviousAndNext
 	    {
 		$node = $node->getFather;
 	    }
-	    $next = $node->searchHead->getIndex;
+	    $next = $node->searchHead(0)->getIndex;
 	}
     }
     else
@@ -1530,8 +1599,8 @@ sub completeGap
 		{
 		    $tree->addNodes($node_set);
 		    $tree->addNodes($additional_node_set);
-		    $tree->getSimplifiedIndexSet->simplify($partial_index_set,$additional_node_set,$tree,-1);
-		    $gap_index_set->simplify($partial_index_set,$additional_node_set,$tree,-1);
+		    if ($tree->getSimplifiedIndexSet->simplify($partial_index_set,$additional_node_set,$tree,-1) == -1 ) {return 0;}
+		    if ($gap_index_set->simplify($partial_index_set,$additional_node_set,$tree,-1) == -1 ) {return 0;}
 		    $tree->updateRoot;
 		}
 		
@@ -1656,7 +1725,7 @@ sub insertOneWord
 		    
 		    if($node->getEdgeStatus($place) ne "HEAD")
 		    {
-			$new_previous = $node->searchHead;
+			$new_previous = $node->searchHead(0);
 			if($new_previous < $index)
 			{
 			    $previous = $new_previous;
@@ -1676,7 +1745,7 @@ sub insertOneWord
 		    
 		    if($node->getEdgeStatus($place) ne "HEAD")
 		    {
-			$new_next = $node->searchHead;
+			$new_next = $node->searchHead(0);
 			if($new_next < $index)
 			{
 			    $next = $new_next;
@@ -1696,12 +1765,16 @@ sub insertOneWord
 		    
 		    $node_set = $this->getParseFromPattern($index_set,$record,$parsing_direction,$words_a);
 		    ($hook_node,$place) = $this->getNodeOfLeaf($previous,$index,$words_a);
-		    if($hook_node->hitch($place,$node_set->getRoot,$words_a))
+		    if((defined $hook_node) && ($hook_node->hitch($place,$node_set->getRoot,$words_a)))
 		    {
 			$tree->addNodes($node_set);
 			$tree->getSimplifiedIndexSet->removeIndex($index);
 			$tree->getIndexSet->addIndex($index);
 			$attached = 1;
+		    } else {
+			if (!defined $hook_node) {
+			    warn "hock_node undefined";
+			}
 		    }
 		}
 		if($attached == 0)

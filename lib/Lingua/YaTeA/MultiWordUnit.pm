@@ -386,7 +386,6 @@ sub parseProgressively
 	@concurrent_trees = @{$this->getForest};
 	$this->emptyForest;
     }
-
     while (scalar @concurrent_trees != 0)
     {
 	foreach ($tree = pop (@concurrent_trees))
@@ -410,9 +409,9 @@ sub parseProgressively
 		    $partial_index_set = $tree->getSimplifiedIndexSet->getPartial($pattern->getLength,$position);
 		    $node_set = $pattern->getNodeSet->copy;
 		    $node_set->fillNodeLeaves($partial_index_set);
-		    $tree->append($node_set,$partial_index_set,\@concurrent_trees,$this->getWords,$tag_set);
+		    #  print STDERR "fillNodeLeaves\n";
+		    if ($tree->append($node_set,$partial_index_set,\@concurrent_trees,$this->getWords,$tag_set) == -1) {return 0;}
 		}
-		
 		else
 		{
 		    next; 

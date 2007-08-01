@@ -406,7 +406,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.2';
+our $VERSION='0.3';
 
 our $process_counter = 1;
 
@@ -598,7 +598,6 @@ sub setParsingPatterns
     $this->{PARSING_PATTERN_SET} = Lingua::YaTeA::ParsingPatternRecordSet->new($this->getConfigFileSet->getFile("ParsingPatterns")->getPath,$this->getTagSet,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
 #    print STDERR "Parsing Patterns loaded\n";
 }
-
 
 sub setChunkingDataSet
 {
