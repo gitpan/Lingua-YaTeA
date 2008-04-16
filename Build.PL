@@ -30,10 +30,12 @@ sub ACTION_fakeinstall {
 sub ACTION_build {
     my $self = shift;
 
-    warn "Setting configuration variables in etc/yatea/yatea.rc\n";
     require Config::General;
+
+    warn "Setting configuration variables in etc/yatea/yatea.rc\n";
     my $rcfile = $self->base_dir() . "/etc/yatea/yatea.rc";
 
+    chmod(0644, $rcfile);
     if (!( -f "$rcfile.orig") ) {
 	File::Copy::copy($rcfile, "$rcfile.orig");
     }
@@ -57,6 +59,7 @@ sub ACTION_build {
     my $n = FileHandle->new($mainpmfile,"r");
 #     File::Copy->cp($n,"$mainpmfile.orig");
 
+    chmod(0644, $mainpmfile);
     if (!( -f "$mainpmfile.orig") ) {
 	File::Copy::copy($mainpmfile, "$mainpmfile.orig");
     }

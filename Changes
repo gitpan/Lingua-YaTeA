@@ -1,5 +1,9 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.5     - Minor correction in the installation process
+        - for some OS, Config::General returns while setting variables
+          as yatea.rc is on read-inly mode
+
 0.4     - use warnings in all the files
         - correction of minor bugs
         - control of the input type in Node.pm,  NodeSet.pm, Tree.pm

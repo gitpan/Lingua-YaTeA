@@ -29,7 +29,7 @@ Or if you don't have the "make" program:
    Build test
    Build install
 
- It requires Mdoule::Build version 0.28 (at least)
+ It requires Mdoule::Build version 0.28 (at least) and File::chmod
 
 
 DEPENDENCIES

@@ -1,6 +1,6 @@
 <DefaultConfig>
-    CONFIG_DIR = /usr/local/share/YaTeA/config
-    LOCALE_DIR = /usr/local/share/YaTeA/locale
+    CONFIG_DIR = /usr/share/YaTeA/config
+    LOCALE_DIR = /usr/share/YaTeA/locale
     RESULT_DIR = $PWD/RESULTS
 </DefaultConfig>
 <OPTIONS>

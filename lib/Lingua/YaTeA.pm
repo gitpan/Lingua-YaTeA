@@ -406,7 +406,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.4';
+our $VERSION='0.5';
 
 our $process_counter = 1;
 
@@ -418,7 +418,7 @@ sub load_config
 # Read de configuration file
 
     if ((! defined $rcfile) || ($rcfile eq "")) {
-	$rcfile = "/usr/local/etc/yatea/yatea.rc";    
+	$rcfile = "/etc/yatea/yatea.rc";    
     }
     
     my $conf = new Config::General('-ConfigFile' => $rcfile,
