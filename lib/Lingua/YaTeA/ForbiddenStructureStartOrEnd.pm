@@ -1,5 +1,6 @@
 package Lingua::YaTeA::ForbiddenStructureStartOrEnd;
 use strict;
+use warnings;
 use Lingua::YaTeA::ForbiddenStructure;
 use Lingua::YaTeA::LinguisticItem;
 use Lingua::YaTeA::TriggerSet;
@@ -7,6 +8,7 @@ use UNIVERSAL qw(isa);
 
 
 our @ISA = qw(Lingua::YaTeA::ForbiddenStructure);
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

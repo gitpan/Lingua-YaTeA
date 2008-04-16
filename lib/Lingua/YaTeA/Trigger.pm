@@ -1,5 +1,8 @@
 package Lingua::YaTeA::Trigger;
 use strict;
+use warnings;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

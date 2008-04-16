@@ -1,10 +1,14 @@
 package Lingua::YaTeA::ParsingPatternRecordSet;
 use strict;
+use warnings;
+
 use Lingua::YaTeA::ParsingPatternRecord;
 use Lingua::YaTeA::ParsingPattern;
 use Lingua::YaTeA::ParsingPatternParser;
 
 our $max_content_words = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

@@ -50,3 +50,7 @@ Check the XML conformity, especially < and >
 - Check the computing of the offset. it is assumed that every token
   are preceded and follow by a space character. But it is not always
   the case (e.g. commas)
+
+- Check that special XML characters are well encoded as XML entities
+
+- Homogenize the output of the file and file handler (print / debug -> file handler, printUnparseable -> file name)

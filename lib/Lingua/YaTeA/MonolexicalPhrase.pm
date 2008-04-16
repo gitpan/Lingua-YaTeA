@@ -1,17 +1,21 @@
 package Lingua::YaTeA::MonolexicalPhrase;
 use Lingua::YaTeA::Phrase;
+use Lingua::YaTeA::MonolexicalUnit;
 use strict;
+use warnings;
 use NEXT;
 
-our @ISA = qw(Lingua::YaTeA::Phrase);
+our @ISA = qw(Lingua::YaTeA::Phrase Lingua::YaTeA::MonolexicalUnit);
 our $counter = 0;
-
+our $parsed = 0;
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
     my ($class,$num_content_words,$words_a,$tag_set) = @_;
-    my $this = $class->SUPER::new($class,$num_content_words,$words_a,$tag_set);
-    bless ($this,$class);
+    my $this = shift;
+    $this = bless {}, $this unless ref $this;
+    $this->NEXT::new(@_);
     return $this;
 }
 

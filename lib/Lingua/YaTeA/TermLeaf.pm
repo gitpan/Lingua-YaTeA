@@ -1,8 +1,10 @@
 package Lingua::YaTeA::TermLeaf;
 use Lingua::YaTeA::Edge;
 use strict;
+use warnings;
 
 our @ISA = qw(Lingua::YaTeA::Edge);
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -68,27 +70,35 @@ sub searchHead
 
 sub print
 {
-    my ($this,$words_a) = @_;
+    my ($this,$words_a,$fh) = @_;
+  #   if(!defined $fh)
+#     {
+# 	$fh = \*STDERR
+#     }
     if(defined $words_a)
     {
-	 $this->printWords($words_a) ;	
-	 print  " (" . $this->getIndex. ")";
+	 $this->printWords($words_a,$fh) ;	
+	 print  $fh " (" . $this->getIndex. ")";
     }
     else
     {
-	print $this->getIndex;
+	print $fh $this->getIndex;
     }
 }
 
 sub printWords
 {
-    my ($this,$words_a) = @_;
-    print $this->getIF($words_a);
+    my ($this,$words_a,$fh) = @_;
+#     if(!defined $fh)
+#     {
+# 	$fh = \*STDERR
+#     }
+    print $fh $this->getIF($words_a);
 }
 
 sub searchRightMostLeaf
 {
-    my ($this) = @_;
+    my ($this,$depth_r) = @_;
     return $this;
 }
 

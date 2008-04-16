@@ -1,8 +1,10 @@
 package Lingua::YaTeA::TermCandidate;
 use strict;
+use warnings;
 use UNIVERSAL qw(isa);
 
 our $id = 0;
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -15,6 +17,7 @@ sub new
     $this->{OCCURRENCES} = [];
     $this->{RELIABILITY} = ();
     $this->{ORIGINAL_PHRASE} = ();
+    $this->{WEIGHT} = 0;
     bless ($this,$class);
     return $this;
 }
@@ -78,6 +81,17 @@ sub getHead
     return $this->{HEAD};
 }
 
+sub setWeight
+{
+    my ($this,$weight) = @_;
+    $this->{WEIGHT} = $weight;
+}
+
+sub getWeight
+{
+    my ($this) = @_;
+    return $this->{WEIGHT};
+}
 
 sub getWords
 {
@@ -89,6 +103,12 @@ sub getOccurrences
 {
     my ($this) = @_;
     return $this->{OCCURRENCES};
+}
+
+sub getOccurrencesNumber
+{
+    my ($this) = @_;
+    return scalar @{$this->getOccurrences};
 }
 
 sub buildLinguisticInfos
@@ -181,6 +201,8 @@ sub getOriginalPhrase
     my ($this) = @_;
     return $this->{ORIGINAL_PHRASE};
 }
+
+
 
 1;
 

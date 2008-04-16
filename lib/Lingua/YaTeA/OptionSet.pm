@@ -1,9 +1,11 @@
 package Lingua::YaTeA::OptionSet;
 use strict;
+use warnings;
 
 use Data::Dumper;
 
 
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -31,6 +33,7 @@ sub addOptionSet
 sub addOption
 {
     my ($this,$name,$value,$message_set,$display_language) = @_;
+
     if(! $this->optionExists($name))
     {
 	$this->{OPTIONS}->{$name} = Lingua::YaTeA::Option->new($name,$value);
@@ -183,6 +186,10 @@ sub checkMaxLength
     {
 	$this->addOption('PHRASE_MAXIMUM_LENGTH',12);
     }
+    if(!$this->optionExists('CANDIDATE_MAXIMUM_LENGTH'))
+    {
+	$this->addOption('CANDIDATE_MAXIMUM_LENGTH',12);
+    }
 }
 
 sub getMaxLength
@@ -253,6 +260,11 @@ sub setDefaultOutputPath
     }
 }
 
+sub getTCMaxLength
+{
+    my ($this) = @_;
+    return $this->getOption("CANDIDATE_MAXIMUM_LENGTH")->getValue;
+}
 
 
 sub disable

@@ -1,7 +1,9 @@
 package Lingua::YaTeA::FileSet;
 use Lingua::YaTeA::File;
 use strict;
+use warnings;
 
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -66,35 +68,63 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::FileSet - Perl extension for ???
+Lingua::YaTeA::FileSet - Perl extension for managing the directory containing the configuration file set given a language.
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::FileSet;
-  Lingua::YaTeA::FileSet->();
+  Lingua::YaTeA::FileSet->new($repository);
 
 =head1 DESCRIPTION
 
+The module provides methods for managing a repository of configuration
+filss for a given language. Information associated to the file set is
+the repository path (field C<REPOSITORY>) and the file list. This list
+is (an array stored in the field C<FILES> wher each element is a
+C<Lingua::YaTeA::File> object.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($repository);
+
+This method creates a object and sets the C<REPOSITORY> field.
 
 =head2 checkRepositoryExists()
 
+    checkRepositoryExists();
+
+This methods checks if the directory referring to the repository
+exists or not.
 
 =head2 addFile()
+
+    addFile($repository, $name);
+
+The method adds a new file (C<$name>) from the repository
+C<$repository>.
 
 
 =head2 getFile()
 
+    getFile($filename);
+
+The method returns the object C<Lingua::YaTeA::File> corresponding to
+the file C<$filename>.
 
 =head2 addFiles()
 
+    addFile($repository, \@filenames);
+
+This method adds the list of configuration files contained in the
+array given by reference (C<\@filenames>).
 
 =head2 getRepository()
 
+    getRepository();
+
+This method returns the name of the repository.
 
 
 =head1 SEE ALSO

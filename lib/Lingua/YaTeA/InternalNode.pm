@@ -1,9 +1,12 @@
 package Lingua::YaTeA::InternalNode;
 use strict;
+use warnings;
 use Lingua::YaTeA::Node;
 use Lingua::YaTeA::Edge;
 use UNIVERSAL qw(isa);
 our @ISA = qw(Lingua::YaTeA::Node Lingua::YaTeA::Edge);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -63,8 +66,8 @@ sub searchRoot
 
 sub printFather
 {
-    my ($this) = @_;
-    print"\t\tfather: " . $this->getFather->getID . "\n"; 
+    my ($this,$fh) = @_;
+    print $fh "\t\tfather: " . $this->getFather->getID . "\n"; 
 }
 
 1;

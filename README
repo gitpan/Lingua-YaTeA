@@ -1,9 +1,9 @@
-Lingua-YaTeA version 0.1
+Lingua-YaTeA version 0.4
 ================================
 
 (Yet Another Term ExtrActor)
 
-YaTeA is a module implrementing a configurable term extractor. It 
+YaTeA is a module implementing a configurable term extractor. It
 detecting term candidates in corpora. It can also take into account
 testified terms issued from terminological resources.
 
@@ -29,6 +29,8 @@ Or if you don't have the "make" program:
    Build test
    Build install
 
+ It requires Mdoule::Build version 0.28 (at least)
+
 
 DEPENDENCIES
 
@@ -40,11 +42,14 @@ This module requires these other modules and libraries:
  Data::Dumper
  File::Path
  Parse::Yapp
+ File::Compare
+ Pod::Usage
+ Test::More
+
 
 DOCUMENTATION
 
-Please see documentation Yatea_user_manual.pdf in the DOC
-subdirectory.
+See the documentation in the module (man Lingua::YaTeA)
 
 COPYRIGHT AND LICENCE
 

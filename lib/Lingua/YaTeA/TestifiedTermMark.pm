@@ -1,9 +1,11 @@
 package Lingua::YaTeA::TestifiedTermMark;
 use strict;
+use warnings;
 use Lingua::YaTeA::AnnotationMark;
 
 
 our @ISA = qw(Lingua::YaTeA::AnnotationMark);
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

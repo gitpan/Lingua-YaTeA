@@ -10,9 +10,12 @@
 package Lingua::YaTeA::ParsingPatternParser;
 use vars qw ( @ISA );
 use strict;
+use warnings;
 
 @ISA= qw ( Parse::Yapp::Driver );
 use Parse::Yapp::Driver;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 #line 12 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 

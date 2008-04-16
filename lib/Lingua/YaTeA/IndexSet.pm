@@ -1,6 +1,10 @@
 package Lingua::YaTeA::IndexSet;
 use strict;
+use warnings;
 use UNIVERSAL qw(isa);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
+
 sub new
 {
     my ($class,$words_a) = @_;
@@ -150,7 +154,7 @@ sub isDisjuncted
 
 sub getIncluded
 {
-    my ($this,$other_index_sets_a) = @_;
+    my ($this,$other_index_sets_a,$parsing_direction) = @_;
     my $index_set;
     my @included;
     foreach $index_set (@{$other_index_sets_a})
@@ -166,9 +170,23 @@ sub getIncluded
 	    push @included, $index_set;
 	}
     }
+    $this->sortIncluded(\@included, $parsing_direction);
     return \@included;
 }
 
+
+sub sortIncluded
+{
+    my ($this,$included_index_sets_a,$parsing_direction) = @_;
+    if($parsing_direction eq "RIGHT")
+    {
+	@$included_index_sets_a = sort ({$b->getLast <=> $a->getLast} @$included_index_sets_a);
+    }
+    else
+    {
+	@$included_index_sets_a = sort ({$b->getFirst <=> $b->getFirst} @$included_index_sets_a);
+    }
+}
 
 sub isIncluded
 {
@@ -428,6 +446,48 @@ sub testSyntacticBreakAndRepetition
 
 }
 
+
+sub testSyntacticBreak
+{
+    my ($this,$words_a,$tag_set) = @_;
+    my @absent;
+    my $i;
+    my %words;
+    my $j = $this->getFirst;
+
+    for($i = 1; $i < $this->getSize; $i++)
+    {
+	$words{$words_a->[$j]->getLF}++;
+		
+	if($this->getIndex($i) != ($j+1))
+	{
+	    while(($j+1) < $this->getIndex($i))
+	    {
+		if($tag_set->existTag('PREPOSITIONS',$words_a->[($j+1)]->getLF))
+		{
+		    return;
+		}
+		if($tag_set->existTag('CANDIDATES',$words_a->[($j+1)]->getPOS))
+		{
+		    if (exists $words{$words_a->[($j+1)]->getLF})
+		    {
+			return;
+		    }
+		}
+		
+		$j++;	    
+	    }
+	}
+	else
+	{
+	    $j++;
+	}
+    }
+    return 1;
+
+}
+
+
 sub buildIFSequence
 {
     my ($this,$words_a) = @_;
@@ -563,62 +623,132 @@ sub getPartial
 
 sub simplify
 {
-    my ($this,$partial_index_set,$node_set,$tree,$pivot) = @_;
+    my ($this,$partial_index_set,$node_set,$tree,$pivot,$fh) = @_;
     my $i;
     my $j=0;
     my $index;
     my $index_partial;
     my @simplified;
-    
+    if(defined $fh)
+    {
+# 	print $fh "arbre:";
+# 	$tree->getIndexSet->print($fh);
+# 	print $fh "\nsimplifie:";
+# 	$this->print($fh);
+# 	print $fh "\npartial:";
+# 	$partial_index_set->print($fh);
+# 	if(defined $pivot)
+# 	{
+# 	    print $fh "\n";
+# 	    print $fh "pivot :" .$pivot ."\n";
+# 	}
+    }
     for ($i= 0; $i < scalar @{$this->getIndexes}; $i++)
     {
 	$index = $this->getIndex($i);
+	
+# 	if(defined $fh)
+# 	{
+# 	    print $fh "index  :" . $index . "\n";
+# 	}
 	if($j < scalar @{$partial_index_set->getIndexes})
 	{
-	    $index_partial  = $partial_index_set->getIndex($j);
-	    if($index == $index_partial)
-	    {
-		if(
-		    (
-		     (!defined $pivot)
-		     ||
-		     ($index != $pivot)
-		    )
-		    &&
-		    (! $tree->getIndexSet->indexExists($index))
-		    )
-		{
-		    $tree->getIndexSet->addIndex($index);
-		}
-		# hack from TH
-		my $head = $node_set->getRoot->searchHead(0);
-		if(defined $head) {
-		    if ($index_partial == $head->getIndex)
-		{
-		    push  @simplified, $index_partial;
-		    
-		}
-		} else {
-		    warn "The head is undefined\n";
-		    return(-1);
-		}
-		$j++;
-	    }
-	    
-	    else
-	    {
-		push  @simplified, $index;
-	    }
+	    &simplifyByCurrent(\$j,\@simplified,$index,$partial_index_set,$node_set,$tree,$pivot,$fh);
 	}
 	else
 	{
+# 	    if(defined $fh)
+# 	    {
+# 		print $fh "push2 dans simplified " . $index . "\n";
+# 	    }
 	    push  @simplified, $index;
 	}
 	
     }
     @{$this->getIndexes} = @simplified;
+#     if(defined $fh)
+#     {
+# 	print $fh "apres\n";
+# 	print $fh "arbre:";
+# 	$tree->getIndexSet->print($fh);
+# 	print $fh "\nsimplifie:";
+# 	$this->print($fh);
+# 	print $fh "\npartial:";
+# 	$partial_index_set->print($fh);
+# 	print $fh "\n";
+#     }
 
 }
+
+
+sub simplifyByCurrent
+{
+    my ($j_s,$simplified_a,$index,$partial_index_set,$node_set,$tree,$pivot,$fh) = @_;
+    my $index_partial  = $partial_index_set->getIndex($$j_s);
+    while (
+	   ($index_partial < $index)
+	   &&
+	   ($tree->getIndexSet->indexExists($index_partial))
+	   &&
+	   ($$j_s < scalar @{$partial_index_set->getIndexes} -1)
+	   )
+    {
+	$$j_s++;
+	$index_partial  = $partial_index_set->getIndex($$j_s);
+    }
+ #    if(defined $fh)
+#     {
+# 	print $fh "\tindex partiel :" . $index_partial . "\n";
+#     }
+    
+    if($index == $index_partial)
+    {
+	if(
+	   (
+	    (!defined $pivot)
+	    ||
+	    ($index != $pivot)
+	    )
+	   &&
+	   (! $tree->getIndexSet->indexExists($index))
+	   )
+	{
+	    $tree->getIndexSet->addIndex($index);
+	  #   if(defined $fh)
+# 	    {
+# 		print $fh "ajoute a iindex d'arbre :" . $index . "\n";
+# 	    }
+	}
+	# hack from TH
+	my $head = $node_set->getRoot->searchHead(0);
+	if(defined $head) {
+	    if ($index_partial == $head->getIndex)
+	    {
+		push  @$simplified_a, $index_partial;
+		
+	    }
+	} else {
+	    warn "The head is undefined\n";
+	    return(-1);
+	}
+	
+	$$j_s++;
+# 	if(defined $fh)
+# 	{
+# 	    print $fh "incerementation j" . $$j_s . "\n";
+# 	}
+    }
+    
+    else
+    {
+# 	if(defined $fh)
+# 	{
+# 	    print $fh "push dans simplified " . $index . "\n";
+# 	}
+	push  @$simplified_a, $index;
+    }
+}
+
 
 sub simplifyWithSeveralPivots
 {
@@ -789,16 +919,18 @@ sub removeIndex
 
 sub defineAppendMode
 {
-    my ($this,$to_append,$pivot) = @_;
+    my ($this,$to_append,$pivot,$fh) = @_;
     my $mode;
+# if(defined $fh)
+# {
+#     print $fh "-> this\n";
+#     print $fh $this->getFirst . "\n";
+#     print $fh $this->getLast . "\n";
+#     print $fh "-> to append\n";
+#     print $fh $to_append->getFirst . "\n";
+#     print $fh $to_append->getLast . "\n";
+# }
 
-#     warn "-> $this\n";
-#     warn $this->getLast . "\n";
-#     warn $this->getFirst . "\n";
-#     warn $to_append->getFirst . "\n";
-#     warn $to_append->getLast . "\n";
-
-#    if (defined $this->getFirst) {
     if (defined @{$this->getIndexes}) {
 	if(
 	   ($this->getLast < $to_append->getFirst)
@@ -806,6 +938,10 @@ sub defineAppendMode
 	   ($this->getFirst > $to_append->getLast)
 	   )
 	{    
+	#     if(defined $fh)
+# 	    {
+# 		print $fh "dis 1 \n";
+# 	    }
 	    return "DISJUNCTION"; # external disjunction
 	}
 	
@@ -827,7 +963,11 @@ sub defineAppendMode
 
 		    return "INCLUSION";
 		}
-		return "DISJUNCTION"; # internal disjunction
+		if(! $this->crosses($to_append))
+		{
+		    return "DISJUNCTION"; # internal disjunction
+		}
+		
 	    }
 	    else
 	    {
@@ -856,7 +996,10 @@ sub defineAppendMode
 		{
 		    return "REVERSED_INCLUSION";
 		}
-		return "DISJUNCTION"; # internal disjunction
+		if(! $this->crosses($to_append))
+		{
+		    return "DISJUNCTION"; # internal disjunction
+		}
 	    }
 	    else
 	    {
@@ -970,6 +1113,20 @@ sub getGaps
     return \@gaps;
 }
 
+
+sub isDiscontinuous
+{
+    my ($this) = @_;
+    my $i;
+    for ($i = 1; $i < scalar @{$this->getIndexes}; $i++)
+    {
+	if($this->getIndexes->[$i] != $this->getIndexes->[$i-1] +1)
+	{
+	    return 1;
+	}
+    }
+    return 0;
+}
 
 sub removeDoubles
 {

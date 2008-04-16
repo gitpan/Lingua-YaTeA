@@ -2,7 +2,7 @@
 # TransFig makefile
 #
 
-all: affichage.tex analyseDefinis.tex AnalyseProgressive.tex analyseSSDefinis.tex chargementPatrons.tex chargementTAtt.tex ChercheIlots.tex classes_supprimees.tex Classes_Yatea_dvlpt.tex Classes_Yatea.tex Classes_Yatea_v1.tex ct.tex decoupage.tex endogenous.tex entreeLex.tex exogenous.tex foret.tex generalExtracteur.tex gnms.tex ilot.tex pat_decomp.tex PlaceInsert.tex SatureEtMAJ.tex TAtt.tex TC_tree.tex Yatea_Classes_Config.tex Yatea_Classes_Process.tex 
+all: affichage.tex analyseDefinis.tex AnalyseProgressive.tex analyseSSDefinis.tex chargementPatrons.tex chargementTAtt.tex ChercheIlots.tex ct.tex decoupage.tex endogenous.tex entreeLex.tex exogenous.tex foret.tex generalExtracteur.tex gnms.tex ilot.tex pat_decomp.tex PlaceInsert.tex SatureEtMAJ.tex TAtt.tex Yatea_Classes_Config.tex Yatea_Classes_Process.tex 
 
 # translation into pdf
 
@@ -58,38 +58,6 @@ ChercheIlots.pdf: ChercheIlots.fig Makefile.in
 	fig2dev -L pdf ChercheIlots.fig ChercheIlots.pdf
 clean::
 	rm -f ChercheIlots.tex
-
-
-# translation into pdf
-
-classes_supprimees.pdf: classes_supprimees.fig Makefile.in
-	fig2dev -L pdf classes_supprimees.fig classes_supprimees.pdf
-clean::
-	rm -f classes_supprimees.tex
-
-
-# translation into pdf
-
-Classes_Yatea_dvlpt.pdf: Classes_Yatea_dvlpt.fig Makefile.in
-	fig2dev -L pdf Classes_Yatea_dvlpt.fig Classes_Yatea_dvlpt.pdf
-clean::
-	rm -f Classes_Yatea_dvlpt.tex
-
-
-# translation into pdf
-
-Classes_Yatea.pdf: Classes_Yatea.fig Makefile.in
-	fig2dev -L pdf Classes_Yatea.fig Classes_Yatea.pdf
-clean::
-	rm -f Classes_Yatea.tex
-
-
-# translation into pdf
-
-Classes_Yatea_v1.pdf: Classes_Yatea_v1.fig Makefile.in
-	fig2dev -L pdf Classes_Yatea_v1.fig Classes_Yatea_v1.pdf
-clean::
-	rm -f Classes_Yatea_v1.tex
 
 
 # translation into pdf
@@ -194,14 +162,6 @@ TAtt.pdf: TAtt.fig Makefile.in
 	fig2dev -L pdf TAtt.fig TAtt.pdf
 clean::
 	rm -f TAtt.tex
-
-
-# translation into pdf
-
-TC_tree.pdf: TC_tree.fig Makefile.in
-	fig2dev -L pdf TC_tree.fig TC_tree.pdf
-clean::
-	rm -f TC_tree.tex
 
 
 # translation into pdf

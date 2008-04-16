@@ -1,25 +1,22 @@
 <DefaultConfig>
-    CONFIG_REP = /usr/share/YaTeA/config
-    LOCALE_REP = /usr/share/YaTeA/locale
-    RESULT_REP = $PWD/RESULTS
+    CONFIG_DIR = /usr/local/share/YaTeA/config
+    LOCALE_DIR = /usr/local/share/YaTeA/locale
+    RESULT_DIR = $PWD/RESULTS
 </DefaultConfig>
 <OPTIONS>
     MESSAGE_DISPLAY = EN
-    language = EN
-    xmlout = 1
-    printChunking = 0
-    suffix = "default"
-    TC-for-BioLG = 0 
-    TT-for-BioLG = 0 
-    debug = 0
-    termList = "multi"
-#     termino = "$HOME/terms.txt"
-    TTG-style-term-candidates = "multi"
-    monolexical-included = 0
-    monolexical-all = 0
-    match-type = "" 
+    TC-for-BioLG = 0
+    TT-for-BioLG = 0
+    TTG-style-term-candidates = multi
     XML-corpus-for-BioLG = 0
     annotate-only = 0
+    debug = 0
+    language = EN
+    match-type = 
+    monolexical-all = 0
+    monolexical-included = 0
+    printChunking = 0
+    suffix = default
+    termList = multi
+    xmlout = 1
 </OPTIONS>
-
-

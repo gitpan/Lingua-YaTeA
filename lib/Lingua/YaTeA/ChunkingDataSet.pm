@@ -1,6 +1,9 @@
 package Lingua::YaTeA::ChunkingDataSet;
 use strict;
+use warnings;
 use Lingua::YaTeA::ChunkingDataSubset;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 
 sub new
@@ -40,6 +43,7 @@ sub loadData
 	{
 	    if(($line !~ /^#/)&&($line !~ /^\s*$/))
 	    {
+		$line =~ s/\r//g;
 		chomp $line;
 		$line =~ /([^\t]+)\t([^\t]+)/;
 		$type= $1;

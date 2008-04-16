@@ -1,9 +1,12 @@
 package Lingua::YaTeA::PhraseSet;
 use strict;
+use warnings;
 use Lingua::YaTeA::MultiWordPhrase;
 use Lingua::YaTeA::MonolexicalPhrase;
 use UNIVERSAL qw(isa);
 use Data::Dumper;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -21,7 +24,7 @@ sub new
 
 sub recordOccurrence
 {
-    my ($this,$words_a,$num_content_words,$tag_set,$parsing_pattern_set,$option_set,$term_frontiers_h,$testified_term_set,$lexicon,$sentence_set) = @_;
+    my ($this,$words_a,$num_content_words,$tag_set,$parsing_pattern_set,$option_set,$term_frontiers_h,$testified_term_set,$lexicon,$sentence_set,$fh) = @_;
     my $phrase;
     my $key;
     my $complete = 0;
@@ -32,7 +35,7 @@ sub recordOccurrence
 	{
 	    if(scalar @$words_a == 1)
 	    {
-		$phrase = Lingua::YaTeA::MonolexicalPhrase->new($words_a,$tag_set);
+		$phrase = Lingua::YaTeA::MonolexicalPhrase->new(1,$words_a,$tag_set);
 	    }
 	    else
 	    {
@@ -67,7 +70,14 @@ sub recordOccurrence
 		    {
 			if (defined $phrase->getTestifiedTerms)
 			{
-			    ($complete,$corrected) = $phrase->searchExogenousIslands($parsing_pattern_set,$tag_set,$option_set->getParsingDirection,$lexicon,$sentence_set);
+			    #($complete,$corrected) = $phrase->searchExogenousIslands($parsing_pattern_set,$tag_set,$option_set->getParsingDirection,$lexicon,$sentence_set);
+			    $phrase->searchExogenousIslands($parsing_pattern_set,$tag_set,$option_set->getParsingDirection,$lexicon,$sentence_set);
+			    if(defined $phrase->getIslandSet)
+			    {
+			#	($complete,$corrected) = $phrase->integrateIslands($chunking_data,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
+				
+				($complete,$corrected) = $phrase->integrateIslands($tag_set,$lexicon,$option_set->getParsingDirection,$sentence_set,$fh);
+			     }
 			    if($corrected == 1)
 			    {
 # 				print "reengistre\n";
@@ -116,7 +126,6 @@ sub recordOccurrence
 		# debaptiser le phrase qui vient d'etre construit
 		$phrase = $this->getPhrases->{$key};
 	    }
-	   
 	    $phrase->addOccurrence($words_a,1);
 	}
     }
@@ -215,55 +224,79 @@ sub sortUnparsed
 
 sub parseProgressively
 {
-    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$lexicon,$sentence_set,$message_set,$display_language, $debugFile) = @_;
+    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$lexicon,$sentence_set,$message_set,$display_language, $fh) = @_;
     my $phrase;
     my $counter = 0;
     my $complete;
-    my $corrected;
+    my $corrected = 0;
     #foreach $phrase (@{$this->getUnparsed})
+   
+    my $Unparsed_size;
 
-    my $Unparsed_size = scalar(@{$this->getUnparsed});
+    my $ref = $this->getUnparsed;
+    #$fh = \*STDERR;
+    if (!defined $ref) {
+	return (0);
+    }
+    $Unparsed_size = scalar(@{$ref});
 
     if(defined $this->{UNPARSED})
     {
 	while ($phrase = pop @{$this->getUnparsed})
 	{ 
-
-# 	    print $debugFile "\n\n";
-# 	    print $debugFile "$phrase\n";
-# 	    print $debugFile $phrase->{'IF'} . "\n";
-# 	    $phrase->print($debugFile);
-# 	    $phrase->printForestParenthesised($debugFile);
-# 	    print $debugFile "\n\n";
-
-#  	    print STDERR "$phrase\n";
-# 	    print STDERR $phrase->{'IF'} . "\n";
+	    $counter++;
+# 	    print $fh "\n\n";
+ 	    #print $fh "COUNTER: " . $counter . " \t" . $phrase->{'IF'} . "\n";
+#   	   $phrase->print($fh);
+ 
 #  	    if (($phrase->{'IF'} eq "fonction ventriculaire gauche globale") || ($phrase->{'IF'} eq "fonction ventriculaire gauche systolique globale")) {
 # 		print STDERR Dumper($phrase);
 # 	    }
-	    ($complete,$corrected) = $phrase->searchEndogenousIslands($this,$chunking_data,$tag_set,$lexicon,$sentence_set);
+	    $complete = 0;
+	    $corrected = 0;
+	    $phrase->searchEndogenousIslands($this,$chunking_data,$tag_set,$lexicon,$sentence_set,$fh);
+	    if(defined $phrase->getIslandSet)
+	    {
+#		$phrase->printIslands($fh);
+#		($complete,$corrected) = $phrase->integrateIslands($chunking_data,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
+		
+		($complete,$corrected) = $phrase->integrateIslands($tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
+#		print $fh "apres\n";
+#		$phrase->printIslands($fh);
+	    }
 	    if($corrected == 1)
 	    {
 		$this->updateRecord($phrase,$tag_set);
 
 	    }
- 	    $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set);
-
-#  	    print STDERR $phrase->{'IF'} . "\n";
-	    
-
-	    if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$chunking_data,$message_set,$display_language, $debugFile))
-	    {
-		$phrase->setParsingMethod('PROGRESSIVE');
-		$phrase->setTC(1);
-		$this->giveAccess($phrase);
-	    }
+	   if($complete == 1)
+	   {
+	       $phrase->setParsingMethod('PROGRESSIVE');
+	       $phrase->setTC(1);
+	       $this->giveAccess($phrase);
+#	       $phrase->print($fh);
+	       
+	   }
 	    else
 	    {
-		$phrase->setTC(0);
-		$this->addToUnparsable($phrase);
-	    }
-	    printf STDERR $message_set->getMessage('UNPARSED_PHRASES')->getContent($display_language) . "... %0.1f%%   \r", (scalar(@{$this->getUnparsed}) / $Unparsed_size) * 100 ;
+	       $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set,$fh);
+	       
+	       
+	       if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$fh))
+	       {
+		   $phrase->setParsingMethod('PROGRESSIVE');
+		   $phrase->setTC(1);
+		   $this->giveAccess($phrase);
+	       }
+	       else
+	       {
+		   $phrase->setTC(0);
+		   $this->addToUnparsable($phrase);
+	       }
+	       #	    $phrase->printForestParenthesised($fh);
+	       #  print $fh "\n\n";
+	       printf STDERR $message_set->getMessage('UNPARSED_PHRASES')->getContent($display_language) . "... %0.1f%%   \r", (scalar(@{$this->getUnparsed}) / $Unparsed_size) * 100 ;
+	   }
 	}
 	print STDERR "\n";
     }
@@ -319,16 +352,17 @@ sub addTermCandidates
     my $phrase;
     my $phrase_set;
     my $term_candidate;
+    my $tc_max_length = $option_set->getTCMaxLength;
     my %mapping_from_phrases_to_TCs_h;
     my %monolexical_transfer;
    
-   
+    print STDERR "TC_MAX_LENGTH:" . $tc_max_length . "\n";
     if(defined $this->getIFaccess)
     {
 	foreach $phrase_set (values (%{$this->getIFaccess}))
 	{
 	    foreach $phrase (@$phrase_set){
-		$phrase->addTermCandidates($this->getTermCandidates,\%mapping_from_phrases_to_TCs_h,$option_set,$this->getPhrases,\%monolexical_transfer);
+		$phrase->addTermCandidates($this->getTermCandidates,\%mapping_from_phrases_to_TCs_h,$tc_max_length,$option_set,$this->getPhrases,\%monolexical_transfer);
 	    }
 	}
     }
@@ -351,12 +385,13 @@ sub addTermCandidates
 }
 
 
+
 sub adjustMonolexicalPhrasesSet
 {
     my ($this,$monolexical_transfer_h) = @_;
     my @adjusted_list;
     my $phrase;
-    
+   
     if(defined $this->{UNPARSABLE})
     {
 	while ($phrase = pop @{$this->getUnparsable})
@@ -388,8 +423,9 @@ sub printTermList
     my $fh = FileHandle->new(">".$file->getPath);
     my $term_candidate;
     
+    #print $fh "# Inflected form\tDDW\tFrequency\n";
     print $fh "# Inflected form\tFrequency\n";
-   foreach $term_candidate ( sort ({$b->getFrequency <=> $a->getFrequency} values(%{$this->getTermCandidates})))
+    foreach $term_candidate ( sort ({&sortTermCandidates($a,$b)} values(%{$this->getTermCandidates})))
    {
 
        if(
@@ -405,9 +441,31 @@ sub printTermList
            )
 	   
        {
-	   print $fh $term_candidate->getIF. "\t" . $term_candidate->getFrequency . "\t\t\n";
+	   print $fh $term_candidate->getIF. "\t" .  $term_candidate->getFrequency . "\t\t\n";
+	   #print $fh $term_candidate->getIF. "\t" . $term_candidate->getWeight. "\t" . $term_candidate->getFrequency . "\t\t\n";
        }
    }
+}
+
+
+sub sortTermCandidates
+{
+    my ($a,$b) = @_;
+    if($b->getWeight == $a->getWeight)
+    {
+	if($b->getReliability == $a->getReliability)
+	{
+	    return $b->getOccurrencesNumber <=> $a->getOccurrencesNumber;
+	}
+	else
+	{
+	    return $b->getReliability <=> $a->getReliability;
+	}
+    }
+    else
+    {
+	return $b->getWeight <=> $a->getWeight;
+    }
 }
 
 sub printUnparsable
@@ -417,11 +475,13 @@ sub printUnparsable
     my $fh = FileHandle->new(">".$file->getPath);
 
     # We should test if there are unparsable or not.
-    foreach $phrase (@{$this->getUnparsable})
-    {
-	if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+    if (defined $this->getUnparsable) {
+	foreach $phrase (@{$this->getUnparsable})
 	{
-	    print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+	    if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+	    {
+		print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+	    }
 	}
     }
 }
@@ -622,17 +682,14 @@ sub print
 }
 
 
-
 sub printPhrases
 {
-    my ($this,$file) = @_;
+    my ($this,$fh) = @_;
     my $phrase;
-    
-    my $fh = FileHandle->new(">".$file->getPath);
     
     if(!defined $fh)
     {
-	$fh = "STDOUT";
+	$fh = \*STDERR;
     }
     
     foreach $phrase (values(%{$this->getPhrases}))

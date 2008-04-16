@@ -1,10 +1,13 @@
 package Lingua::YaTeA::MultiWordTestifiedTerm;
 use strict;
+use warnings;
 use Lingua::YaTeA::TestifiedTerm;
 use Lingua::YaTeA::MultiWordUnit;
 use UNIVERSAL qw(isa);
 use NEXT;
 use base qw(Lingua::YaTeA::TestifiedTerm Lingua::YaTeA::MultiWordUnit);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

@@ -1,9 +1,11 @@
 package Lingua::YaTeA::TestifiedTerm;
 use strict;
+use warnings;
 use UNIVERSAL qw(isa);
 use NEXT;
 
 our $id = 0;
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -190,9 +192,7 @@ sub addOccurrence
     my $end_offset;
     my $testified_occurrence;
     my @index = split(/-/,$key);
-
     ($start_offset,$end_offset) = $this->getPositionInPhrase($phrase,\@index);
-
     $testified_occurrence = Lingua::YaTeA::Occurrence->new;
     $testified_occurrence->setInfoForTestifiedTerm($phrase_occurrence->getSentence,$phrase_occurrence->getStartChar + $start_offset, $phrase_occurrence->getEndChar - $end_offset);
     push @{$this->{OCCURRENCES}}, $testified_occurrence; 
@@ -206,8 +206,8 @@ sub getPositionInPhrase
     my $index;
     my $start_offset = 0;
     my $end_offset = 0;
-    warn $index_a->[0] . "\n";
-    warn $index_a->[$#$index_a] . "\n";
+ #   warn $index_a->[0] . "\n";
+ #   warn $index_a->[$#$index_a] . "\n";
     for ($index = 0; $index < $index_a->[0]; $index++)
     {
 	push @before, $index;

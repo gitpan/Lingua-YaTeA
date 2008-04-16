@@ -1,9 +1,12 @@
 package Lingua::YaTeA::Sentence;
 use strict;
+use warnings;
 
 our $counter = 0;
 our $in_doc_counter = 0;
 our $start_char = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

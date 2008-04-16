@@ -1,5 +1,6 @@
 package Lingua::YaTeA::MultiWordTermCandidate;
 use strict;
+use warnings;
 use Lingua::YaTeA::TermCandidate;
 use Lingua::YaTeA::IndexSet;
 use Data::Dumper;
@@ -7,6 +8,7 @@ use Data::Dumper;
 use UNIVERSAL qw(isa);
 
 our @ISA = qw(Lingua::YaTeA::TermCandidate);
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -107,9 +109,16 @@ sub completeOccurrences
 {
     my ($this,$offset) = @_;
     my $occurrence;
+
+#     print STDERR "---> " . $this->getID() . "\n";
+
     foreach $occurrence (@{$this->getOccurrences})
     {
-	$occurrence->{END_CHAR} = $occurrence->getStartChar + $offset -1;
+# 	print STDERR $occurrence->{ID} . "\n";
+# 	print STDERR $occurrence->{START_CHAR} . "\n";
+
+	$occurrence->{END_CHAR} = $occurrence->getStartChar  + $offset - 1; #  + $offset 
+# 	print STDERR $occurrence->{END_CHAR} . "\n";
     }
 }
 

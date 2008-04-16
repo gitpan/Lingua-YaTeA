@@ -1,5 +1,8 @@
 package Lingua::YaTeA::ObjectCounters;
 use strict;
+use warnings;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

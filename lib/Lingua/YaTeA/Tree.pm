@@ -1,7 +1,10 @@
 package Lingua::YaTeA::Tree;
 use strict;
+use warnings;
 use Lingua::YaTeA::IndexSet;
 use UNIVERSAL qw(isa);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -119,20 +122,25 @@ sub addNodes
 
 sub print
 {
-    my ($this,$words_a) = @_;
-    print "index set ";
-    $this->getIndexSet->print;
-    print "\n";
+    my ($this,$words_a,$fh) = @_;
+    if(!defined $fh)
+    {
+	$fh = \*STDERR;
+    }
+    print $fh $this . "\n";
+    print $fh "index set ";
+    $this->getIndexSet->print($fh);
+    print $fh "\n";
     if(defined $this->getSimplifiedIndexSet)
     {
-	print "simplified index set ";
-	$this->getSimplifiedIndexSet->print;
-	print "\n";
+	print $fh "simplified index set ";
+	$this->getSimplifiedIndexSet->print($fh);
+	print $fh "\n";
     }
-    print "node set : ";
+    print $fh "node set : ";
     if(defined $this->getNodeSet)
     {
-	$this->getNodeSet->printAllNodes($words_a);
+	$this->getNodeSet->printAllNodes($words_a,$fh);
     }
 }
 
@@ -168,8 +176,8 @@ sub check
     my ($this,$phrase) = @_;
     my $if;
     $this->getRoot->buildIF(\$if,$phrase->getWords);
-    $if =~ s/ $//;
-   
+    $if =~ s/ +$//;
+    
     if($if eq $phrase->getIF)
     {
 	return 1;
@@ -178,38 +186,128 @@ sub check
     {
 #	print "Arbre mal forme :" .$if . "\n";
 # 	$this->getNodeSet->printAllNodes($phrase->getWords);
- 	warn "\nArbre mal forme :" .$if . " (pour " . $phrase->getIF.")\n";
+ 	warn "\nArbre mal forme :\'" .$if . "\' pour \'" . $phrase->getIF."\'\n";
 	return 0;
     }
 }
 
+sub getIncludedNodes
+{
+    my ($this,$free_nodes_a,$parsing_direction) = @_;
+    my $node;
+    my $index_set;
+    my %index_key_to_nodes;
+    my @index_sets;
+    my $included_a;
+    my $included;
+    my @node_inclusions;
+    foreach $node (@$free_nodes_a)
+    {
+	$index_set = Lingua::YaTeA::IndexSet->new;
+	$node->fillIndexSet($index_set);
+	$index_key_to_nodes{$index_set->joinAll('-')} = $node;
+	push @index_sets, $index_set;
+    }   
+    foreach $index_set (@index_sets)
+    {
+	$included_a = $index_set->getIncluded(\@index_sets,$parsing_direction);
+	foreach $included (@{$included_a})
+	{
+	    my @pair;
+	    $pair[0] = $index_key_to_nodes{$index_set->joinAll('-')};
+	    $pair[1] = $index_key_to_nodes{$included->joinAll('-')};
+	    ($pair[2],$pair[3]) = $index_set->getIncludedContext($included);
+	    push @node_inclusions,\@pair;
+	}
+    }
+    
+    return \@node_inclusions;
+}
+
+sub plugNodePairs
+{
+    my ($this,$parsing_pattern_set,$parsing_direction,$tag_set,$words_a,$fh) = @_;
+    my $free_nodes_a;
+    my $inclusions_a;
+    my $pair_a;
+    my $above;
+    my $below;
+    my $success;
+    my $additional_node_set;
+#    $this->print($words_a,$fh);
+    $free_nodes_a = $this->getNodeSet->searchFreeNodes();
+    if(scalar @$free_nodes_a  > 1)
+    {
+#	print $fh "NB FREE: ". scalar @$free_nodes_a . "\n";
+	$inclusions_a = $this->getIncludedNodes($free_nodes_a,$parsing_direction);
+	
+	foreach $pair_a (@$inclusions_a)
+	{
+	    $above = $pair_a->[0];
+	    $below = $pair_a->[1];
+	   
+	    ($success,$additional_node_set) = $above->plugInternalNode($below,$pair_a->[2],$pair_a->[3],$parsing_pattern_set,$words_a,$parsing_direction,$tag_set,$fh);
+	    if($success == 1)
+	    {
+		$this->addNodes($additional_node_set);
+		
+		$this->getSimplifiedIndexSet->removeIndex($pair_a->[1]->searchHead(0)->getIndex);
+		$this->updateRoot;
+#		print $fh "accrochage reussi\n";
+		return 1;
+	    }
+	  #   else
+# 	    {
+# 		print $fh "accrochage impossible\n";
+# 	    }
+	}
+	##### TODO: tenter d'accrocher des sous-arbres adjacents ou proches: il existe un patron pour TeteArbre1 [trou: ex: "of a"] TeteArbre2
+    }
+    return 0;
+}
+
+
+
 sub completeDiscontinuousNodes
 {
-    my ($this,$parsing_pattern_set,$parsing_direction,$tag_set,$words_a) = @_;
+    my ($this,$parsing_pattern_set,$parsing_direction,$tag_set,$words_a,$fh) = @_;
     my $previous = -1;
     my $discontinuous_infos_a;
     my $free_nodes_a = $this->getNodeSet->searchFreeNodes($words_a);
-    my $discontinuous_nodes_a = $this->getDiscontinuousNodes($free_nodes_a,$words_a);
-
+    my $discontinuous_nodes_a = $this->getDiscontinuousNodes($free_nodes_a,$words_a,$fh);
+    
     foreach $discontinuous_infos_a (@$discontinuous_nodes_a)
     {
-	if($discontinuous_infos_a->[0]->completeGap($discontinuous_infos_a->[1], $discontinuous_infos_a->[2],$this,$parsing_pattern_set,$parsing_direction,$tag_set,$words_a))
+	$previous = $discontinuous_infos_a->[1];
+	$discontinuous_infos_a = $discontinuous_infos_a->[0]->isDiscontinuous(\$previous,$words_a,$fh);
+	if(isa($discontinuous_infos_a->[0],'Lingua::YaTeA::Node'))
 	{
-	    if(
-		($discontinuous_infos_a = $discontinuous_infos_a->[0]->isDiscontinuous(\$previous))
-		&&
-		(isa ($discontinuous_infos_a->[0],'Lingua::YaTeA::Node'))
-		)
+# 	    print $fh "dis_a : ". join ("\n",@$discontinuous_infos_a) . "\n";
+# 	    print $fh "id:" . $discontinuous_infos_a->[0]->getID . "\n";
+# 	    $this->print($words_a,$fh);
+   
+	    if($discontinuous_infos_a->[0]->completeGap($discontinuous_infos_a->[1], $discontinuous_infos_a->[2],$this,$parsing_pattern_set,$parsing_direction,$tag_set,$words_a,$fh) == 1)
 	    {
-		push @$discontinuous_nodes_a,$discontinuous_infos_a;
-	    }
-	} 
+# 		print $fh  "completeGap pour " . $discontinuous_infos_a->[0]->getID . " est OK\n";
+# 		$this->print($words_a,$fh);
+		$previous = -1;
+		if(
+		   ($discontinuous_infos_a = $discontinuous_infos_a->[0]->isDiscontinuous(\$previous,$words_a,$fh))
+		   &&
+		   (isa ($discontinuous_infos_a->[0],'Lingua::YaTeA::Node'))
+		   )
+		{
+#		    print $fh "push : " . $discontinuous_infos_a->[0]->getID . "\n";
+		    push @$discontinuous_nodes_a,$discontinuous_infos_a;
+		}
+	    } 
+	}
     }
 }
 
 sub getDiscontinuousNodes
 {
-    my ($this,$free_nodes_a,$words_a) = @_;
+    my ($this,$free_nodes_a,$words_a,$fh) = @_;
     my $free_node;
     my $previous = -1;
     my $discontinuous_infos_a;
@@ -218,7 +316,7 @@ sub getDiscontinuousNodes
     foreach $free_node (@$free_nodes_a)
     {
 	$previous = -1;
-	$discontinuous_infos_a = $free_node->isDiscontinuous(\$previous);
+	$discontinuous_infos_a = $free_node->isDiscontinuous(\$previous,$words_a,$fh);
 	if(isa($discontinuous_infos_a->[0],'Lingua::YaTeA::Node')){
 	    push @discontinuous,$discontinuous_infos_a;
 	}
@@ -230,19 +328,27 @@ sub getDiscontinuousNodes
 
 sub removeDiscontinuousNodes
 {
-    my ($this,$words_a) = @_;
+    my ($this,$words_a,$fh) = @_;
     my $discontinuous;
     my $modified = 0;
     my @unplugged;
-
-    my $discontinuous_nodes_a = $this->getDiscontinuousNodes($this->getNodeSet->getNodes,$words_a);
-    foreach $discontinuous (@$discontinuous_nodes_a)
+#    print $fh "tree id: ". $this ."\n";
+    my $discontinuous_nodes_a = $this->getDiscontinuousNodes($this->getNodeSet->getNodes,$words_a,$fh);
+    while (scalar @$discontinuous_nodes_a != 0)
     {
-	push @unplugged, @{$this->getNodeSet->removeNodes($discontinuous->[0],$words_a)};
-	$modified = 1;
+	foreach $discontinuous (@$discontinuous_nodes_a)
+	{
+#	    print $fh "discon a degager " .$discontinuous->[0]->getID . "\n";
+#	    $discontinuous->[0]->printRecursively($words_a,$fh);
+	    
+	    push @unplugged, @{$this->getNodeSet->removeNodes($discontinuous->[0],$words_a,$fh)};
+	    $modified = 1;
+	}
+	$discontinuous_nodes_a = $this->getDiscontinuousNodes($this->getNodeSet->getNodes,$words_a,$fh);
     }
 
     $this->updateRoot;
+  
     return ($modified,\@unplugged);
 }
 
@@ -251,18 +357,21 @@ sub removeDiscontinuousNodes
 
 sub integrateIslandNodeSets
 {
-    my ($this,$node_sets,$index_set,$words_a,$tagset) = @_;
+    my ($this,$node_sets,$index_set,$new_trees_a,$words_a,$tagset,$fh) = @_;
     my $to_add;
     my $save;
     my $tree;
     my $i;
     my $integrated = 0;
     my @new_trees;
+#     print $fh "index set a integrer :";
+#     $index_set->print($fh);
+#     print $fh "\nsimplifie :";
+#     $this->getSimplifiedIndexSet->print($fh);
+#     print $fh "\n";
 
-
-    if($index_set->appearsIn($this->getSimplifiedIndexSet))
+    if(! $index_set->moreThanOneInCommon($this->getIndexSet))
     {
-	
 	if(scalar @$node_sets > 1)
 	{
 	    $save = $this->copy;
@@ -283,32 +392,38 @@ sub integrateIslandNodeSets
 	    $to_add = $node_sets->[$i]->copy;
 
 	    $to_add->getRoot->linkToIsland;
-	    if($tree->append($to_add,$index_set,\@new_trees,$words_a,$tagset))
+	    if($tree->append($to_add,$index_set,$new_trees_a,$words_a,$tagset,$fh))
 	    {
 		$integrated = 1;
+	# 	print $fh "RES/\n";
+# 		$tree->getNodeSet->printAllNodes($words_a,$fh);
 	    }
 	    else
 	    {
-		push @new_trees, $tree;
+		push @$new_trees_a, $tree;
 	    }
 	}
 	
     }
     else
     { # islands are incompatible
-	push @new_trees, $this;
+	push @$new_trees_a, $this;
     }
-    return ($integrated,\@new_trees);
+    return ($integrated);
 }
 
 sub append
 {
-    my ($this,$added_node_set,$added_index_set,$concurrent_trees_a,$words_a,$tagset) = @_;
+    my ($this,$added_node_set,$added_index_set,$concurrent_trees_a,$words_a,$tagset,$fh) = @_;
     my $addition = 0;
     my $pivot;
     my $mode;
     my $root;
     my $index_set;
+    my $modified = 0;
+ #    print $fh "append: " . $this . " \n";
+#     $added_node_set->print($words_a,$fh);
+#     print $fh "DANS\n";
     
     if(!defined $this->getNodeSet)
     {
@@ -318,13 +433,17 @@ sub append
 	push @$concurrent_trees_a, $this;
 	return 1;
     }
-
+ #   $this->getNodeSet->print($words_a,$fh);
 #     print STDERR "a1\n";
     
-    if($added_index_set->testSyntacticBreakAndRepetition($words_a,$tagset))
-    {
+    # if($added_index_set->testSyntacticBreakAndRepetition($words_a,$tagset))
+#     {
+
 	
 	$pivot = $added_node_set->getRoot->searchHead(0)->getIndex;
+# 	print $fh "pivot :" . $pivot . "\n";
+# 	print $fh "a chercger dans ";
+# 	$this->getIndexSet->print($fh);
 # 	print STDERR "a2\n";
 	if(! $this->getIndexSet->indexExists($pivot))
 	{
@@ -335,8 +454,10 @@ sub append
 	{
 	    $index_set = Lingua::YaTeA::IndexSet->new;
 	    $root = $this->getNodeSet->searchRootNodeForLeaf($pivot);
+	    
 	    if (defined $root) { # Added by Thierry 02/03/2007
 # 		warn "==> $root\n";
+#		print $fh "tourve root :" .$root->getID . "\n";
 		$root->fillIndexSet($index_set);
 	    }
 	}
@@ -347,45 +468,53 @@ sub append
 	#  print STDERR "a4\n";
 
 # 	warn "===>$index_set\n";
-	$mode = $index_set->defineAppendMode($added_index_set,$pivot);
+	$mode = $index_set->defineAppendMode($added_index_set,$pivot,$fh);
+
 	#  print STDERR "a5\n";
 
 # 	warn "<<<<\n";
 	if(defined $mode)
 	{
-
+#	    print $fh "mùode :" .$mode. "\n";
 	    #  print STDERR "$mode\n";
 
 	    if($mode eq "DISJUNCTION")
 	    {
-		$addition = $this->appendDisjuncted($added_node_set);	
+#		print $fh "disjuncted\n";
+		($modified,$addition) = $this->appendDisjuncted($added_node_set,$fh);	
 	    }
 	    else
 	    {
 		if($mode =~ /INCLUSION/)
 		{
-		    $addition = $this->appendIncluded($mode,$root,$index_set,$added_node_set,$added_index_set,$pivot,$words_a);	
+#		    print $fh "inclusion\n";
+		    ($modified,$addition) = $this->appendIncluded($mode,$root,$index_set,$added_node_set,$added_index_set,$pivot,$words_a,$fh);	
 		    
 		}
 		else
 		{
 		    if($mode =~ /ADJUNCTION/)
 		    {
-			$addition = $this->appendAdjuncts($root,$index_set,$added_node_set,$added_index_set,$pivot,$concurrent_trees_a,$words_a);	
+#			 print $fh "adjuction\n";
+			($modified,$addition) = $this->appendAdjuncts($root,$index_set,$added_node_set,$added_index_set,$pivot,$concurrent_trees_a,$words_a,$fh);	
 			if ($addition == -1) {return -1;}
 		    }
 		}
 	    }
-	    if($addition == 1)
+	    if($modified == 1)
 	    {
-		
-		if ($this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot) == -1) {return -1;}     
+		if ($this->getSimplifiedIndexSet->simplify($added_index_set,$added_node_set,$this,$pivot,$fh) == -1) {return -1;}  
+#		print $fh "push " . $this . "\n";
 		push @$concurrent_trees_a, $this;
 	    }
 	}
 	
-    }
-
+   #  }
+#     else
+#     {
+# 	print $fh "passe pas le syntactic break\n";
+#     }
+    
     if($addition == 1)
     {
 	
@@ -398,7 +527,7 @@ sub append
 
 sub appendAdjuncts
 {
-    my ($this,$root,$index_set,$added_node_set,$added_index_set,$pivot,$concurrent_trees_a,$words_a) = @_;
+    my ($this,$root,$index_set,$added_node_set,$added_index_set,$pivot,$concurrent_trees_a,$words_a,$fh) = @_;
     my $type;
     my $place;
     my $above;
@@ -407,50 +536,86 @@ sub appendAdjuncts
     my $added_save = $added_node_set->copy;
     my $sub_index_set_save = $index_set->copy;
     my $added_index_set_save = $added_index_set->copy;
-
+    my $depth = 0;
+    my $appended = 0;
+    my $modified = 0;
     if($added_node_set->getRoot->searchHead(0)->getIndex == $pivot )
     {
+#	print $fh "pivot est tete de l'ajout\n";
 	my $tree2 = $tree_save->copy;
+#	$tree2->print($words_a,$fh);
 	my $added2 = $added_save->copy;
 	$root2 = $tree2->getNodeSet->searchRootNodeForLeaf($pivot);
 	if (defined $root) { # Added by Thierry 02/03/2007
-	    ($above,$place) = $root2->searchLeaf($pivot); 
-	    if($above->{"LINKED_TO_ISLAND"} == 0)
+	    ($above,$place) = $root2->searchLeaf($pivot,\$depth); 
+#	    print $fh "above: " . $above->getID . "  plcae: " . $place ."\n";
+	    
+	    if(
+	       ($above->{"LINKED_TO_ISLAND"} == 0)
+	       ||
+	       ($above->getEdgeStatus($place) eq "MODIFIER")
+	       ||
+	       (
+		($above->{"LINKED_TO_ISLAND"} == 1)
+		&&
+		(
+		 ($added2->getRoot->{"LINKED_TO_ISLAND"} == 1)
+		 # ||
+# 		 ($above->searchHead(0)->getIndex == $pivot) 
+		 )
+		)
+	       )
 	    {
-		if($above->hitch($place,$added2->getRoot,$words_a))
+		if($above->hitch($place,$added2->getRoot,$words_a,$fh))
 		{
-		    if ($tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot) == -1 ) {return -1;}
-		    $tree2->addNodes($added2);
-		    $root2->searchRoot->hitchMore($tree2->getNodeSet->searchFreeNodes($words_a),$tree2,$words_a);
-		    $tree2->updateRoot;
-		    push @$concurrent_trees_a,$tree2;
 		    
+		    if ($tree2->getSimplifiedIndexSet->simplify($added_index_set,$added2,$tree2,$pivot) != -1 ) 
+		    {
+#			print $fh "arbre modifie  " . $tree2 . "\n";
+			$tree2->addNodes($added2);
+			#$tree2->updateRoot;
+			$root2->searchRoot->hitchMore($tree2->getNodeSet->searchFreeNodes($words_a),$tree2,$words_a,$fh);
+			$tree2->updateRoot;
+			push @$concurrent_trees_a,$tree2;
+			$appended = 1;
+		    }
+		    else
+		    {
+			$appended = -1;
+		    }
 		}
 	    }
+	 #    else
+# 	    {
+# 		print $fh "Linked to island above: " .$above->getID . "\n";
+# 	    }
 	}
 	
     }
     if($root->searchHead(0)->getIndex == $pivot)
     {
-	($above,$place) = $added_node_set->getRoot->searchLeaf($pivot);
+#	print $fh "pivot est tete du hook" . $root->getID. " \n";
+#	$this->print($words_a,$fh);
+	($above,$place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 	if (defined $above) { # Added by Thierry Hamon 31/01/2007 - to check
-	if($above->hitch($place,$root,$words_a))
+#	    print $fh "above: " . $above->getID . "  plcae: " . $place ."\n";
+	if($above->hitch($place,$root,$words_a,$fh))
 	{
 	    $this->addNodes($added_node_set);
-	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a);
+	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a,$fh);
 	    $this->updateRoot;
-	    return 1;
-
+	     $appended = 1;
+	    $modified = 1;
 	}
     }
     }
 
-    return 0;
+    return ($modified,$appended);
 }
 
 sub appendIncluded
 {
-    my ($this,$mode,$root,$index_set,$added_node_set,$added_index_set,$pivot,$words_a) = @_;
+    my ($this,$mode,$root,$index_set,$added_node_set,$added_index_set,$pivot,$words_a,$fh) = @_;
     my $above;
     my $above_index_set;
     my $below;
@@ -458,7 +623,7 @@ sub appendIncluded
     my $type;
     my $place;
     my $intermediate_node;
-    
+    my $depth = 0;
     #  print STDERR "I1\n";
     if($mode =~ /REVERSED/)
     {
@@ -467,6 +632,7 @@ sub appendIncluded
 	$above_index_set = $added_index_set;
 	$below = $root;
 	$below_index_set = $index_set;
+	
     }
     else
     {
@@ -479,44 +645,48 @@ sub appendIncluded
     #  print STDERR "I2\n";
 
     $type = $below_index_set->appendPosition($pivot);
-
-        #  print STDERR "$type\n";
-
-    ($above,$place) = $above->searchLeaf($pivot);
-
+   
+    #  print STDERR "$type\n";
+ #    print $fh "pivot " . $pivot . "\n";
+#     print $fh "cherche1 dans " . $above->getID ."\n";
+#     $above->printRecursively($words_a,$fh);
+    ($above,$place) = $above->searchLeaf($pivot,\$depth);
+#    print $fh "above1 ok " . $above->getID . " place:" . $place. "\n";
     #  print STDERR "I3\n";
 
-    ($above,$intermediate_node) = $above->getHookNode($type,$place,$below_index_set);
+    ($above,$intermediate_node,$place) = $above->getHookNode($type,$place,$below_index_set,$fh);
     #  print STDERR "I4\n";
     if(defined $above)
     {
+#	print $fh "above2 ok " . $above->getID . " place:" . $place. "\n";
 	#  print STDERR "I5\n";
 
-	if($above->hitch($place,$below,$words_a))
+	if($above->hitch($place,$below,$words_a,$fh))
 	{
-	#  print STDERR "I6\n";
-
+#	    $above->printRecursively($words_a,$fh);
+	 # print STDERR "I6c\n";
 	    $this->addNodes($added_node_set);
-	#  print STDERR "I7\n";
+	#  print STDERR "I7c\n";
 
 # XXXX
-	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a);
+	   
+	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a,$fh);
 
-	#  print STDERR "I8\n";
+	  #print STDERR "I8\n";
 
 	    $this->updateRoot;
-	#  print STDERR "I9\n";
-	    return 1;
+	 # print STDERR "I9\n";
+	    return (1,1);
 	}
     }
-    return 0;
+    return (0,0);
 }
 
 sub appendDisjuncted
 {
     my ($this,$added_node_set) = @_;
     $this->addNodes($added_node_set);
-    return 1;
+    return (1,1);
 }
 
 sub getAppendContexts
@@ -530,17 +700,17 @@ sub getAppendContexts
     my $added_save = $added_node_set->copy;
     my $sub_index_set_save = $index_set->copy;
     my $added_index_set_save = $added_index_set->copy;
-
+    my $depth = 0;
     if($mode =~ /INSERTION/)
     {
 	if($mode =~ /REVERSED/)
 	{
-	    ($above,$place) =  $added_node_set->getRoot->searchLeaf($pivot);
+	    ($above,$place) =  $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 	    $below = $root;	    
 	}
 	else
 	{
-	    ($above,$place) = $root->searchLeaf($pivot);
+	    ($above,$place) = $root->searchLeaf($pivot,\$depth);
 	    $below = $added_node_set->getRoot;
 	}
 	my $context = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$this, "INDEX_SET"=>$index_set, "ADDED_NODE_SET"=>$added_node_set, "ADDED_INDEX_SET"=>$added_index_set};
@@ -551,7 +721,7 @@ sub getAppendContexts
 
 	if($mode !~ /MIDDLE/)
 	{
-	    ($above,$place) = $added_node_set->getRoot->searchLeaf($pivot);
+	    ($above,$place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 	    $below = $root;
 	    my $context = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$this, "INDEX_SET"=>$index_set, "ADDED_NODE_SET"=>$added_node_set, "ADDED_INDEX_SET"=>$added_index_set};
 	    push @contexts, $context;
@@ -571,7 +741,7 @@ sub getAppendContexts
 	
 	else
 	{
-	    ($above,$place) =  $added_node_set->getRoot->searchLeaf($pivot);
+	    ($above,$place) =  $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 	    $below = $this->getNodeSet->searchRootNodeForLeaf($pivot);
 	    if (defined $below) { # Added by Thierry 02/03/2007
 		my $context = {"ABOVE"=>$above, "PLACE"=>$place, "BELOW" => $below, "TREE"=>$this, "INDEX_SET"=>$index_set, "ADDED_NODE_SET"=>$added_node_set, "ADDED_INDEX_SET"=>$added_index_set};

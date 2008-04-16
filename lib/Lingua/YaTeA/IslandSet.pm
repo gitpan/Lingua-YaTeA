@@ -1,5 +1,8 @@
 package Lingua::YaTeA::IslandSet;
 use strict;
+use warnings;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -51,16 +54,19 @@ sub existLargerIsland
 
 sub addIsland
 {
-    my ($this,$island) = @_;
+    my ($this,$island,$fh) = @_;
     my $key = $island->getIndexSet->joinAll('-');
+  #  print $fh " key: ". $key . "  - ";
     $this->getIslands->{$key} = $island;
+  #  print $fh "\tilot ajoute";
 }
 
 sub removeIsland
 {
-    my ($this,$island) = @_;
+    my ($this,$island,$fh) = @_;
     my $key = $island->getIndexSet->joinAll('-');
     delete($this->getIslands->{$key});
+#    print $fh "remove";
     $island = undef;
 }
 

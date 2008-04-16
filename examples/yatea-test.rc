@@ -1,7 +1,7 @@
 <DefaultConfig>
-    CONFIG_REP = $HOME/Recherche/Program/YaTeA/Lingua-YaTeA/share/YaTeA/config
-    LOCALE_REP = $HOME/Recherche/Program/YaTeA/Lingua-YaTeA/share/YaTeA/locale
-    RESULT_REP = $PWD/RESULTS
+    CONFIG_DIR = ../share/YaTeA/config
+    LOCALE_DIR = ../share/YaTeA/locale
+    RESULT_DIR = $PWD/RESULTS
 </DefaultConfig>
 <OPTIONS>
     MESSAGE_DISPLAY = EN

@@ -1,7 +1,10 @@
 package Lingua::YaTeA::Document;
 use strict;
+use warnings;
 
 our $counter = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

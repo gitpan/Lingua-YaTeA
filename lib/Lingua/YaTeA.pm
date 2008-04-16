@@ -242,15 +242,15 @@ The configuration file of YaTeA is divided into two sections:
 
 =item * 
 
-C<CONFIG_REP> : directory containing the configuration files according to the language
+C<CONFIG_DIR> : directory containing the configuration files according to the language
 
 =item * 
 
-C<LOCALE_REP> : directory containing the environment files according to the language
+C<LOCALE_DIR> : directory containing the environment files according to the language
 
 =item * 
 
-C<RESULT_REP> : directory where are stored the results
+C<RESULT_DIR> : directory where are stored the results
 
 =back
 
@@ -393,8 +393,8 @@ at your option, any later version of Perl 5 you may have available.
 =cut
 
 use strict;
+use warnings;
 use Data::Dumper;
-
 use Lingua::YaTeA::ParsingPatternRecordSet;
 use Lingua::YaTeA::OptionSet;
 use Lingua::YaTeA::Option;
@@ -406,7 +406,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.3';
+our $VERSION='0.4';
 
 our $process_counter = 1;
 
@@ -414,11 +414,11 @@ sub load_config
 {
 
     my ($rcfile) = @_;
- 
+    
 # Read de configuration file
 
     if ((! defined $rcfile) || ($rcfile eq "")) {
-	$rcfile = "/etc/yatea/yatea.rc";
+	$rcfile = "/usr/local/etc/yatea/yatea.rc";    
     }
     
     my $conf = new Config::General('-ConfigFile' => $rcfile,
@@ -469,7 +469,8 @@ sub termExtraction
     
     my $sentence_boundary = $this->getOptionSet->getSentenceBoundary;
     my $document_boundary = $this->getOptionSet->getDocumentBoundary;
-
+    my $debug_fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('debug')->getPath);;
+   
     $this->loadTestifiedTerms(\$process_counter,$corpus,$sentence_boundary,$document_boundary,$this->getOptionSet->MatchTypeValue,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
     
     
@@ -483,9 +484,10 @@ sub termExtraction
     my $phrase_set = Lingua::YaTeA::PhraseSet->new;
     
     print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('CHUNKING')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
-    $corpus->chunk($phrase_set,$sentence_boundary,$document_boundary,$this->getChunkingDataSet,$this->getFSSet,$this->getTagSet,$this->getParsingPatternSet,$this->getTestifiedTermSet,$this->getOptionSet);
+    $corpus->chunk($phrase_set,$sentence_boundary,$document_boundary,$this->getChunkingDataSet,$this->getFSSet,$this->getTagSet,$this->getParsingPatternSet,$this->getTestifiedTermSet,$this->getOptionSet,$debug_fh);
 
-    $phrase_set->printPhrases($corpus->getOutputFileSet->getFile('unparsed'));
+    my $fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('unparsed')->getPath);
+    $phrase_set->printPhrases($fh);
 
 #     print STDERR Dumper($phrase_set);
 
@@ -496,8 +498,7 @@ sub termExtraction
 	
 	print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('PARSING')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
 	
-	my $fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('debug')->getPath);
-	$phrase_set->parseProgressively($this->getTagSet,$this->getOptionSet->getParsingDirection,$this->getParsingPatternSet,$this->getChunkingDataSet,$corpus->getLexicon,$corpus->getSentenceSet,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$fh);
+	$phrase_set->parseProgressively($this->getTagSet,$this->getOptionSet->getParsingDirection,$this->getParsingPatternSet,$this->getChunkingDataSet,$corpus->getLexicon,$corpus->getSentenceSet,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$debug_fh);
 	
 	$phrase_set->printParsingStatistics($this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
 	
@@ -516,12 +517,13 @@ sub termExtraction
 	    )
 	{
 	    $phrase_set->addTermCandidates($this->getOptionSet);
+	    $corpus->makeDDW($phrase_set->getTermCandidates,$debug_fh);
 	}
     }
     
     print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('RESULTS')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
     
-    $this->displayExtractionResults($phrase_set,$corpus,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$this->getOptionSet->getDefaultOutput);
+    $this->displayExtractionResults($phrase_set,$corpus,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$this->getOptionSet->getDefaultOutput,$debug_fh);
 }
 
 
@@ -544,7 +546,7 @@ sub setConfigFiles
     my $config_files;
     my $language = $this->getOptionSet->getLanguage;
 #    print STDERR Dumper(%$system_config_h);
-    my $repository = $system_config_h->{'DefaultConfig'}->{CONFIG_REP} . "/" . $language;
+    my $repository = $system_config_h->{'DefaultConfig'}->{CONFIG_DIR} . "/" . $language;
    
     my @file_names = ("Options","ForbiddenStructures","ChunkingFrontiers","ChunkingExceptions","CleaningFrontiers","CleaningExceptions","ParsingPatterns","TagSet","LGPmapping");
 
@@ -560,7 +562,7 @@ sub setLocaleFiles
 {
     my ($this,$system_config_h) = @_;
     my $config_files;
-    my $repository = $system_config_h->{'DefaultConfig'}->{LOCALE_REP} . "/";
+    my $repository = $system_config_h->{'DefaultConfig'}->{LOCALE_DIR} . "/";
     my @file_names = ("Messages");
     
     $this->{LOCALE_FILE_SET} = Lingua::YaTeA::FileSet->new($repository);
@@ -747,14 +749,14 @@ sub addMessageSetFile
 
 sub displayExtractionResults
 {
-    my ($this,$phrase_set,$corpus,$message_set,$display_language,$default_output) = @_;
+    my ($this,$phrase_set,$corpus,$message_set,$display_language,$default_output,$debug_fh) = @_;
 
     
     
     if ((defined $this->getOptionSet->getOption('debug')) && ($this->getOptionSet->getOption('debug')->getValue() == 1))
     {
 	print STDERR "\t-" . ($this->getMessageSet->getMessage('DISPLAY_RAW')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('debug')->getPath . "'\n";
-	$phrase_set->printPhrases($corpus->getOutputFileSet->getFile('debug'));
+	$phrase_set->printPhrases($debug_fh);
 	$phrase_set->printUnparsable($corpus->getOutputFileSet->getFile('unparsable'));
 #	$phrase_set->printUnparsed($corpus->getOutputFileSet->getFile('unparsed'));
     }
@@ -773,6 +775,7 @@ sub displayExtractionResults
     if ((defined $this->getOptionSet->getOption('printChunking')) && ($this->getOptionSet->getOption('printChunking')->getValue() == 1))
     {
 	print STDERR "\t-" . ($this->getMessageSet->getMessage('DISPLAY_CORPUS_PHRASES')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('candidatesAndUnparsedInCorpus')->getPath . "'\n";
+	
 	$corpus->printCandidatesAndUnparsedInCorpus($phrase_set->getTermCandidates,$phrase_set->getUnparsable,$corpus->getOutputFileSet->getFile('candidatesAndUnparsedInCorpus'),$this->getOptionSet->getSentenceBoundary,$this->getOptionSet->getDocumentBoundary,$this->getOptionSet->getOption('COLOR_BLIND'));
     }
 

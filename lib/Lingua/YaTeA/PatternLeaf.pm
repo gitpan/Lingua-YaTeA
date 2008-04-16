@@ -1,8 +1,12 @@
 package Lingua::YaTeA::PatternLeaf;
 use strict;
+use warnings;
+
 use Lingua::YaTeA::Edge;
 
 our @ISA = qw(Lingua::YaTeA::Edge);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

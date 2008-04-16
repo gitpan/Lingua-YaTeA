@@ -1,8 +1,11 @@
 package Lingua::YaTeA::AnnotationMark;
 use strict;
+use warnings;
 use Lingua::YaTeA::WordOccurrence;
 
 our @ISA = qw(Lingua::YaTeA::WordOccurrence);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

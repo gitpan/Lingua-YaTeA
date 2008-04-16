@@ -1,10 +1,13 @@
 package Lingua::YaTeA::WordFromCorpus;
 use strict;
+use warnings;
 use Lingua::YaTeA::WordOccurrence;
 use UNIVERSAL qw(isa);
 
 our @ISA = qw(Lingua::YaTeA::WordOccurrence);
 our $counter = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

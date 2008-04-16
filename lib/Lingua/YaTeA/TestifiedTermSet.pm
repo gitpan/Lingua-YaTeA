@@ -1,8 +1,11 @@
 package Lingua::YaTeA::TestifiedTermSet;
 use strict;
+use warnings;
 use Lingua::YaTeA::MultiWordTestifiedTerm;
 use Lingua::YaTeA::MonolexicalTestifiedTerm;
 use UNIVERSAL qw(isa);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

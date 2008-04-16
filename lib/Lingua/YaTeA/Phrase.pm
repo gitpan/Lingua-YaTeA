@@ -1,12 +1,15 @@
 package Lingua::YaTeA::Phrase;
+use strict;
+use warnings;
 use Lingua::YaTeA::Occurrence;
 use Lingua::YaTeA::Island;
 use Lingua::YaTeA::IslandSet;
-use strict;
 use NEXT;
 use UNIVERSAL qw(isa);
 use Data::Dumper;
 our $counter = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -203,15 +206,16 @@ sub getOccurrences
 
 sub addTermCandidates
 {
-    my ($this,$term_candidates_h,$mapping_from_phrases_to_TCs_h,$option_set,$phrase_set,$monolexical_transfer_h) = @_;
+    my ($this,$term_candidates_h,$mapping_from_phrases_to_TCs_h,$tc_max_length,$option_set,$phrase_set,$monolexical_transfer_h) = @_;
     my @term_candidates;
     my $tc;
     my $reference;
     my $occurrence;
     my $max_tc;
     my $mono;
-
     my $offset = 0;
+    
+   
     if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
     {
 	$max_tc = $this->getTree(0)->getRoot->buildTermList(\@term_candidates,$this->getWords,$this->getOccurrences,$this->getIslandSet,\$offset,1);
@@ -230,49 +234,68 @@ sub addTermCandidates
     @term_candidates = sort ({$a->getLength <=> $b->getLength} @term_candidates);
    foreach $tc (@term_candidates)
    {
-       $tc->{ORIGINAL_PHRASE} = $this;
-       if(!exists $term_candidates_h->{$tc->getKey})
-       {	   
-	   $tc->setHead;
-	   # TODO: changer le critere de pertinence du terme
-	   # actuellement: un tc reçoit le taux de confiance du groupe dont il est extrait
-	   if(isa($this,'Lingua::YaTeA::MultiWordTermCandidate'))
-	   {
-	       $tc->setReliability($this->getTree(0)->getReliability);
+       #print STDERR $tc->getIF . " : " .$tc->getLength . " -> ";
+       if($tc->getLength < $tc_max_length)
+       {
+	   #print STDERR " ajoute \n";
+	   $tc->{ORIGINAL_PHRASE} = $this;
+	   if(!exists $term_candidates_h->{$tc->getKey})
+	   {	   
+	       $tc->setHead;
+	       # TODO: changer le critere de pertinence du terme
+	       # actuellement: un tc reçoit le taux de confiance du groupe dont il est extrait
+	       if(isa($this,'Lingua::YaTeA::MultiWordTermCandidate'))
+	       {
+		   $tc->setReliability($this->getTree(0)->getReliability);
+	       }
+	       else
+	       {
+		   $tc->setReliability(0.5);
+	       }
+	       $term_candidates_h->{$tc->getKey} = $tc;
+	       $reference = $tc;
+	       
+	       
+# Correction Sophie Aubin 11/16/2007
+	       if
+		   (
+		    (defined $option_set->getOption('monolexical-included'))
+		    &&
+		    ($option_set->getOption('monolexical-included')->getValue() == 1)
+		    &&
+		    (isa($tc,'Lingua::YaTeA::MonolexicalTermCandidate'))
+		    &&
+		    (
+		     (!defined $option_set->getOption('monolexical-all'))
+		     ||
+		     ($option_set->getOption('monolexical-all')->getValue() == 0)
+		     )
+		    )
+	       {
+		   $tc->addMonolexicalOccurrences($phrase_set,$monolexical_transfer_h)
+		   }
 	   }
 	   else
 	   {
-	       $tc->setReliability(0.5);
+	       $reference =  $term_candidates_h->{$tc->getKey};
+	       $reference->addOccurrences($tc->getOccurrences);
+	       $this->adjustReferences(\@term_candidates,$tc,$reference); 
+	       
+	       # ajouter un critere de frequence au taux de confiance des tc
 	   }
-	   $term_candidates_h->{$tc->getKey} = $tc;
-	   $reference = $tc;
-	   if
-	       (
-		(defined $option_set->getOption('monolexical-included'))
-		&&
-		(isa($tc,'Lingua::YaTeA::MonolexicalTermCandidate'))
-	       )
-	   {
-	       $tc->addMonolexicalOccurrences($phrase_set,$monolexical_transfer_h)
-	   }
-       }
-       else
-       {
-	   $reference =  $term_candidates_h->{$tc->getKey};
-	   $reference->addOccurrences($tc->getOccurrences);
-	   $this->adjustReferences(\@term_candidates,$tc,$reference); 
 	   
-	   # ajouter un critere de frequence au taux de confiance des tc
+	   # record the link between this phrase and the TC that covers it completely
+	   if($tc->getID == $max_tc->getID)
+	   {
+	       $mapping_from_phrases_to_TCs_h->{$this->getID} = $reference;
+	       $reference->{ORIGINAL_PHRASE} = $this;
+	   }
        }
-      
-       # record the link between this phrase and the TC that covers it completely
-       if($tc->getID == $max_tc->getID)
-       {
-	   $mapping_from_phrases_to_TCs_h->{$this->getID} = $reference;
-	   $reference->{ORIGINAL_PHRASE} = $this;
-       }
+       #else
+       #{
+	  # print STDERR " NON \n";
+       #}
    }
-    
 }
 
 
@@ -330,6 +353,29 @@ sub addOccurrences
     {
 	$this->addExistingOccurrence($occurrence);
     }
+}
+
+sub adjustReferences
+{
+    my ($this,$term_candidates_a,$current,$reference) = @_;
+    my $term_candidate;
+    my $island;
+    
+    foreach $term_candidate (@$term_candidates_a)
+    {
+	if(isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
+	{
+	    if($term_candidate->getRootHead->getID == $current->getID)
+	    {
+		$term_candidate->{ROOT_HEAD} = $reference;
+	    }
+	    if($term_candidate->getRootModifier->getID == $current->getID)
+	    {
+		$term_candidate->{ROOT_MODIFIER} = $reference;
+	    }
+	}
+    }
+
 }
 
 
@@ -427,6 +473,8 @@ Lingua::YaTeA::Phrase - Perl extension for ???
 
 =head2 addExistingOccurrence()
 
+
+=head2 adjustReferences()
 
 
 =head1 SEE ALSO

@@ -1,6 +1,8 @@
 package Lingua::YaTeA::ChunkingDataSubset;
 use strict;
+use warnings;
 
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

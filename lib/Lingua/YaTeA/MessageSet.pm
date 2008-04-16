@@ -1,8 +1,11 @@
 package Lingua::YaTeA::MessageSet;
 use strict;
+use warnings;
 
 use Lingua::YaTeA::Message;
 use Data::Dumper;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

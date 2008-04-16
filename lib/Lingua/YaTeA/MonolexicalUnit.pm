@@ -1,47 +1,47 @@
-package Lingua::YaTeA::SentenceSet;
+package Lingua::YaTeA::MonolexicalUnit;
 use strict;
 use warnings;
+use NEXT;
+use Data::Dumper;
+use UNIVERSAL qw(isa);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
-    my ($class) = @_;
-    my $this = {};
-    bless ($this,$class);
-    $this->{SENTENCES} = [];
+    my ($class_or_object,$num_content_words,$words_a) = @_;
+    my $this = shift;
+    $this = bless {}, $this unless ref $this;
+    $this->{CONTENT_WORDS} = $num_content_words;
+    $this->{PARSING_METHOD} = ();
+    $this->{LENGTH} = scalar @$words_a;
+    $this->NEXT::new(@_);
     return $this;
 }
 
-sub addSentence
+sub setParsingMethod
 {
-    my ($this,$documents) = @_;
-    push @{$this->{SENTENCES}}, Lingua::YaTeA::Sentence->new($documents);
+    my ($this,$method) = @_;
+    if(isa($this,'Lingua::YaTeA::Phrase'))
+    {
+	$Lingua::YaTeA::MonolexicalPhrase::parsed++;
+    }
+    $this->{PARSING_METHOD} = $method;
 }
 
-sub getCurrent
-{
-    my ($this)= @_;
-    return $this->{SENTENCES}[-1];
-}
-
-sub getSentences
-{
-    my ($this)= @_;
-    return $this->{SENTENCES};
-}
 1;
+
 
 __END__
 
 =head1 NAME
 
-Lingua::YaTeA::SentenceSet - Perl extension for ???
+Lingua::YaTeA::MonolexicalUnit - Perl extension for ???
 
 =head1 SYNOPSIS
 
-  use Lingua::YaTeA::SentenceSet;
-  Lingua::YaTeA::SentenceSet->();
+  use Lingua::YaTeA::MonolexicalUnit;
+  Lingua::YaTeA::MonolexicalUnit->();
 
 =head1 DESCRIPTION
 
@@ -51,13 +51,8 @@ Lingua::YaTeA::SentenceSet - Perl extension for ???
 =head2 new()
 
 
-=head2 addSentence()
+=head2 setParsingMethod()
 
-
-=head2 getCurrent()
-
-
-=head2 getSentences()
 
 
 

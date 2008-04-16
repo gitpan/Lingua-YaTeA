@@ -29,6 +29,7 @@ lib/Lingua/YaTeA/LinguisticItem.pm
 lib/Lingua/YaTeA/Message.pm
 lib/Lingua/YaTeA/MessageSet.pm
 lib/Lingua/YaTeA/MonolexicalPhrase.pm
+lib/Lingua/YaTeA/MonolexicalUnit.pm
 lib/Lingua/YaTeA/MultiWordUnit.pm
 lib/Lingua/YaTeA/MultiWordPhrase.pm
 lib/Lingua/YaTeA/MultiWordTermCandidate.pm
@@ -149,4 +150,4 @@ t/0-creation.t
 t/pod.t
 t/pod-coverage.t
 TODO
-META.yml                                 Module meta-data (added by MakeMaker)
+META.yml

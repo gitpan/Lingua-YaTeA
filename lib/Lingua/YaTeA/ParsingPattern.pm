@@ -1,11 +1,14 @@
 package Lingua::YaTeA::ParsingPattern;
 use strict;
+use warnings;
+
 use Lingua::YaTeA::NodeSet;
 use Lingua::YaTeA::InternalNode;
 use Lingua::YaTeA::RootNode;
 use Lingua::YaTeA::PatternLeaf;
 # use Data::Dumper;
  
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

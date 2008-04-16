@@ -1,6 +1,9 @@
 package Lingua::YaTeA::NodeSet;
 use UNIVERSAL qw(isa);
 use strict;
+use warnings;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {  
@@ -37,8 +40,10 @@ sub setRoot
 	if(isa($node,'Lingua::YaTeA::RootNode'))
 	{
 	    $this->{ROOT_NODE} =  $node;
+	    return;
 	} 
     }
+    die "No root node\n";
 }
 
 
@@ -166,11 +171,11 @@ sub searchFreeNodes
 
 
 sub removeNodes{
-    my ($this,$root_node,$words_a) = @_;
+    my ($this,$root_node,$words_a,$fh) = @_;
     my @tmp;
     my $node;
     my @unplugged;
-
+    my $previous;
     while ($node = pop @{$this->getNodes})
     {
 	if($node->getID == $root_node->getID)
@@ -203,16 +208,29 @@ sub removeNodes{
 	    }
 	    if(isa($node->getLeftEdge,'Lingua::YaTeA::Node'))
 	    {
+#		print $fh "rebless left:" . $node->getLeftEdge->getID . "\n";
 		undef $node->getLeftEdge->{FATHER};
 		bless($node->getLeftEdge,'Lingua::YaTeA::RootNode');
-		push @unplugged,$node->getLeftEdge;
+		$previous = -1;
+		if($node->getLeftEdge->isDiscontinuous(\$previous,$words_a,$fh)->[0] == -1)
+		{
+		    push @unplugged,$node->getLeftEdge;
+		}
+		$node->{LEFT_EDGE} = $node->getLeftEdge->searchHead(0);
 		
 	    }
 	    if(isa($node->getRightEdge,'Lingua::YaTeA::Node'))
 	    {
+#		print $fh "rebless right:" . $node->getRightEdge->getID . "\n";
 		undef $node->getRightEdge->{FATHER};
 		bless($node->getRightEdge,'Lingua::YaTeA::RootNode');
-		push @unplugged,$node->getRightEdge;
+#		$node->getRightEdge->printRecursively($words_a,$fh);
+		$previous = -1;
+		if($node->getRightEdge->isDiscontinuous(\$previous,$words_a,$fh)->[0] == -1)
+		{
+		    push @unplugged,$node->getRightEdge;
+		}
+		$node->{RIGHT_EDGE} = $node->getRightEdge->searchHead(0);
 	    }
 	}
 	else
@@ -224,7 +242,6 @@ sub removeNodes{
     
     @{$this->getNodes} = @tmp;
     $this->updateRoot;
-
     return \@unplugged;
 }
 
@@ -232,7 +249,7 @@ sub removeNodes{
 
 sub hitchMore
 {
-    my ($this,$added_node_set,$added_index_set,$words_a) = @_;
+    my ($this,$added_node_set,$added_index_set,$words_a,$fh) = @_;
     my $free_nodes_a = $this->searchFreeNodes($words_a);
     my $node;
     my $pivot;
@@ -288,17 +305,20 @@ sub findHierarchy
     my $left_most;
     my $right_most;
     my $recorded;
+    my $depth = 0;
   
     foreach $node (@{$this->getNodes})
     {
+	$depth = 0;
 	if(isa($node,'Lingua::YaTeA::RootNode'))
 	{
-	    ($pivot_node,$pivot_place) = $node->searchLeaf($pivot);
+	    ($pivot_node,$pivot_place) = $node->searchLeaf($pivot,\$depth);
 	    
 	    if(isa($pivot_node,'Lingua::YaTeA::Node'))
 	    {
 		$left_most = $node->searchLeftMostLeaf;
-		$right_most = $node->searchRightMostLeaf;
+		$depth = 0;
+		$right_most = $node->searchRightMostLeaf(\$depth);
 		$recorded = $node;
 		last;
 	    }
@@ -315,7 +335,7 @@ sub findHierarchy
 	{
 	    if($left_most->getIndex > $added_index_set->getFirst)
 	    {
-		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 		return ($pivot_node,$pivot_place,$recorded);
 	    }
 	    if($left_most->getIndex < $added_index_set->getFirst)
@@ -327,7 +347,7 @@ sub findHierarchy
 
 	if($right_most->getIndex == $added_index_set->getFirst)
 	{
-	    ($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+	    ($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 	    return ($pivot_node,$pivot_place,$recorded);
 	}
 
@@ -340,7 +360,7 @@ sub findHierarchy
 	    }
 	    else
 	    {
-		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 		return ($pivot_node,$pivot_place,$recorded);
 	    }
 	}
@@ -353,7 +373,7 @@ sub findHierarchy
 	    }
 	    if($right_most->getIndex < $added_index_set->getLast)
 	    {
-		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 		return ($pivot_node,$pivot_place,$recorded);
 	    }
 	}
@@ -361,12 +381,12 @@ sub findHierarchy
 	{
 	    if($right_most->getIndex < $added_index_set->getLast)
 	    {
-		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 		return ($pivot_node,$pivot_place,$recorded);
 	    }
 	    else
 	    {
-		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
 		return ($pivot_node,$pivot_place,$recorded);
 	    }
 	    die "not defined";
@@ -381,7 +401,7 @@ sub findHierarchy
 	    if($recorded->searchHead(0)->getIndex == $pivot)
  	    {
 		
- 		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot);
+ 		($pivot_node,$pivot_place) = $added_node_set->getRoot->searchLeaf($pivot,\$depth);
  		return ($pivot_node,$pivot_place,$recorded);
  	    }
 	    else
@@ -443,33 +463,72 @@ sub addNodes
 sub print
 {
     my ($this,$words_a,$fh) = @_;
-    if(defined $fh)
+    if(scalar @{$this->getNodes} != 0)
     {
-	print $fh "ROOT_NODE :" . $this->getRoot->getID . "\n";
-	print $fh "NODES : \n"; 
-	$this->getRoot->printRecursively($words_a,$fh);
+	if(defined $fh)
+	{
+	    if(defined $this->getRoot)
+	    {
+		print $fh "ROOT_NODE :" . $this->getRoot->getID . "\n";
+	    }
+	    else
+	    {
+		print $fh "ROOT_NODE :NO ROOT NODE\n";
+	    }
+	    print $fh "NODES : \n"; 
+	    $this->getRoot->printRecursively($words_a,$fh);
+	}
+	else
+	{
+	    if(defined $this->getRoot)
+	    {
+		print "ROOT_NODE :" . $this->getRoot->getID . "\n";
+	    }
+	    else
+	    {
+		print "ROOT_NODE :NO ROOT NODE\n";
+	    }
+	    print "NODES : \n"; 
+	    $this->getRoot->printRecursively($words_a);
+	}
     }
     else
     {
-	print "ROOT_NODE :" . $this->getRoot->getID . "\n";
-	print "NODES : \n"; 
-	$this->getRoot->printRecursively($words_a);
+	if(defined $fh)
+	{
+	    print $fh "NodeSet is empty\n";
+	}
+	else
+	{
+	    print "NodeSet is empty\n";
+	}
     }
 }
 
 
 sub printAllNodes
 {
-    my ($this,$words_a) = @_;
+    my ($this,$words_a,$fh) = @_;
     my $node;
-    print "ROOT_NODE :" . $this->getRoot->getID . "\n";
-    print "NODES : \n"; 
+    if(!defined $fh)
+    {
+	$fh = \*STDERR;
+    }
+     if(defined $this->getRoot)
+     {
+	 print $fh "ROOT_NODE :" . $this->getRoot->getID . "\n";
+     }
+    else
+    {
+	print $fh "ROOT_NODE :NO ROOT NODE\n";
+    }
+    print $fh "NODES : \n"; 
 
     foreach $node (@{$this->getNodes})
     {
-	$node->printSimple($words_a);
+	$node->printSimple($words_a,$fh);
     }
-    print "\n";
+    print $fh "\n";
 }
 
 

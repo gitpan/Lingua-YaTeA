@@ -7,6 +7,8 @@ use Module::Build;
 #     ... and create something in blib/lib/
 #     }
 # EOF
+
+
  
 my $class = Module::Build->subclass(
 				    class => "Module::Build::Custom",
@@ -15,8 +17,77 @@ code => <<'SUBCLASS' );
 sub ACTION_install {
     my $self = shift;
     $self->SUPER::ACTION_install;
-    warn "\nDon't forget to set the variables CONFIG_REP and LOCALE_REP in the configuration file yatea.rc to the right path if necessary.\n\n";
+#     warn "\nDon't forget to set the variables CONFIG_DIR and LOCALE_DIR in the configuration file yatea.rc to the right path if necessary.\n\n";
 }
+
+sub ACTION_fakeinstall {
+    my $self = shift;
+    $self->SUPER::ACTION_fakeinstall;
+
+#     warn "\nDon't forget to set the variables CONFIG_DIR and LOCALE_DIR in the configuration file yatea.rc to the right path if necessary.\n\n";
+}
+
+sub ACTION_build {
+    my $self = shift;
+
+    warn "Setting configuration variables in etc/yatea/yatea.rc\n";
+    require Config::General;
+    my $rcfile = $self->base_dir() . "/etc/yatea/yatea.rc";
+
+    if (!( -f "$rcfile.orig") ) {
+	File::Copy::copy($rcfile, "$rcfile.orig");
+    }
+
+    my $conf = new Config::General('-ConfigFile' => $rcfile . ".orig",
+				   '-InterPolateVars' => 0,
+				   '-InterPolateEnv' => 0,
+				   '-StoreDelimiter' => " = ",
+				   );
+    my %config = $conf->getall;
+    $config{'DefaultConfig'}->{'CONFIG_DIR'} = $self->install_destination("share") . "/YaTeA/config";
+    $config{'DefaultConfig'}->{'LOCALE_DIR'} = $self->install_destination("share") . "/YaTeA/locale";
+    $conf->save_file($rcfile,\%config);
+    warn "Done\n";
+
+    warn "Setting the default location of yatea.rc in lib/Lingua/YaTeA.pm\n";
+    my $mainpmfile = $self->base_dir() . "/lib/Lingua/YaTeA.pm";
+    
+    require File::Copy;
+
+    my $n = FileHandle->new($mainpmfile,"r");
+#     File::Copy->cp($n,"$mainpmfile.orig");
+
+    if (!( -f "$mainpmfile.orig") ) {
+	File::Copy::copy($mainpmfile, "$mainpmfile.orig");
+    }
+    my $line;
+    open MAINPMFILE, "$mainpmfile.orig" or die "No such file ($mainpmfile.orig)\n";
+    open MAINPMFILEDEST, ">$mainpmfile" or die "Can not open file $mainpmfile\n";
+    while($line = <MAINPMFILE>) {
+	if ($line =~ /^(\s\$rcfile\s=\s\")\/etc\/yatea\/yatea.rc(\".*\n)/) {
+	    $line = $1 . $self->install_destination("conf") . "/yatea/yatea.rc" . $2;
+	}
+	print MAINPMFILEDEST $line;
+    }
+    close MAINPMFILE;
+    close MAINPMFILEDEST;
+    warn "Done\n";
+
+    $self->SUPER::ACTION_build;
+}
+
+sub ACTION_clean {
+    my $self = shift;
+    $self->SUPER::ACTION_clean;
+
+    require File::Copy;
+    my $mainpmfile = $self->base_dir() . "/lib/Lingua/YaTeA.pm";
+    File::Copy::move("$mainpmfile.orig", $mainpmfile);
+
+    my $rcfile = $self->base_dir() . "/etc/yatea/yatea.rc";
+    File::Copy::move("$rcfile.orig", $rcfile);
+}
+
 SUBCLASS
 
 my $build = $class->new
@@ -30,14 +101,19 @@ my $build = $class->new
 		  File::Compare => 0,
 		  Data::Dumper => 0, 
 		  Pod::Usage => 0,
-		  Config::General => 2.
+		  Config::General => 2,
+		  Test::More     => 0.62,
 		  },
 
 #      $build->add_build_element('dat');
 #      $build->create_build_script;
 
+    build_requires => {
+        "Module::Build"     => 0.28,
+    },
 
-     installdirs => 'core',
+
+#       installdirs => 'core',
      conf_files => {'etc/yatea/yatea.rc' => 'conf/yatea/yatea.rc'},
      share_files => {'share/doc/YaTeA/affichage.fig' => 'share/doc/YaTeA/affichage.fig',
 		     'share/doc/YaTeA/alvis.sty' => 'share/doc/YaTeA/alvis.sty',
@@ -114,11 +190,13 @@ my $build = $class->new
 		 },
      );
 
+
 $build->install_base_relpaths( conf => 'etc' );
 $build->prefix_relpaths('site', conf => 'etc' );
 $build->prefix_relpaths('core', conf => 'etc' );
 $build->prefix_relpaths('vendor', conf => 'etc' );
 $build->add_build_element('conf');
+
 
 $build->install_base_relpaths( share => 'share' );
 $build->prefix_relpaths('site', share => 'share' );
@@ -126,5 +204,23 @@ $build->prefix_relpaths('core', share => 'share' );
 $build->prefix_relpaths('vendor', share => 'share' );
 $build->add_build_element('share');
 
+foreach my $type (keys(%{$build->install_sets})) {
+    $build->install_sets->{$type}->{'conf'} = '/etc';
+    $build->install_sets->{$type}->{'share'} = '/usr/share';
+}
+
+$build->install_sets->{'site'}->{'share'} = '/usr/local/share';
+
+$build->install_sets->{'site'}->{'conf'} = '/usr/local/etc';
+
+# same thing with prefix
+if (((defined $build->install_base()) && ($build->install_base() eq "/usr")) ||
+    ((defined $build->prefix()) && ($build->prefix() eq "/usr")))
+ {
+	$build->install_path->{conf} = '/etc';
+}
+
+
 $build->create_build_script;
+
 

@@ -1,8 +1,11 @@
 package Lingua::YaTeA::MonolexicalTermCandidate;
 use strict;
+use warnings;
 use Lingua::YaTeA::TermCandidate;
 
 our @ISA = qw(Lingua::YaTeA::TermCandidate);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

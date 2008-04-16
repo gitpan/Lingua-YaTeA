@@ -1,6 +1,9 @@
 package Lingua::YaTeA::DocumentSet;
 use strict;
+use warnings;
 use Lingua::YaTeA::Document;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -13,6 +16,12 @@ sub new
 }
 
 
+sub getDocuments
+{
+    my ($this) = @_;
+    return $this->{DOCUMENTS};
+}
+
 sub addDefaultDocument
 {
     my ($this,$word) = @_;
@@ -22,14 +31,13 @@ sub addDefaultDocument
 sub addDocument
 {
     my ($this,$word) = @_;
-    
-    if((scalar @{$this->{DOCUMENTS}} == 1)&&($this->getCurrent->getName eq "unknown") && ($Sentence::counter == 0)){
-	$this->getCurrent->update($word);
+    if($Lingua::YaTeA::WordFromCorpus::counter==1)
+    {
+   	$this->getCurrent->update($word);
     }
     else{
 	$Lingua::YaTeA::Document::counter++;
 	push @{$this->{DOCUMENTS}}, Lingua::YaTeA::Document->new($word);
-	
     }
 
 }
@@ -40,6 +48,13 @@ sub getCurrent
     my ($this)= @_;
     return $this->{DOCUMENTS}[-1];
 }
+
+sub getDocumentNumber
+{
+    my ($this) = @_;
+    return scalar @{$this->{DOCUMENTS}};
+}
+
 1;
 
 __END__

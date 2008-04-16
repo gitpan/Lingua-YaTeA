@@ -1,6 +1,8 @@
 package Lingua::YaTeA::File;
 use strict;
+use warnings;
 
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 
 sub new
@@ -57,32 +59,56 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::File - Perl extension for ???
+Lingua::YaTeA::File - Perl extension for managing information related to a configuration file.
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::File;
-  Lingua::YaTeA::File->();
+  Lingua::YaTeA::File->new($repository, $configfilename);
 
 =head1 DESCRIPTION
 
+This module manages the information related to the configuration file
+C<$configfilename> in the directory C<$repository>. Information
+associated to a configuration file is stored in three fields:
+C<FULL_NAME>, the file name without path; C<PATH>, the absolute path;
+C<INTERNAL_NAME>, the file name without path and extension.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($repository, $name);
+
+This methods creates a new object associated to a configuration
+file. It sets, then, the three fields related to the file information.
 
 =head2 getPath()
 
+    getPath;
+
+This method returns the absolute path of the current configuration
+file (field C<PATH>).
 
 =head2 getFullName()
+
+    getFullName();
+
+This method returns the full name (without path) of the current configuration
+file (field C<FULL_NAME>).
 
 
 =head2 getInternalName()
 
+    getInternalName()
+
+This method returns the name  (without path and extension) of the current configuration
+file  (field C<INTERNAL_NAME>).
 
 =head2 setInternalName()
 
+This method sets the name (without path and extension) of the current
+configuration file (field C<INTERNAL_NAME>).
 
 
 =head1 SEE ALSO

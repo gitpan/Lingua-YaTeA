@@ -1,8 +1,11 @@
 package Lingua::YaTeA::ForbiddenStructureSet;
 use strict;
+use warnings;
 use Lingua::YaTeA::ForbiddenStructureAny;
 use Lingua::YaTeA::ForbiddenStructureStartOrEnd;
 use Lingua::YaTeA::TriggerSet;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 
 sub new
@@ -76,6 +79,7 @@ sub cleanInfos
     foreach $info (@$infos_a)
     {
 	chomp $info;
+	$info =~ s/\r//g;
     }
 }
 

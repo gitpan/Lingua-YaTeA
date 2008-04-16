@@ -1,6 +1,9 @@
 package Lingua::YaTeA::Lexicon;
 use strict;
+use warnings;
 use Lingua::YaTeA::LexiconItem;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

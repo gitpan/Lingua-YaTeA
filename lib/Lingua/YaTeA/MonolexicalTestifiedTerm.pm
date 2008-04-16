@@ -1,8 +1,11 @@
 package Lingua::YaTeA::MonolexicalTestifiedTerm;
 use strict;
+use warnings;
 use Lingua::YaTeA::TestifiedTerm;
 
 our @ISA = qw(Lingua::YaTeA::TestifiedTerm);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

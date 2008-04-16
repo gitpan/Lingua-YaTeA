@@ -1,7 +1,9 @@
 package Lingua::YaTeA::Edge;
 use strict;
+use warnings;
 use UNIVERSAL qw(isa);
 
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 
 sub new
@@ -47,13 +49,13 @@ sub update
 
 sub print
 {
-    my ($this,$words_a) = @_;
+    my ($this,$words_a,$fh) = @_;
     if (isa($this,"Lingua::YaTeA::Node"))
     {
-	 print "Node " . $this->getID;
+	 print $fh "Node " . $this->getID;
     }
     else{
-	$this->printWords($words_a);
+	$this->printWords($words_a,$fh);
     }
 }
 

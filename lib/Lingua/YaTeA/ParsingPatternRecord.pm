@@ -1,6 +1,10 @@
 package Lingua::YaTeA::ParsingPatternRecord;
 use strict;
+use warnings;
+
 use Lingua::YaTeA::ParsingPattern;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

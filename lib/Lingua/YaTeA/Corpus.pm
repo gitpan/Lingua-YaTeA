@@ -1,8 +1,10 @@
 package Lingua::YaTeA::Corpus;
 use strict;
+use warnings;
 use Data::Dumper;
 use UNIVERSAL qw(isa);
 use File::Path;
+use POSIX qw(log10);
 
 use Lingua::YaTeA::ForbiddenStructureMark;
 use Lingua::YaTeA::TestifiedTermMark;
@@ -12,6 +14,9 @@ use Lingua::YaTeA::DocumentSet;
 use Lingua::YaTeA::SentenceSet;
 use Lingua::YaTeA::WordFromCorpus;
 use Lingua::YaTeA::XMLEntities;
+
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 our $forbidden_counter = 0;
 our $tt_counter = 0;
@@ -287,6 +292,7 @@ sub MarkForbiddenStructures
 sub WrapBlock
 {
     my ($this,$block_r) = @_;
+    $$block_r =~ s/\r//g;
     $$block_r =~ s/^/\n/;
     $$block_r =~ s/$/\n/;
 }
@@ -304,7 +310,7 @@ sub UnwrapBlock
 
 sub chunk
 {
-    my ($this,$phrase_set,$sentence_boundary,$document_boundary,$chunking_data,$FS_set,$tag_set,$parsing_pattern_set,$testified_term_set,$option_set) = @_;
+    my ($this,$phrase_set,$sentence_boundary,$document_boundary,$chunking_data,$FS_set,$tag_set,$parsing_pattern_set,$testified_term_set,$option_set,$fh) = @_;
     my $word;
     my $i;
     my @words;
@@ -317,7 +323,7 @@ sub chunk
     my $compulsory = $option_set->getCompulsory;
     my $max_length = $option_set->getMaxLength;
 
-
+    print STDERR "MAX_LENGTH: " .  $max_length . "\n";
     for ($i = 0; $i <= $this->size; $i++){
 	$word = $this->getWord($i);
 	if(
@@ -330,8 +336,7 @@ sub chunk
 	    
 	   if ($valid == 1)
 	   {
-	       
-		$phrase_set->recordOccurrence(\@words,$num_content_words,$tag_set,$parsing_pattern_set,$option_set,$term_frontiers_h,$testified_term_set,$this->getLexicon,$this->getSentenceSet);
+	       $phrase_set->recordOccurrence(\@words,$num_content_words,$tag_set,$parsing_pattern_set,$option_set,$term_frontiers_h,$testified_term_set,$this->getLexicon,$this->getSentenceSet,$fh);
 		$Lingua::YaTeA::Corpus::tt_counter = 0;
 	   }
 	   @words = ();
@@ -1129,12 +1134,14 @@ sub printHTMLCorpus
 		    $string_copy .= substr($string,$offset,$occurrence->getStartChar - $offset). "<B><FONT COLOR =\"" . $color . "\">";
 		    $string_copy .= substr($string,$occurrence->getStartChar,$occurrence->getEndChar - $occurrence->getStartChar) . "</FONT></B>";
 		    $offset = $occurrence->getEndChar;
+		    
+		    if(! substr($string,$offset-1))
+		    {
+			print STDERR "problem d'offset pour la phrase DOC:" . $document_id . " - SENT: " . $sentence_id . "\n";
+			print STDERR $string . "\n";
+		    }
 		}
-		if(! substr($string,$offset))
-		{
-		    print STDERR "problem d'offset pour la phrase DOC:" . $document_id . " - SENT: " . $sentence_id . "\n";
-		    print STDERR $string . "\n";
-		}
+
 		$string_copy .= substr($string,$offset);
 		print $fh $word->getSentence->getInDocID . ":" . $string_copy . "<BR>\n";
 		$string = "";
@@ -1224,6 +1231,7 @@ sub orderOccurrences
     my $sent_hash;
     my $occurrences_a;
 
+
     foreach $term_candidate (values (%$term_candidates_h))
     {
        	foreach $occurrence (@{$term_candidate->getOccurrences})
@@ -1232,7 +1240,6 @@ sub orderOccurrences
 	    {
 		push @{$occurrences{$occurrence->getDocument->getID}{$occurrence->getSentence->getID}}, $occurrence;
 		$ids_for_parsed_h->{$occurrence->getID}++;	
-		
 	    }
 	}
     }
@@ -1243,11 +1250,9 @@ sub orderOccurrences
 	    if($occurrence->isMaximal)
 	    {
 		push @{$occurrences{$occurrence->getDocument->getID}{$occurrence->getSentence->getID}}, $occurrence;
-		
 	    }
 	}
     }
-    
     while (($document,$sent_hash) = each (%occurrences))
     {
 	while (($sentence,$occurrences_a) = each (%$sent_hash))
@@ -1264,6 +1269,60 @@ sub getWords
     my ($this) = @_;
     return $this->{WORDS};
 }
+
+
+sub makeDDW
+{
+    my ($this,$term_candidates_h,$fh) = @_;
+    my $tc_weight;
+    my $mean_occ;
+    my $total_occ = 0;
+    my $total_doc = $this->getDocumentSet->getDocumentNumber;
+    my %doc_by_tc;
+    my %docs_for_this_tc;
+    my $tc;
+    my $occ;
+
+    foreach $tc (values (%$term_candidates_h))
+    {
+	%docs_for_this_tc  = ();
+#	print $fh $tc->getIF . "\n";
+	foreach $occ (@{$tc->getOccurrences})
+	{	    
+	    $docs_for_this_tc{$occ->getDocument->getID}++;
+#	    print $fh "\tdoc: ". $occ->getDocument->getID . "\n";
+	    $total_occ++;
+	}
+	$doc_by_tc{$tc->getKey} = scalar keys(%docs_for_this_tc);
+#	print $fh "\ttot doic :" . $doc_by_tc{$tc->getKey} . "\n";
+    }
+    $mean_occ = $total_occ / scalar keys %$term_candidates_h;
+    foreach $tc (values (%$term_candidates_h))
+    {
+#	print $fh $tc->getIF . ": (" .  $tc->getOccurrencesNumber . "/" . $mean_occ . ") log (" . $total_doc . "/" . $doc_by_tc{$tc->getKey} . ")\n";
+	
+	##### mesure 'descriptor discriminating weight' présenté dans 'Building back-of-the-book indexes', Nazarenko, Aït El Mekki (2005)
+	##### PROBLEME: vaut 0 a chaque fois qu'il n'y a qu'un document dans le corpus (log10 de 1/1 vaut 0)
+	$tc_weight =  ($tc->getOccurrencesNumber/$mean_occ) * log10 ($total_doc/$doc_by_tc{$tc->getKey});
+	$tc->setWeight($tc_weight);
+    }
+}
+
+
+
+sub processTotalDocOccurrences
+{
+    my ($this,$occurrences_h) = @_;
+    my $total;
+    my $occ;
+#    print STDERR $occurrences_h. "\n";
+    foreach $occ (values (%$occurrences_h))
+    {
+	$total +=  $occ;
+    }
+    return $total;
+}
+
 
 1;
 

@@ -1,8 +1,10 @@
 package Lingua::YaTeA::ForbiddenStructureAny;
 use Lingua::YaTeA::ForbiddenStructure;
 use strict;
+use warnings;
 
 our @ISA = qw(Lingua::YaTeA::ForbiddenStructure);
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {

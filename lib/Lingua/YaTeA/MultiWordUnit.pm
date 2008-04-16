@@ -1,8 +1,11 @@
 package Lingua::YaTeA::MultiWordUnit;
 use strict;
+use warnings;
 use NEXT;
 use Data::Dumper;
 use UNIVERSAL qw(isa);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -164,11 +167,11 @@ sub getParseFromPattern
 
 sub getPartialPattern
 {
-   my ($this,$simplified_index_set,$tag_set,$parsing_direction,$parsing_pattern_set) = @_;
+   my ($this,$simplified_index_set,$tag_set,$parsing_direction,$parsing_pattern_set,$fh) = @_;
    my $pattern;
    my $position;
    my $POS  = $simplified_index_set->buildPOSSequence($this->getWords,$tag_set);
-
+#   print $fh "pos: ". $POS . "\n";
    if($parsing_direction eq "LEFT")
    {
        ($pattern,$position) = $this->getPatternsLeftFirst($POS,$parsing_pattern_set,$parsing_direction);
@@ -364,7 +367,7 @@ sub getParsingMethod
 
 sub parseProgressively
 {
-    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set, $debugFile) = @_;
+    my ($this,$tag_set,$parsing_direction,$parsing_pattern_set, $fh) = @_;
     my $tree;
     my $pattern;
     my $position;
@@ -372,8 +375,9 @@ sub parseProgressively
     my $node_set;
     my @concurrent_trees;
     my $parsed = 0;
-
-#     $this->printDebug($debugFile);
+    
+#    print $fh "parseProgressively\n";
+#     print $fh $this->getIF . "\n";
 
     if(!defined $this->getForest)
     {
@@ -384,33 +388,45 @@ sub parseProgressively
     else
     {
 	@concurrent_trees = @{$this->getForest};
+	# print $fh scalar  @concurrent_trees . " arbres\n";
 	$this->emptyForest;
     }
     while (scalar @concurrent_trees != 0)
     {
 	foreach ($tree = pop (@concurrent_trees))
 	{
+#	    print $fh "TREE parse\n";
+#	    $tree->print($this->getWords,$fh);
 	    if($tree->getSimplifiedIndexSet->getSize == 1)
 	    {
+#		print $fh "on check " . $tree . "\n";
 		if($tree->check($this))
 		{
 		    $parsed = 1;
 		    $tree->setHead;
 		    $tree->setReliability(2);
 		    $this->addTree($tree);
+#		    print $fh "analyse terminee\n";
 		}
 	    }
 	    else
 	    {
-		($pattern,$position) = $this->getPartialPattern($tree->getSimplifiedIndexSet,$tag_set,$parsing_direction,$parsing_pattern_set);
-		
+#		print $fh "on cherche un partial partern pour ";
+#		$tree->getSimplifiedIndexSet->print($fh);
+#		print $fh "\n";
+		($pattern,$position) = $this->getPartialPattern($tree->getSimplifiedIndexSet,$tag_set,$parsing_direction,$parsing_pattern_set,$fh);
+#		$tree->getSimplifiedIndexSet->print($fh);
 		if(isa($pattern,'Lingua::YaTeA::ParsingPattern'))
 		{
+#		    print $fh "trouve partial pattern\n";
 		    $partial_index_set = $tree->getSimplifiedIndexSet->getPartial($pattern->getLength,$position);
 		    $node_set = $pattern->getNodeSet->copy;
 		    $node_set->fillNodeLeaves($partial_index_set);
-		    #  print STDERR "fillNodeLeaves\n";
-		    if ($tree->append($node_set,$partial_index_set,\@concurrent_trees,$this->getWords,$tag_set) == -1) {return 0;}
+		     
+		    if ($tree->append($node_set,$partial_index_set,\@concurrent_trees,$this->getWords,$tag_set,$fh) == -1) {
+#			print $fh "termine append avec -1\n";
+			return 0;
+		    }
 		}
 		else
 		{
@@ -419,7 +435,7 @@ sub parseProgressively
 	    }
 	}
     }
-#     $this->printDebug($debugFile);
+#     $this->printDebug($fh);
 
     return $parsed;
 }
@@ -429,20 +445,20 @@ sub parseProgressively
 
 sub printForest
 {
-    my ($this) = @_;
+    my ($this,$fh) = @_;
     my $tree;
-    print "FOREST\n";
+#    print "FOREST\n";
     if(defined $this->getForest)
     {
-	print "Taille de la foret: " . $this->forestSize . "\n";
+	#print "Taille de la foret: " . $this->forestSize . "\n";
 	foreach $tree (@{$this->getForest})
 	{
-	    $tree->print($this->getWords);
+	    $tree->print($this->getWords,$fh);
 	}
     }
     else
     {
-	print "Pas d'analyse\n";
+	print  "Pas d'analyse\n";
     }
 }
 

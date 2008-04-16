@@ -16,11 +16,11 @@
 
 
 use strict;
+# use lib '/home/mig/saubin/recherche/outils/yatea/Lingua-YaTeA/lib/';
 use Getopt::Long;
 use Config::General;
 use Pod::Usage;
 use Data::Dumper;
-
 use Lingua::YaTeA::Corpus;
 # use Lingua::YaTeA::Config;
 use Lingua::YaTeA;
@@ -35,7 +35,6 @@ my $rcfile = "";
 GetOptions('help|?' => \$help, man => \$man, "rcfile=s" => \$rcfile) or pod2usage(2);
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
-
 
 my %config = Lingua::YaTeA::load_config($rcfile);
 

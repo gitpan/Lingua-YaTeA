@@ -1,7 +1,10 @@
 package Lingua::YaTeA::Island;
 use strict;
+use warnings;
 
 our $id = 0;
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -71,7 +74,23 @@ sub importNodeSets
     return $node_sets_a;
 }
 
-
+sub gapSize
+{
+    my ($this) = @_;
+    my $i;
+    my $gap =0;
+    my $index = $this->getIndexSet->getIndexes->[0];
+    for ($i=1; $i < scalar @{$this->getIndexSet->getIndexes}; $i++)
+    {
+	if($this->getIndexSet->getIndexes->[$i] != $index + 1)
+	{
+#	    return 0;
+	    $gap += $this->getIndexSet->getIndexes->[$i] - $index;
+	}
+	$index = $this->getIndexSet->getIndexes->[$i];
+    }
+    return $gap;
+}
 
 
 sub print

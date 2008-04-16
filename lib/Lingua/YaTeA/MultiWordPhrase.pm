@@ -1,5 +1,6 @@
 package Lingua::YaTeA::MultiWordPhrase;
 use strict;
+use warnings;
 use Lingua::YaTeA::Phrase;
 use Lingua::YaTeA::MultiWordUnit;
 use Lingua::YaTeA::Tree;
@@ -11,6 +12,7 @@ use base qw(Lingua::YaTeA::Phrase Lingua::YaTeA::MultiWordUnit);
 
 our $counter = 0;
 our $parsed = 0;
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
@@ -27,15 +29,17 @@ sub new
 
 sub searchEndogenousIslands
 {
-    my ($this,$phrase_set,$chunking_data,$tag_set,$lexicon,$sentence_set) = @_;
+    my ($this,$phrase_set,$chunking_data,$tag_set,$lexicon,$sentence_set,$fh) = @_;
     my $sub_indexes_set_a = $this->getIndexSet->searchSubIndexesSet($this->getWords,$chunking_data,$tag_set,$lexicon,$sentence_set);
     my $sub_index;
     my $source_a;
     my $corrected = 0;
+    
     if(scalar  @$sub_indexes_set_a > 0)
     {
 	foreach $sub_index (@$sub_indexes_set_a)
 	{
+	    
 	    if(
 		(!defined $this->getIslandSet)
 		||
@@ -48,42 +52,103 @@ sub searchEndogenousIslands
 	    {
 		if($source_a = $phrase_set->searchFromIF($sub_index->buildIFSequence($this->getWords)))
 		{
-		    $this->makeIsland($sub_index,$source_a,'endogenous','IF',$tag_set,$lexicon,$sentence_set);
+		    $this->makeIsland($sub_index,$source_a,'endogenous','IF',$tag_set,$lexicon,$sentence_set,$fh);
 		}
 		else
 		{
 		    if($source_a = $phrase_set->searchFromLF($sub_index->buildLFSequence($this->getWords)))
 		    {
-			if($this->makeIsland($sub_index,$source_a,'endogenous','LF',$tag_set,$lexicon,$sentence_set) == 1)
-			{
-			    $corrected =1;
-			}
+			$this->makeIsland($sub_index,$source_a,'endogenous','LF',$tag_set,$lexicon,$sentence_set,$fh);
 		    }
 		}
 	    }
 	}
     }
-    return ($this->checkParseCompleteness,$corrected);
 }
 
 
 
+sub sortIslands
+{
+    my ($a,$b,$parsing_direction,$fh) = @_;
+    # print $fh "a: " ;
+#     $a->getIndexSet->print($fh);
+#     print $fh " : " .$a->gapSize . "\n"; 
+#     print $fh "b: " ;
+#     $b->getIndexSet->print($fh);
+#     print $fh " : " .$b->gapSize . "\n"; 
+   
+    if($parsing_direction eq "LEFT")
+    {
+	if($a->getIndexSet->getFirst == $b->getIndexSet->getFirst)
+	{
+	   return $b->gapSize <=> $a->gapSize;
+	}
+	else
+	{
+	    return $a->getIndexSet->getFirst <=> $b->getIndexSet->getFirst;
+	}
+    }
+    else
+    {
+	if($parsing_direction eq "RIGHT")
+	{
+	    if($a->getIndexSet->getLast == $b->getIndexSet->getLast)
+	    {
+		return $b->gapSize <=> $a->gapSize;
+	    }
+	    else
+	    {
+		return $b->getIndexSet->getLast <=> $a->getIndexSet->getLast;
+	    }
+	}
+    }
+}
+
+
+
+
+sub integrateIslands
+{
+  #  my ($this,$chunking_data,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh) = @_;
+    my ($this,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh) = @_;
+    my $test;
+    my $corrected = 0;
+    my $island;
+    my @islands = values %{$this->getIslandSet->getIslands};
+    #@islands = sort({$a->getIndexSet->getSize <=> $b->getIndexSet->getSize} @islands);
+    @islands = sort({&sortIslands($a,$b,$parsing_direction,$fh)} @islands);
+    if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
+    {
+	foreach $island (@islands)
+	{
+#	    print $fh "integrate essai " . $island->getIF . "\n";
+	    $test = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set,$fh);
+	    if($test == 1)
+	    {
+		$corrected = 1;
+	    }
+#	    print $fh "apres l'ilot " . $island->getIF . "\n";
+#	    $this->printForest($fh);
+	}
+    }
+    return ($this->checkParseCompleteness($fh),$corrected);
+}
 
 
 
 
 sub integrateIsland
 {
-    my ($this,$island,$tagset,$lexicon,$sentence_set) = @_;
+    my ($this,$island,$tagset,$lexicon,$sentence_set,$fh) = @_;
     my $i;
     my $tree; 
     my $node_sets_a = $island->importNodeSets;   
-    my $new_trees_a;
+    my @new_trees;
     my $new;
     my $integrated_at_least_once = 0;
     my $success;
     my $corrected = 0;
-
     if(!defined $this->getForest)
     {
 	$tree = Lingua::YaTeA::Tree->new;
@@ -93,27 +158,29 @@ sub integrateIsland
     
     while ($tree = pop @{$this->getForest})
     {
-	
-	($success,$new_trees_a) = $tree->integrateIslandNodeSets($node_sets_a,$island->getIndexSet,$this->getWords,$tagset);
+#	print $fh "essaie dans arebre :" . $tree . "\n";
+	($success) = $tree->integrateIslandNodeSets($node_sets_a,$island->getIndexSet,\@new_trees,$this->getWords,$tagset,$fh);
 	if($success == 1)
 	{
 	    $integrated_at_least_once = 1;
 	}
     }
-
-    while ($new = pop @$new_trees_a)
+#    print $fh "integrated? " . $integrated_at_least_once . "\n";
+    while ($new = pop @new_trees)
     {
+#	print $fh "pop new ici :" . $new . "\n";
 	$this->addTree($new);
     }
 
     if($integrated_at_least_once == 0)
     {
-	$this->removeIsland($island);
+	$this->removeIsland($island,$fh);
     }
     else
     {
 	$corrected = $this->correctPOSandLemma($island,$lexicon,$sentence_set);
     }
+   
     return $corrected;
 }
 
@@ -191,28 +258,6 @@ sub checkMaximumLength
 }
 
 
-sub adjustReferences
-{
-    my ($this,$term_candidates_a,$current,$reference) = @_;
-    my $term_candidate;
-    my $island;
-    
-    foreach $term_candidate (@$term_candidates_a)
-    {
-	if(isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
-	{
-	    if($term_candidate->getRootHead->getID == $current->getID)
-	    {
-		$term_candidate->{ROOT_HEAD} = $reference;
-	    }
-	    if($term_candidate->getRootModifier->getID == $current->getID)
-	    {
-		$term_candidate->{ROOT_MODIFIER} = $reference;
-	    }
-	}
-    }
-
-}
 
 sub existIsland
 {
@@ -225,12 +270,11 @@ sub existIsland
 }
 
 sub makeIsland
-{    my ($this,$index,$source_a,$type,$access,$tag_set,$lexicon,$sentence_set) = @_;
+{    my ($this,$index,$source_a,$type,$access,$tag_set,$lexicon,$sentence_set,$fh) = @_;
     my $source;
     my $s;
     my $island;
      my $corrected;
-    
      if($type eq "endogenous")
      {
 	 $source = $index->chooseBestSource($source_a,$this->getWords,$tag_set);
@@ -241,30 +285,33 @@ sub makeIsland
      }
     
     $island = Lingua::YaTeA::Island->new($index,$type,$source); 
-    $this->addIsland($island);
+#     print $fh $island->getIF;
+    $this->addIsland($island,$fh);
 
-     if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
-     {
+     # if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
+#      {
 	 
-	 $corrected = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set);
-     }
+# 	 $corrected = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set,$fh);
+#      }
+#     print $fh "coorected:" . $corrected ;
      return $corrected;
 }
 
+
 sub removeIsland
 {
-    my ($this,$island) = @_;
-    $this->getIslandSet->removeIsland($island);
+    my ($this,$island,$fh) = @_;
+    $this->getIslandSet->removeIsland($island,$fh);
 }
 
 sub addIsland
 {
-    my ($this,$island) = @_;
+    my ($this,$island,$fh) = @_;
     if(!defined $this->getIslandSet)
     {
 	$this->{ISLAND_SET} = Lingua::YaTeA::IslandSet->new;
     }
-    $this->getIslandSet->addIsland($island);
+    $this->getIslandSet->addIsland($island,$fh);
 }
 
 
@@ -355,29 +402,24 @@ sub searchExogenousIslands
 	{
 	    $source[0] = $preselected_islands_h->{$key};
 	    
-	    if($this->makeIsland($index,\@source,'exogenous','UNKNOWN',$tag_set,$lexicon,$sentence_set) == 1)
-	    {
-		$corrected =1;
-	    }
+# 	    if($this->makeIsland($index,\@source,'exogenous','UNKNOWN',$tag_set,$lexicon,$sentence_set) == 1)
+# 	    {
+# 		$corrected =1;
+# 	    }
+	    $this->makeIsland($index,\@source,'exogenous','UNKNOWN',$tag_set,$lexicon,$sentence_set);
 	}    
     }
     
-    return ($this->checkParseCompleteness,$corrected);
+   # return ($this->checkParseCompleteness,$corrected);
 }
 
 sub plugInternalFreeNodes
 {
-    my ($this,$parsing_pattern_set,$parsing_direction,$tag_set) = @_;
+    my ($this,$parsing_pattern_set,$parsing_direction,$tag_set,$fh) = @_;
     my $island;
     my $key;
-    my $free_nodes_a;
+  
     my $tree;
-    my $inclusions_a;
-    my $pair_a;
-    my $above;
-    my $below;
-    my $additional_node_set;
-    my $success;
     my $tree_updated;
     my $unplugged_a;
     my $unplugged;
@@ -385,48 +427,48 @@ sub plugInternalFreeNodes
     my %unexploitable_islands;
     my @tmp_forest;
     my @new_trees;
+
+    my $free_nodes_a;
+    my $new_plugging;
+#    print $fh "plugInternalFreeNodes\n";
     
     if(defined $this->getForest)
     {
+#	print $fh "nb arbres: " . scalar @{$this->getForest} . "\n";
 	foreach  $tree (@{$this->getForest})
 	{
+#	    print $fh "TREE: ". $tree ."\n";
 	    $tree_updated = 0;
-	    $free_nodes_a = $tree->getNodeSet->searchFreeNodes($this->getWords);
-	    if(scalar @$free_nodes_a  > 1)
+	    
+	    $new_plugging = 1;
+	    while ($new_plugging == 1)
 	    {
-		$inclusions_a = $this->getIncludedNodes($free_nodes_a);
-		foreach $pair_a (@$inclusions_a)
-		{
-		    $above = $pair_a->[0];
-		    $below = $pair_a->[1];
-		    
-		    ($success,$additional_node_set) = $above->plugInternalNode($below,$pair_a->[2],$pair_a->[3],$parsing_pattern_set,$this->getWords,$parsing_direction,$tag_set);
-		    if($success == 1)
-		    {
-			$tree->addNodes($additional_node_set);
-		
-			$tree->getSimplifiedIndexSet->removeIndex($pair_a->[1]->searchHead(0)->getIndex);
-			$tree->updateRoot;
-		    }
-		}
+		$new_plugging = $tree->plugNodePairs($parsing_pattern_set,$parsing_direction,$tag_set,$this->getWords,$fh);
 	    }
-	    $tree->completeDiscontinuousNodes($parsing_pattern_set,$parsing_direction,$tag_set,$this->getWords);
-	    ($tree_updated,$unplugged_a) = $tree->removeDiscontinuousNodes($this->getWords);
+	    $tree->completeDiscontinuousNodes($parsing_pattern_set,$parsing_direction,$tag_set,$this->getWords,$fh);
+#	    print $fh "avant removeDiscontinuousNodes\n";
+#	    $tree->print($this->getWords,$fh);
+	    ($tree_updated,$unplugged_a) = $tree->removeDiscontinuousNodes($this->getWords,$fh);
 	    
 	    if($tree_updated == 1)
 	    {
-		
+#		print $fh "tree upodate " .$tree . "\n";
+#		$tree->print($this->getWords,$fh);
 		if(scalar @{$tree->getNodeSet->getNodes} > 0)
 		{
 		    $tree->updateIndexes($this->getIndexSet,$this->getWords);
 		    if(scalar @$unplugged_a > 0)
 		    {
+#			print $fh "ya a des unplugged\n";
 			foreach $unplugged (@$unplugged_a)
 			{
+#			    print $fh "unpl: " . $unplugged->getID . "\n";
 			    $free_nodes_a = $tree->getNodeSet->searchFreeNodes($this->getWords);
-			    $unplugged->hitchMore($free_nodes_a,$tree,$this->getWords);
+			    $unplugged->hitchMore($free_nodes_a,$tree,$this->getWords,$fh);
 			}
 		    }
+#		    print $fh "push " . $tree . "\n";
+#		    $tree->print($this->getWords,$fh);
 		    push @tmp_forest, $tree;
 		    
 		}
@@ -439,55 +481,30 @@ sub plugInternalFreeNodes
 	}
 	if(scalar @tmp_forest > 0)
 	{
-	    @{$this->getForest} = @tmp_forest;
+#	    print $fh "redefinition forest\n";
+	    
+	    @{$this->{FOREST}} = @tmp_forest;
+#	    $this->printForest($fh);
+	    #@{$this->getForest} = @tmp_forest;
+
 	}
 	else
 	{
 	    undef $this->{FOREST};
 	}
     }
-    
+     
 }
 
 
 
-sub getIncludedNodes
-{
-    my ($this,$free_nodes_a) = @_;
-    my $node;
-    my $index_set;
-    my %index_key_to_nodes;
-    my @index_sets;
-    my $included_a;
-    my $included;
-    my @node_inclusions;
-    foreach $node (@$free_nodes_a)
-    {
-	$index_set = Lingua::YaTeA::IndexSet->new;
-	$node->fillIndexSet($index_set);
-	$index_key_to_nodes{$index_set->joinAll('-')} = $node;
-	push @index_sets, $index_set;
-    }   
-    foreach $index_set (@index_sets)
-    {
-	$included_a = $index_set->getIncluded(\@index_sets);
-	
-	foreach $included (@{$included_a})
-	{
-	    my @pair;
-	    $pair[0] = $index_key_to_nodes{$index_set->joinAll('-')};
-	    $pair[1] = $index_key_to_nodes{$included->joinAll('-')};
-	    ($pair[2],$pair[3]) = $index_set->getIncludedContext($included);
-	    push @node_inclusions,\@pair;
-	}
-    }
-    return \@node_inclusions;
-}
+
+
 
 
 sub checkParseCompleteness
 {
-    my ($this) = @_;
+    my ($this,$fh) = @_;
     my @uncomplete_trees;
     my @complete_trees;
     my $tree;
@@ -501,6 +518,7 @@ sub checkParseCompleteness
     {
 	while ($tree = pop @{$this->getForest})
 	{
+#	    print $fh "pop : ". $tree . "\n";
 	    if($tree->getSimplifiedIndexSet->getSize == 1)
 	    {
 		$parsed = 1;
@@ -690,14 +708,14 @@ sub print
 
 sub printDebug
 {
-    my ($this, $debugFile) = @_;
+    my ($this, $fh) = @_;
 
-    print $debugFile "\n\n";
-    print $debugFile "$this\n";
-    print $debugFile $this->{'IF'} . "\n";
-    $this->print($debugFile);
-    $this->printForestParenthesised($debugFile);
-    print $debugFile "\n\n";
+    print $fh "\n\n";
+    print $fh "$this\n";
+    print $fh $this->{'IF'} . "\n";
+    $this->print($fh);
+    $this->printForestParenthesised($fh);
+    print $fh "\n\n";
 
 }
 
@@ -741,9 +759,6 @@ Lingua::YaTeA::MultiWordPhrase - Perl extension for ???
 
 
 =head2 checkMaximumLength()
-
-
-=head2 adjustReferences()
 
 
 =head2 existIsland()

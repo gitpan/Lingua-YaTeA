@@ -1,10 +1,43 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.4     - use warnings in all the files
+        - correction of minor bugs
+        - control of the input type in Node.pm,  NodeSet.pm, Tree.pm
+        - bug fix in Tree.pm (method
+          completeDiscontinuousNodes). Initialisation of
+          a variable
+        - carriage returns are deleted in the loaded files (module
+          ForbiddenStructureSet.pm, method CleanInfo, and module
+          ChunkingDataSet.pm, method LoadData,Corpus.pm:WrapBlocks)
+	- addition of the option "TC_MAXIMUM_LENGTH" to allow to limit
+          the length of the extracted term candidates (set in
+          configuration file Options, default is 12 words)
+	- homogeneisation of sub-trees attachement
+	- addition of a TF-IDF based ranking method for extracted term
+          candidates
+        - Workaround for a missing feature in Module::Info : if no
+          prefix is set while running "perl Build.PL", additionnal
+          directories 'etc' and 'conf' are not installed (or well installed)
+        - Modification of Makefile.PL to use the Module::Build (it
+          should be a CPAN.pm-compatible distribution)
+	- Variables CONFIG_REP, LOCALE_REP, RESULT_REP (yatea.rc) are
+          renamed CONFIG_DIR, LOCALE_DIR, RESULT_DIR respectively. 
+	- Variables CONFIG_DIR, LOCALE_DIR, RESULT_DIR (yatea.rc) are
+          automatically set, while the configuration (in Build.PL)
+        - The location of the rc file (yatea.rc) is automatically set,
+          while the configuration (in Build.PL)
+	- documentation of the module TagSet.pm, File.pm and FileSet.pm
+	- Corrections in the LICENSE file
+
 0.3     - removing the .config file
         - bug fix: check in the hook_node is defined in Node.pm
         - replacement of the use of the Parse::Lex module by a
 	  module generated from Parse::Yapp
         - addition of examples in the YaTeA PM
+        - correction of a bug when calculating the offset of the end
+	  char in component of term (especially the left components)
+        - in parseProgressively, taking into account that the unparsed
+	  array can be empty
 
 
 0.2     - correction of bugs (or temporary workaround) in the

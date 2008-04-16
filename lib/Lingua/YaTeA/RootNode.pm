@@ -1,8 +1,11 @@
 package Lingua::YaTeA::RootNode;
 use Lingua::YaTeA::Node;
 use strict;
+use warnings;
 
 our @ISA = qw(Lingua::YaTeA::Node);
+
+our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub new
 {
