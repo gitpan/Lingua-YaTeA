@@ -35,6 +35,13 @@ many\IF	ANY	delete
 another\IF	ANY	delete
 both\IF	ANY	delete
 several\IF	ANY	delete
+#
+following\IF	ANY	delete
+first\IF	ANY	delete
+previous\IF	ANY	delete
+good\IF	ANY	delete
+more\IF	ANY	delete
+only\IF	ANY	delete
 
 CD\POS	START
 JJ\POS of\LF	START

@@ -74,32 +74,57 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::ChunkingDataSet - Perl extension for ???
+Lingua::YaTeA::ChunkingDataSet - Perl extension for the set of chuncking data
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::ChunkingDataSet;
-  Lingua::YaTeA::ChunkingDataSet->();
+  Lingua::YaTeA::ChunkingDataSet->new($file_set);
 
 =head1 DESCRIPTION
 
+The module implements sets of chunking data, i.e. chunking frontiers
+(field C<ChunkingFrontiers>), chunking exceptions (field
+C<ChunkingExceptions>), cleaning frontiers (C<CleaningFrontiers>), and
+cleaning exceptions (C<CleaningExceptions>). Chunking data are stored
+in subsets (C<Lingua::YaTeA::ChunckingSubset>).
 
 =head1 METHODS
 
 =head2 new()
 
+    new($file_set);
+
+The method creates a set of chunking data and the related subset. The
+data stored in the directory c<$file_set> (an object C<Lingua::FileSet>) are loaded in the subsets.
 
 =head2 loadData()
 
+    loadData($file_set);
 
-=head2 get()
+The method loads the chuncking data stored in the directory
+c<$file_set> (an object C<Lingua::FileSet>) in the related subsets:
+chunking frontiers (field C<ChunkingFrontiers>), chunking exceptions
+(field C<ChunkingExceptions>), cleaning frontiers
+(C<CleaningFrontiers>), and cleaning exceptions
+(C<CleaningExceptions>).
 
+=head2 getSubset()
 
-=head2 set()
+    getSubset($name);
+
+The method returns the subset corresponding to the field C<$name>
+(i.e. ChunkingFrontiers, ChunkingExceptions, CleaningFrontiers,
+CleaningExceptions).
+
 
 
 =head2 existData()
 
+    existData($set,$type,$data);
+
+The methods checks if the data C<$data> exists in the field C<$type>
+in the subset C<$set>. It returns 1 if it exists, otherwise 0.
 
 
 =head1 SEE ALSO
@@ -113,7 +138,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

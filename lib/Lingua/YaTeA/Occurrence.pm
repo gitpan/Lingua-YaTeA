@@ -19,8 +19,6 @@ sub new
     return $this;
 }
 
-
-
 sub getSentence
 {
     my ($this) = @_;
@@ -50,7 +48,6 @@ sub getDocument
     my ($this) = @_;
     return $this->getSentence->getDocument;
 }
-
 
 sub isMaximal
 {
@@ -173,57 +170,121 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Occurrence - Perl extension for ???
+Lingua::YaTeA::Occurrence - Perl extension for the phrase occurrences
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Occurrence;
-  Lingua::YaTeA::Occurrence->();
+  Lingua::YaTeA::Occurrence->new();
 
 =head1 DESCRIPTION
 
+This module implements a reprensentation of a phrase occurrence. Each
+occurrence is described by five fields: an identifier C<ID>, a
+reference to the object referring the sentence where the phrase occurs
+C<SENTENCE>, the character where the phrase begins C<START_CHAR>, the
+character where the phrase ends C<END_CHAR> and the indication whether
+the occurrence is a maximal noun phrase.
 
 =head1 METHODS
 
 
 =head2 new()
 
+  new();
+
+The method creates a new object for a phrase occurrence and returns the object.
 
 =head2 getSentence()
 
+  getSentence();
+
+The method returns the obeject referring the sentence where the phrase occurs.
 
 =head2 getStartChar()
+
+  getStartChar();
+
+The method returns the start character of the phrase occurrence.
 
 
 =head2 getEndChar()
 
+  getEndChar();
+
+The method returns the end character of the phrase occurrence.
+
 
 =head2 getID()
+
+  getID();
+
+The method returns the identifier of the phrase occurrence.
 
 
 =head2 getDocument()
 
+  getDocument();
+
+The method returns the document reference where the phrase occurs
 
 =head2 isMaximal()
 
+  isMaximal();
+
+The medthod indicates if the phrase occurrence is maximal.
 
 =head2 setInfoForPhrase()
 
+   setInfoForPhrase(@words, $maximal);
+
+The method sets the information related to the phrase occurrence for
+the array of words C<@words>. C<$maximal> indicates if the phrase
+occurrence is maximal.
 
 =head2 setInfoForTestifiedTerm()
 
+   setInfoForTestifiedTerm($sentence, $start_char, $end_char);
+
+The method sets the information related to the phrase occurrence for a
+testified term: the object referring the sentence C<$sentence>, the
+start character C<$start_char> and the end character C<$end_char>.
 
 =head2 print()
+
+   print($fh);
+
+The method prints the information related to the phrase occurrence in the file handler C<$fh>.
 
 
 =head2 isNotBest()
 
+   isNotBest($other_occurrences_a,$parsing_direction);   
+
+The method indicates if the current phrase occurrence is included in
+one of the occurrence of the array C<$other_occurrences_a> or
+regarding the most convinient occurrence according to the parsing
+direction C<$parsing_direction>. In that case, it returns 1, otherwise
+undef.
+
 
 =head2 crossesWithoutPriority()
 
+   crossesWithoutPriority($other,$parsing_direction);
+
+This method indicates if the current phrase occrrence is partially
+embeded in a the other phrase occurrence C<$other>, according to the
+prioritu given by C<$parsing_direction>. In that case, it returns 1, otherwise
+undef.
 
 =head2 isIncludedIn()
 
+ 
+   isIncludedIn($other;
+
+
+The method indicates if the current phrase occurrence is included in
+the phrase C<$other>.  In that case, it returns 1, otherwise undef.
 
 =head1 SEE ALSO
 
@@ -236,7 +297,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -32,8 +32,7 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::ForbiddenStructure - Perl extension for the forbidden
-structures.
+Lingua::YaTeA::ForbiddenStructure - Perl extension for the forbidden structures.
 
 =head1 SYNOPSIS
 
@@ -83,7 +82,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

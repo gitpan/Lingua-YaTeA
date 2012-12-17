@@ -62,39 +62,70 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Sentence - Perl extension for ???
+Lingua::YaTeA::Sentence - Perl extension for sentence
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Sentence;
-  Lingua::YaTeA::Sentence->();
+  Lingua::YaTeA::Sentence->new($document);
 
 =head1 DESCRIPTION
 
+the module implements sentences of the document. An identifier (field
+C<ID>) is associated to each sentence. The field C<IN_DOC_ID> records
+the rank of the sentence in the document. The field C<DOCUMENT> is
+the reference to the document object.
 
 =head1 METHODS
 
 
 =head2 new()
 
+    new($document);
+
+the method creates a new sentence and defined the reference given the
+document C<$document>.
+
 
 =head2 resetInDocCounter()
 
+    resetInDocCounter();
+
+The method resets the counter managing the sentence rank in a
+document.
 
 =head2 resetStartChar()
 
+    resetStartChar()
+
+The method resets the C<ùstart_char> offset.
 
 =head2 updateStartChar()
+
+    updateStartChar($word);
+
+The method updates the C<ùstart_char> offset given the length of the
+inflected form of the word C<$word>.
 
 
 =head2 getDocument()
 
+    getDocument();
+
+The method returns the reference of the document which contains the
+sentence.
 
 =head2 getID()
 
+    getID();
+
+The method returns the sentence identifier.
 
 =head2 getInDocID()
 
+    getInDocID();
+
+The method returns the rank of the sentence in the document.
 
 =head1 SEE ALSO
 
@@ -107,7 +138,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

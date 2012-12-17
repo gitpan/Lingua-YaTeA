@@ -4,9 +4,10 @@ DISPLAY_RAW = "Phrases that are term candidates or rejected are displayed in tex
 DISPLAY_TC_XML = "Term candidates are displayed in XML format in "
 DISPLAY_CORPUS_PHRASES = "The corpus annotated with phrases is displayed in HTML format in "
 TC_FOR_LGP = "Creating an XML version of the corpus with Term Candidates marked for LGP in "
-TC_FOR_LGP = "Creating an XML version of the corpus with Testified Term marked for LGP in "
+TT_FOR_LGP = "Creating an XML version of the corpus with Testified Term marked for LGP in "
 XML_FOR_BIOLG = "Creating an XML version of the corpus for BioLG in "
 DISPLAY_TERM_LIST = "Display of the list of term candidates and sub term candidates in text format in file "
+DISPLAY_TERMANDHEAD_LIST = "Display of the list of term candidates and sub term candidates and their head in text format in file "
 PHRASES_NUMBER = "Total number of phrases: "
 MULTIWORDPHRASES_NUMBER = "multi-word phrases: "
 MONOLEXICALPHRASES_NUMBER = "monolexical phrases: "
@@ -74,3 +75,4 @@ DISPLAY_BASIC_TERM_LIST = "Display of the list of basic term candidates (every p
 CANNOT_OPEN = "Can not open "
 
 UNPARSED_PHRASES = "Unparsed phrases"
+DISPLAY_BOOTSTRAP = "Bracketed multiword terms are displayed in file "

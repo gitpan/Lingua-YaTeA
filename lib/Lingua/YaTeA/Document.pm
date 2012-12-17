@@ -51,33 +51,53 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Document - Perl extension for ???
+Lingua::YaTeA::Document - Perl extension for words of input document 
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Document;
-  Lingua::YaTeA::Document->();
+  Lingua::YaTeA::Document->new($word);
 
 =head1 DESCRIPTION
 
+The module manages the words of an input documents. The identifier of
+the document is stored in the attribut C<ID>. The attribut C<NAME>
+contains the inflected form of the word.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($word);
+
+The method creates a objet storing a word C<$WORD> and associated it
+the current document. 
 
 =head2 newDefault()
+
+    newDefault($word);
+
+The method creates a empty objet, without any reference to a document.
 
 
 =head2 getID()
 
+    getID();
+
+The method returns the identifier of the document.
+
 
 =head2 getName()
 
+    getName();
+
+The method returns the inflected form of the word.
 
 =head2 update()
 
+    update($word);
 
+The method updates the attribut C<NAME> (the inflected form) of the object.
 
 =head1 SEE ALSO
 
@@ -90,7 +110,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

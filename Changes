@@ -1,5 +1,54 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.6     
+        - Add of installation tests 
+        - Add of examples for French
+        - Integration of the MIG corrections (Node, Testified terms)
+        - Correction in the forbidden structure management (split
+          action)
+        - Add NEXT.pm in the pre-required module list
+        - UTF-8 is used as charset for both configuration files and
+          texts to process
+        - Integration of attested terms (in a bracketed format, can be
+          produced by the bootstrap option)
+        - Option "bootstrap" to generate an output in a bracketed
+          format. This output can be used as a attested resource on a
+          other corpus
+        - Add a defined test in the function appendInclude (but it
+          seems there is still a bug on tree building).
+        - Monolexical term occurrences are identified as MNP when the
+          monolexical oprion is set
+        - Addition of a config set for French based on the POSTagger
+          Flemm (which uses the Multex tagset) and modification of the
+          read method in Corpus.pm (addition opf the parameter
+          language) to normalisze the input (correction of the output
+          of Flemm)
+	- Correction in the input normalization for Flemm
+        - Each printing function can now print results on stdout 
+        - Replace ':' as tag by 'COLUMN'
+        - Add of some Chunking Frontiers as '('
+	- Only the tag is taken into account for sentence_boundary
+          detection
+	- Add Weights section to the DTD and in the XML rendering
+	- Correction: TF-IDF based ranking method is a DDW ranking
+	- Add ROOT as a reference to the term in which the current
+          term is nested
+        - Addition of several term weighting and selection measures
+          (C-Value and variations, iLong, ilnc, iLong, and term
+          autonomy)
+        - Add the status of the term candidate (0 : not a term, 1 :
+          term). By default, term candidate are terms
+        - Add a option for term output style to print only term
+          candidate having the status of term
+        - colors of the terms in the HTML output can be parametrized
+          (option file, options PARSED_COLOR and UNPARSED_COLOR)
+	- new function for printing only list of candidate terms
+          without XML header
+        - Addition of the option XML-corpus-raw, rendering the corpus
+          in XML format with terms. Documents and sentences are
+          identified in the XML files.
+
+
 0.5     - Minor correction in the installation process
         - for some OS, Config::General returns while setting variables
           as yatea.rc is on read-inly mode

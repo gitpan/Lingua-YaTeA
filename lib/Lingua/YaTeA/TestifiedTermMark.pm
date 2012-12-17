@@ -14,8 +14,8 @@ sub new
     my $this = $class->SUPER::new($form,$frontier_id,$type);
     bless ($this,$class);
     $this->{TESTIFIED_ID} = $testified_id;
-    $this->{START} = ();
-    $this->{END} = ();
+    $this->{START} = (); # should be 0
+    $this->{END} = ();  # should be 0
     return $this;
 }
 
@@ -95,38 +95,67 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::TestifiedTermMark - Perl extension for ???
+Lingua::YaTeA::TestifiedTermMark - Perl extension for marks of testified terms
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::TestifiedTermMark;
-  Lingua::YaTeA::TestifiedTermMark->();
+  Lingua::YaTeA::TestifiedTermMark->new();
 
 =head1 DESCRIPTION
 
+The module implements the marks indicating testified terms in the
+document structures. Each mark delimited with a start offset
+(C<START>) and a end offset (C<END>). An identifier C<TESTTIED_ID> is
+associated to the mark. The module inherits of the module
+C<Lingua::YaTeA::AnnotationMark>.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($form);
+
+The method creates a new mark of testitied term from the form C<$form>.
 
 =head2 getTestifiedID()
 
+    getTestifiedID();
+
+The method returns the identifier of the mark.
 
 =head2 isOpener()
 
+    isOpener();
+
+The method returns 1 if the mark is an opening mark, otherwise 0.
 
 =head2 isCloser()
+
+    isCloser();
+
+The method returns 1 if the mark is an closing mark, otherwise 0.
 
 
 =head2 parse()
 
+    parse($form);
+
+The method parses the form C<$form> and returns an array containing
+three elements: the identifier of the frontier, the identifier of the
+testitied term and the type of the mark (C<opener> or C<closer>).
 
 =head2 getStart()
 
+    getStart();
+
+The method returns the start offset of the mark.
 
 =head2 getEnd()
 
+    getEnd();
+
+The method returns the end offset of the mark.
 
 
 =head1 SEE ALSO
@@ -140,7 +169,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

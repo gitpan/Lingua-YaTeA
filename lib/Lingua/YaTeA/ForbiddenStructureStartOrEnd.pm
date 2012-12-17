@@ -4,7 +4,8 @@ use warnings;
 use Lingua::YaTeA::ForbiddenStructure;
 use Lingua::YaTeA::LinguisticItem;
 use Lingua::YaTeA::TriggerSet;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 
 our @ISA = qw(Lingua::YaTeA::ForbiddenStructure);
@@ -120,7 +121,8 @@ sub apply
 	while ($j < $this->getLength)
 	{
 
-	    if(isa($words_a->[$i],'Lingua::YaTeA::TestifiedTermMark'))
+#	    warn "ref: " . ref($words_a->[$i]) . "\n";
+	    if ((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::TestifiedTermMark')))
 	    {
 		return;
 		#return $to_delete;
@@ -129,10 +131,10 @@ sub apply
 	    {
 		if
 		    (
-		     (isa($words_a->[$i],'Lingua::YaTeA::ForbiddenStructureStartOrEnd'))
+		     (((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::ForbiddenStructureStartOrEnd'))))
 		     ||
 		     (
-		      (isa($words_a->[$i],'Lingua::YaTeA::WordFromCorpus'))
+		      (((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::WordFromCorpus'))))
 		      &&
 		      ($this->getItem($j)->matchesWord($words_a->[$i]))
 		     )
@@ -156,7 +158,7 @@ sub apply
 	while ($j >= 0)
 	{
 	    
-	    if(isa($words_a->[$i],'Lingua::YaTeA::TestifiedTermMark'))
+	    if((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::TestifiedTermMark')))
 	    {
 		return;
 	    }
@@ -165,10 +167,10 @@ sub apply
 		
 		if
 		    (
-		     (isa($words_a->[$i],'Lingua::YaTeA::ForbiddenStructureStartOrEnd'))
+		     (((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::ForbiddenStructureStartOrEnd'))))
 		     ||
 		    (
-		     (isa($words_a->[$i],'Lingua::YaTeA::WordFromCorpus'))
+		     (((blessed($words_a->[$i])) && ($words_a->[$i]->isa('Lingua::YaTeA::WordFromCorpus'))))
 		     &&
 		     ($this->getItem($j)->matchesWord($words_a->[$i]))
 		    )
@@ -321,7 +323,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -254,7 +254,7 @@ sub setDefaultOutputPath
 {
     my ($this) = @_;
 
-    if(!defined $this->getOption("output-path"))
+    if((!defined $this->getOption("output-path")) ||($this->getOption("output-path")->getValue =~ /^\s*$/))
     {
 	$this->addOption("output-path",".");
     }
@@ -300,7 +300,8 @@ sub handleOptionDependencies
 {
     my ($this,$message_set) = @_;
     my %incompatibilities = ('annotate-only' => ["TC-for-BioLG", "debug"]);
-    my %necessarily_linked = ('TT-for-BioLG' => ["termino", "match-type:strict"]);
+    my %necessarily_linked = ('TT-for-BioLG' => ["termino", "match-type:if"],
+			      'bootstrap' => ["termList"]);
     my $incompatible_option;
     my $necessary_option;
     my @necessary_option;
@@ -621,7 +622,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

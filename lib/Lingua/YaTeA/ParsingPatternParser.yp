@@ -12,6 +12,7 @@
 %{
     use Lingua::YaTeA;
 #     use Data::Dumper;
+    use warnings;
 
     my $node_set;
     my $level = 0;
@@ -242,17 +243,28 @@ Lingua::YaTeA::ParsingPatternParser - Perl extension for parsing the file contai
 
 =head1 DESCRIPTION
 
+The module implements a parser for analysing parsing pattern file.  
+
+The parser takes into account several information: the file handler to
+read (field C<FH>), the list of the possible Part-of-Speech tags
+(field C<CANDIDATES>), the list of prepositions (field
+C<PREPOSITIONS>), and the list of determiners (field C<DETERMINERS>).
 
 =head1 METHODS
 
+=head2 _Error()
 
-=head2 new()
+    _Error($error_objet);
 
+The method is used to manage the parsing error and prints a message
+explaining the error.
 
 =head2 _Lexer()
 
+    _Lexer($parser_info);
 
-=head2 _Error()
+The method applies the parser on the data contains in the structure
+C<$parser_info> (field C<INPUT>).
 
 
 
@@ -267,7 +279,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

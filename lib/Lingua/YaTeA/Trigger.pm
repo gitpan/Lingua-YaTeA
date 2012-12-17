@@ -18,7 +18,7 @@ sub new
 sub addFS
 {
     my ($this,$fs) = @_;
-    psuh @{$this->{FS}}, $fs;
+    push @{$this->{FS}}, $fs;
 }
 
 sub getType
@@ -52,7 +52,7 @@ Lingua::YaTeA::Trigger - Perl extension for a trigger.
 This module represents a trigge. Each trigger contains three fields:
 C<TYPE>, C<FORM> and C<FS>. The field C<TYPE> contains the type of the
 trigger. The field C<FORM> contains the form of the trigger. The field
-C<FS> contains an array of forbidden structure defining the trigger.
+C<FS> contains an array of forbidden structures defining the trigger.
 
 
 
@@ -96,7 +96,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -36,30 +36,44 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::SentenceSet - Perl extension for ???
+Lingua::YaTeA::SentenceSet - Perl extension for the sentence set
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::SentenceSet;
-  Lingua::YaTeA::SentenceSet->();
+  Lingua::YaTeA::SentenceSet->new();
 
 =head1 DESCRIPTION
 
+This module implements the set of sentences and proposes methods for
+managing sentences set.
 
 =head1 METHODS
 
 =head2 new()
 
+    new();
+
+This method creates a set of sentences.
+
 
 =head2 addSentence()
 
+    addSentence($documents);
+
+This method adds a sentence to the set of the sentences.
 
 =head2 getCurrent()
 
+    getCurrent();
+
+This method returns the current or the last sentence of the set. 
 
 =head2 getSentences()
 
+    getSentences();
 
+This methods returns the set of sentences.
 
 =head1 SEE ALSO
 
@@ -72,7 +86,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -1,5 +1,7 @@
 package Lingua::YaTeA::RootNode;
+
 use Lingua::YaTeA::Node;
+
 use strict;
 use warnings;
 
@@ -22,20 +24,26 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::RootNode - Perl extension for ???
+Lingua::YaTeA::RootNode - Perl extension for the root node of the syntactic tree of a term
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::RootNode;
-  Lingua::YaTeA::RootNode->();
+  Lingua::YaTeA::RootNode->new($level);
 
 =head1 DESCRIPTION
 
+This module implements the root node of a syntactic tree as a specific
+node in its naming. Objects inherits of the module Lingua::YaTeA::Node.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($level);
+
+The method creates a node which is considered as the root node for the
+syntactic tree of any kind of terms.
 
 =head1 SEE ALSO
 
@@ -48,7 +56,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

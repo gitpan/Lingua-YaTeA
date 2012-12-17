@@ -25,7 +25,7 @@ sub setSplitAfter
     my ($this,$infos_a) = @_;
     if ($this->{ACTION} eq "split")
     {
-	return $infos_a->[3];
+	return $infos_a->[3] - 1;
     }
     return "";
 }
@@ -41,6 +41,10 @@ sub parse
     
     foreach $element (@elements){
 	$element =~ /^([^\\]+)\\(.+)$/;
+	if(!defined $2)
+	{
+	    warn "FS error:" . $string. "\n";
+	}
 	if ($2 eq "IF"){
 	    $reg_exp .= $forbidden_tag . "\?\\n" . quotemeta($1)."\\t\[\^\\t\]\+\\t\[\^\\t\]\+" . $forbidden_tag;
 	}
@@ -181,7 +185,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

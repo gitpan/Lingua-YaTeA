@@ -37,26 +37,41 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::PatternLeaf - Perl extension for ???
+Lingua::YaTeA::PatternLeaf - Perl extension for the leaf node of a syntactic pattern tree
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::PatternLeaf;
-  Lingua::YaTeA::PatternLeaf->();
+  Lingua::YaTeA::PatternLeaf->new($tag, $father);
 
 =head1 DESCRIPTION
 
 
-=head1 METHODS
+This module implements the leaf node of a syntactic pattern. Objects
+inherit of the module C<Lingua::YaTeA::Edge>. A Part-of-Speech tag can
+be associated to the node. The node is connected to its father node.
 
+=head1 METHODS
 
 =head2 new()
 
+    new($tag, $father);
+
+
+This method creates a leaf node and associates a Part-of-Speech tag
+C<$tag>. It also connects the node to its father node C<$father>.
 
 =head2 getPOS()
 
+    getPOS();
+
+This method returns the Part-of-Speech tag associated to the node.
 
 =head2 print()
+
+    print();
+
+This method prints the Part-of-Speech tag associated to the node.
 
 
 =head1 SEE ALSO
@@ -70,7 +85,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

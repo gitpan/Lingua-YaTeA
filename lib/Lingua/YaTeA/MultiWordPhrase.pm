@@ -5,10 +5,13 @@ use Lingua::YaTeA::Phrase;
 use Lingua::YaTeA::MultiWordUnit;
 use Lingua::YaTeA::Tree;
 use Lingua::YaTeA::IndexSet;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 use Data::Dumper;
 use NEXT;
 use base qw(Lingua::YaTeA::Phrase Lingua::YaTeA::MultiWordUnit);
+
+use Encode qw(:fallbacks);;
 
 our $counter = 0;
 our $parsed = 0;
@@ -118,18 +121,21 @@ sub integrateIslands
     my @islands = values %{$this->getIslandSet->getIslands};
     #@islands = sort({$a->getIndexSet->getSize <=> $b->getIndexSet->getSize} @islands);
     @islands = sort({&sortIslands($a,$b,$parsing_direction,$fh)} @islands);
-    if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
+    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::MultiWordPhrase')))
     {
 	foreach $island (@islands)
 	{
 #	    print $fh "integrate essai " . $island->getIF . "\n";
-	    $test = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set,$fh);
-	    if($test == 1)
+	    if($island->isIntegrated == 0)
 	    {
-		$corrected = 1;
-	    }
-#	    print $fh "apres l'ilot " . $island->getIF . "\n";
+		$test = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set,$fh);
+		if($test == 1)
+		{
+		    $corrected = 1;
+		}
+		#print $fh "apres l'ilot " . $island->getIF . "\n";
 #	    $this->printForest($fh);
+	    }
 	}
     }
     return ($this->checkParseCompleteness($fh),$corrected);
@@ -158,35 +164,35 @@ sub integrateIsland
     
     while ($tree = pop @{$this->getForest})
     {
-#	print $fh "essaie dans arebre :" . $tree . "\n";
+	#print $fh "essaie dans arebre :" . $tree . "\n";
 	($success) = $tree->integrateIslandNodeSets($node_sets_a,$island->getIndexSet,\@new_trees,$this->getWords,$tagset,$fh);
 	if($success == 1)
 	{
 	    $integrated_at_least_once = 1;
 	}
     }
-#    print $fh "integrated? " . $integrated_at_least_once . "\n";
+ 
     while ($new = pop @new_trees)
     {
-#	print $fh "pop new ici :" . $new . "\n";
+	#print $fh "pop new ici :" . $new . "\n";
 	$this->addTree($new);
     }
 
-    if($integrated_at_least_once == 0)
+    if($integrated_at_least_once == 1)
     {
-	$this->removeIsland($island,$fh);
+	$island->{INTEGRATED} = 1;
+	$corrected = $this->correctPOSandLemma($island,$lexicon,$sentence_set,$fh);
     }
     else
     {
-	$corrected = $this->correctPOSandLemma($island,$lexicon,$sentence_set);
+	$this->removeIsland($island,$fh);
     }
-   
     return $corrected;
 }
 
 sub correctPOSandLemma
 {
-    my ($this,$island,$lexicon,$sentence_set) = @_;
+    my ($this,$island,$lexicon,$sentence_set,$fh) = @_;
     my $i;
     my $index;
     my $corrected = 0;
@@ -197,22 +203,58 @@ sub correctPOSandLemma
 	if (defined ($island->getSource->getWord($i))) {
 	    if  ($island->getSource->getWord($i)->getPOS ne $this->getWord($index)->getPOS)
 	    {
+		#print $fh  $island->getSource->getWord($i)->getPOS . " !=" .$this->getWord($index)->getPOS . "\n"; 
 		if(lc($island->getSource->getWord($i)->getIF) eq lc($this->getWord($index)->getIF))
 		{
-		    $this->correctWord($index,$island->getSource->getWord($i),"POS",$lexicon,$sentence_set);
-		    $corrected = 1;
+		  
+		    if($this->isCorrectedWord($index) == 0) # added by SA (29/08/2008) : a word can be corrected only once
+		    {
+			#print $fh lc($island->getSource->getWord($i)->getIF) . "=" .  lc($this->getWord($index)->getIF) . "=> corrige\n";
+			$this->correctWord($index,$island->getSource->getWord($i),"POS",$lexicon,$sentence_set);
+			push @{$this->{CORRECTED_WORDS}}, $index;
+			$corrected = 1;
+		    }
 		}
 	    }
 	    if($island->getSource->getWord($i)->getLF ne $this->getWord($index)->getLF)
 	    {
-		$this->correctWord($index,$island->getSource->getWord($i),"LF",$lexicon,$sentence_set);
-		$corrected = 1;
+		 if($this->isCorrectedWord($index) == 0) # added by SA (29/08/2008) : a word can be corrected only once
+		 {
+		    # print $fh  $island->getSource->getWord($i)->getLF . " !=" .$this->getWord($index)->getLF . "=>corrige\n"; 
+		     $this->correctWord($index,$island->getSource->getWord($i),"LF",$lexicon,$sentence_set);
+		     push @{$this->{CORRECTED_WORDS}}, $index;
+		     $corrected = 1;
+		 }
 	    }
 	} else {
 	    warn "Word undefined\n";
 	}
     }
     return $corrected;
+}
+
+# added by SA (29/08/2008) : check if a word has already been corrected
+sub isCorrectedWord
+{
+    my ($this,$index) = @_;
+    my $i;
+    if(defined $this->getCorrectedWords)
+    {
+	foreach $i (@{$this->getCorrectedWords})
+	{
+	    if($i == $index)
+	    {
+		return 1;
+	    }
+	}
+    }
+    return 0;
+}
+
+sub getCorrectedWords
+{
+    my ($this) = @_;
+    return $this->{CORRECTED_WORDS};
 }
 
 sub correctWord
@@ -275,6 +317,7 @@ sub makeIsland
     my $s;
     my $island;
      my $corrected;
+     
      if($type eq "endogenous")
      {
 	 $source = $index->chooseBestSource($source_a,$this->getWords,$tag_set);
@@ -284,11 +327,16 @@ sub makeIsland
 	$source = $source_a->[0]; 
      }
     
-    $island = Lingua::YaTeA::Island->new($index,$type,$source); 
-#     print $fh $island->getIF;
-    $this->addIsland($island,$fh);
+#we verify if the island is multi-word phrase
+     if ((blessed($source)) && ($source->isa('Lingua::YaTeA::MultiWordPhrase')))
+     {   
+	 $island = Lingua::YaTeA::Island->new($index,$type,$source); 
+     
+	 
+	 $this->addIsland($island,$fh);
+     }
 
-     # if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
+     # if($this->isa('Lingua::YaTeA::MultiWordPhrase'))
 #      {
 	 
 # 	 $corrected = $this->integrateIsland($island,$tag_set,$lexicon,$sentence_set,$fh);
@@ -322,11 +370,10 @@ sub getParsablePotentialIslands
     my $concurrent_set_a;
     my $concurrent;
     my $key;
-    
     while (($key,$concurrent_set_a) = each (%{$this->getTestifiedTerms}))
     {
 	# islands can be created only from MultiWordTestifiedTerm
-	if(isa($concurrent_set_a->[0],'Lingua::YaTeA::MultiWordTestifiedTerm'))
+	if ((blessed($concurrent_set_a->[0])) && ($concurrent_set_a->[0]->isa('Lingua::YaTeA::MultiWordTestifiedTerm')))
 	{
 	    foreach $concurrent (@$concurrent_set_a)
 	    {
@@ -367,7 +414,6 @@ sub getBestExogenousIslands
 	{
 	    $preselected_islands{$key} = $concurrent_set_a->[0];
 	}
-	
     }
     return \%preselected_islands;
 }
@@ -406,10 +452,11 @@ sub searchExogenousIslands
 # 	    {
 # 		$corrected =1;
 # 	    }
+	    
 	    $this->makeIsland($index,\@source,'exogenous','UNKNOWN',$tag_set,$lexicon,$sentence_set);
 	}    
     }
-    
+    #$this->printIslands(*STDERR);
    # return ($this->checkParseCompleteness,$corrected);
 }
 
@@ -671,9 +718,9 @@ sub print
     if(defined $fh)
     {
 
-	print $fh  "if: " . $this->getIF . "\n";
-	print $fh "pos: " . $this->getPOS . "\n";
-	print $fh "lf: " . $this->getLF . "\n";
+	print $fh  "if: " . Encode::encode("UTF-8", $this->getIF) . "\n";
+	print $fh "pos: " . Encode::encode("UTF-8", $this->getPOS) . "\n";
+	print $fh "lf: " . Encode::encode("UTF-8", $this->getLF) . "\n";
 	print $fh "is a term candidate: " . $this->isTC. "\n";
 	if($this->isTC)
 	{
@@ -706,18 +753,6 @@ sub print
 }
 
 
-sub printDebug
-{
-    my ($this, $fh) = @_;
-
-    print $fh "\n\n";
-    print $fh "$this\n";
-    print $fh $this->{'IF'} . "\n";
-    $this->print($fh);
-    $this->printForestParenthesised($fh);
-    print $fh "\n\n";
-
-}
 
 
 1;
@@ -826,7 +861,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

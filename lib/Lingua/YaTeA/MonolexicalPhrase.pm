@@ -46,23 +46,36 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MonolexicalPhrase - Perl extension for ???
+Lingua::YaTeA::MonolexicalPhrase - Perl extension for monoloexical phrases
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MonolexicalPhrase;
-  Lingua::YaTeA::MonolexicalPhrase->();
+  Lingua::YaTeA::MonolexicalPhrase->new($num_content_words,$words_a,$tag_set);
 
 =head1 DESCRIPTION
+
+This module implements monolexical phrases. It inehirits of the module
+C<Lingua::YaTeA::Phrase Lingua::YaTeA::MonolexicalUnit>.
 
 
 =head1 METHODS
 
 =head2 new()
 
+    new($num_content_words,$words_a,$tag_set);
+
+
+The method creates a monolexical word. C<$words_a> is the reference to
+an array of words. C<$num_content_words> is the number of content
+words. C<$tag_set> is the reference to the tag set used in the term
+extractor.
+
 =head2 print()
 
+    print();
 
+The method prints information related to the current monolexical unit.
 
 =head1 SEE ALSO
 
@@ -75,7 +88,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

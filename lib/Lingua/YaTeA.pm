@@ -20,17 +20,19 @@ $yatea->termExtraction($corpus);
 =head1 DESCRIPTION
 
 This module is the main module of the software named YaTeA. It aims at
-extracting noun phrases that look like terms from a corpus. It
-provides their syntactic analysis in a head-modifier format.  As an
-input, the term extractor requires a corpus which has been segmented
-into words and sentences, lemmatized and tagged with part-of-speech
-(POS) information. The implementation of this term extractor allows to
-process large corpora.  Data provided with YaTeA allow to extract
-terms from English and French texts.  But new linguistic features can
-be integrated to extract terms from another language. Moreover,
+extracting noun phrases that look like terms from a corpus.  It
+provides their syntactic analysis in a head-modifier representation.
+As an input, the term extractor requires a corpus which has been
+segmented into words and sentences, lemmatized and tagged with
+part-of-speech (POS) information. The input file is encoded in
+UTF-8. The implementation of this term extractor allows to process
+large corpora.  Data provided with YaTeA allow to extract terms from
+English and French texts.  But new linguistic features can be
+integrated to extract terms from another language. Moreover,
 linguistic features can be modified or created for a sub-language or
 tagset.
 
+For the use of YaTeA, see the documentation with the script C<yatea>.
 
 The main strategy of analysis of the term candidates is based on the
 exploitation of simple parsing patterns and endogenous
@@ -38,7 +40,7 @@ disambiguation. Exogenous disambiguation is also made possible for the
 identification and the analysis of term candidates by the use of
 external resources, I<i.e.> lists of testified terms.
 
-=head2 ENDOGENOUS AND EXOGENOUS DISAMBIGUATION
+=head2 ANALYSIS: ENDOGENOUS AND EXOGENOUS DISAMBIGUATION
 
 Endogenous disambiguation consists in the exploitation of intermediate
 chunking and parsing results for the parsing of a given Maximal Noun
@@ -250,7 +252,7 @@ C<LOCALE_DIR> : directory containing the environment files according to the lang
 
 =item * 
 
-C<RESULT_DIR> : directory where are stored the results
+C<RESULT_DIR> : directory where are stored the results (probably not useful)
 
 =back
 
@@ -260,8 +262,12 @@ C<RESULT_DIR> : directory where are stored the results
 
 =item * 
 
-C<lang> I<language> : Definition of the language of the corpus. Values
-are either C<FR> (French) or C<EN> (English)
+C<language> I<language> : Definition of the language of the
+corpus. Values are either C<FR> (French - TreeTagger output - TagSet
+<http://www.ims.uni-stuttgart.de/~schmid/french-tagset.html>),
+C<FR-Flemm> (French - output of Flemm analyser or C<EN> (English -
+TreeTagger or GeniaTagger output - PennTreeBank Tagset)
+
 
 =item * 
 
@@ -369,6 +375,23 @@ term candidates with the value C<all>, or if any value is specified.
 
 =back
 
+=head1 CONTRIBUTORS
+
+=over
+
+=item *
+
+Charlotte Roze has defined the configuration files to process a corpus
+tagged with Flemm
+
+=item * 
+
+Wiktoria Golik, Robert Bossy and Claire Nédellec (MIG/INRA) have
+corrected bugs and improve the mapping of testified terms.
+
+
+=back
+
 =head1 SEE ALSO
 
 Sophie Aubin and Thierry Hamon. Improving Term Extraction with
@@ -379,7 +402,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHORS
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 LICENSE
 
@@ -406,7 +429,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.5';
+our $VERSION='0.6';
 
 our $process_counter = 1;
 
@@ -466,20 +489,19 @@ sub new
 sub termExtraction
 {
     my ($this,$corpus) = @_;
-    
     my $sentence_boundary = $this->getOptionSet->getSentenceBoundary;
     my $document_boundary = $this->getOptionSet->getDocumentBoundary;
     my $debug_fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('debug')->getPath);;
-   
+    binmode($debug_fh, ":utf8");
     $this->loadTestifiedTerms(\$process_counter,$corpus,$sentence_boundary,$document_boundary,$this->getOptionSet->MatchTypeValue,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
-    
     
 
     print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('LOAD_CORPUS')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
 
     
+#    warn "Language: " . $this->getOptionSet->getLanguage . "\n";
 
-    $corpus->read($sentence_boundary,$document_boundary,$this->getFSSet,$this->getTestifiedTermSet,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage);
+    $corpus->read($sentence_boundary,$document_boundary,$this->getFSSet,$this->getTestifiedTermSet,$this->getOptionSet->MatchTypeValue,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage, $this->getOptionSet->getLanguage,$debug_fh);
     
     my $phrase_set = Lingua::YaTeA::PhraseSet->new;
     
@@ -487,6 +509,7 @@ sub termExtraction
     $corpus->chunk($phrase_set,$sentence_boundary,$document_boundary,$this->getChunkingDataSet,$this->getFSSet,$this->getTagSet,$this->getParsingPatternSet,$this->getTestifiedTermSet,$this->getOptionSet,$debug_fh);
 
     my $fh = FileHandle->new(">".$corpus->getOutputFileSet->getFile('unparsed')->getPath);
+    binmode($fh, ":utf8");
     $phrase_set->printPhrases($fh);
 
 #     print STDERR Dumper($phrase_set);
@@ -524,6 +547,7 @@ sub termExtraction
     print STDERR $process_counter++ . ") " . ($this->getMessageSet->getMessage('RESULTS')->getContent($this->getOptionSet->getDisplayLanguage)) . "\n";
     
     $this->displayExtractionResults($phrase_set,$corpus,$this->getMessageSet,$this->getOptionSet->getDisplayLanguage,$this->getOptionSet->getDefaultOutput,$debug_fh);
+    return(0);
 }
 
 
@@ -810,6 +834,19 @@ sub displayExtractionResults
 	print STDERR "\t-" . ($this->getMessageSet->getMessage('TTG_TERM_CANDIDATES')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('termCandidates')->getPath . "'\n";
 	$phrase_set->printTermCandidatesTTG($corpus->getOutputFileSet->getFile("termCandidates"),$this->getOptionSet->getTTGStyle);
     } 
+
+     if (defined $this->getOptionSet->getOption('bootstrap'))
+     {
+	 print STDERR "\t-" . ($this->getMessageSet->getMessage('DISPLAY_BOOTSTRAP')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('parsedTerms')->getPath . "'\n";
+	$phrase_set->printBootstrapList($corpus->getOutputFileSet->getFile('parsedTerms'),$corpus->getName);
+     }
+    if ((defined $this->getOptionSet->getOption('XML-corpus-raw')) && ($this->getOptionSet->getOption('XML-corpus-raw')->getValue() == 1))
+    {
+	print STDERR "\t-" . ($this->getMessageSet->getMessage('DISPLAY_CORPUS_RAW')->getContent($this->getOptionSet->getDisplayLanguage)) . "\'". $corpus->getOutputFileSet->getFile('corpusRaw')->getPath . "'\n";
+	
+	$corpus->printXMLRawCorpus($corpus->getOutputFileSet->getFile('corpusRaw'),$this->getOptionSet->getSentenceBoundary,$this->getOptionSet->getDocumentBoundary);
+    }
+    return(0);
 }
 
 

@@ -2,7 +2,8 @@ package Lingua::YaTeA::Tree;
 use strict;
 use warnings;
 use Lingua::YaTeA::IndexSet;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -175,7 +176,9 @@ sub check
 {
     my ($this,$phrase) = @_;
     my $if;
-    $this->getRoot->buildIF(\$if,$phrase->getWords);
+    my $depth = 0;
+
+    $this->getRoot->buildIF(\$if,$phrase->getWords, \$depth);
     $if =~ s/ +$//;
     
     if($if eq $phrase->getIF)
@@ -280,7 +283,7 @@ sub completeDiscontinuousNodes
     {
 	$previous = $discontinuous_infos_a->[1];
 	$discontinuous_infos_a = $discontinuous_infos_a->[0]->isDiscontinuous(\$previous,$words_a,$fh);
-	if(isa($discontinuous_infos_a->[0],'Lingua::YaTeA::Node'))
+	if ((blessed($discontinuous_infos_a->[0])) && ($discontinuous_infos_a->[0]->isa('Lingua::YaTeA::Node')))
 	{
 # 	    print $fh "dis_a : ". join ("\n",@$discontinuous_infos_a) . "\n";
 # 	    print $fh "id:" . $discontinuous_infos_a->[0]->getID . "\n";
@@ -294,7 +297,7 @@ sub completeDiscontinuousNodes
 		if(
 		   ($discontinuous_infos_a = $discontinuous_infos_a->[0]->isDiscontinuous(\$previous,$words_a,$fh))
 		   &&
-		   (isa ($discontinuous_infos_a->[0],'Lingua::YaTeA::Node'))
+		   ((blessed($discontinuous_infos_a->[0])) && ($discontinuous_infos_a->[0]->isa('Lingua::YaTeA::Node')))
 		   )
 		{
 #		    print $fh "push : " . $discontinuous_infos_a->[0]->getID . "\n";
@@ -317,7 +320,7 @@ sub getDiscontinuousNodes
     {
 	$previous = -1;
 	$discontinuous_infos_a = $free_node->isDiscontinuous(\$previous,$words_a,$fh);
-	if(isa($discontinuous_infos_a->[0],'Lingua::YaTeA::Node')){
+	if ((blessed($discontinuous_infos_a->[0])) && ($discontinuous_infos_a->[0]->isa('Lingua::YaTeA::Node'))){
 	    push @discontinuous,$discontinuous_infos_a;
 	}
     }
@@ -654,29 +657,33 @@ sub appendIncluded
 #    print $fh "above1 ok " . $above->getID . " place:" . $place. "\n";
     #  print STDERR "I3\n";
 
-    ($above,$intermediate_node,$place) = $above->getHookNode($type,$place,$below_index_set,$fh);
-    #  print STDERR "I4\n";
+
     if(defined $above)
     {
-#	print $fh "above2 ok " . $above->getID . " place:" . $place. "\n";
-	#  print STDERR "I5\n";
-
-	if($above->hitch($place,$below,$words_a,$fh))
+	($above,$intermediate_node,$place) = $above->getHookNode($type,$place,$below_index_set,$fh);
+	#  print STDERR "I4\n";
+	if(defined $above)
 	{
+#	print $fh "above2 ok " . $above->getID . " place:" . $place. "\n";
+	    #  print STDERR "I5\n";
+
+	    if($above->hitch($place,$below,$words_a,$fh))
+	    {
 #	    $above->printRecursively($words_a,$fh);
-	 # print STDERR "I6c\n";
-	    $this->addNodes($added_node_set);
-	#  print STDERR "I7c\n";
+		# print STDERR "I6c\n";
+		$this->addNodes($added_node_set);
+		#  print STDERR "I7c\n";
 
 # XXXX
-	   
-	    $above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a,$fh);
+		
+		$above->searchRoot->hitchMore($this->getNodeSet->searchFreeNodes($words_a),$this,$words_a,$fh);
 
-	  #print STDERR "I8\n";
+		#print STDERR "I8\n";
 
-	    $this->updateRoot;
-	 # print STDERR "I9\n";
-	    return (1,1);
+		$this->updateRoot;
+		# print STDERR "I9\n";
+		return (1,1);
+	    }
 	}
     }
     return (0,0);
@@ -885,7 +892,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

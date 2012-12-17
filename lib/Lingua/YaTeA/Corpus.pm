@@ -2,7 +2,8 @@ package Lingua::YaTeA::Corpus;
 use strict;
 use warnings;
 use Data::Dumper;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 use File::Path;
 use POSIX qw(log10);
 
@@ -14,6 +15,8 @@ use Lingua::YaTeA::DocumentSet;
 use Lingua::YaTeA::SentenceSet;
 use Lingua::YaTeA::WordFromCorpus;
 use Lingua::YaTeA::XMLEntities;
+
+use Encode qw(:fallbacks);;
 
 
 our $VERSION=$Lingua::YaTeA::VERSION;
@@ -77,28 +80,113 @@ sub preLoadLexicon
 } 
 
 
+sub _normalizeInputCorpusLine {
+    my ($this, $block, $language) = @_;
+
+    my $line;
+    my @elems;
+    my @elems_out;
+    my $new_block = "";
+    
+    my @septags;
+
+    if ((defined $language) && ($language eq "FR-Flemm")) {
+	foreach $line (split /\n/, $block) {
+	    $line =~ s/</INF/go;
+	    $line =~ s/>/SUP/go;
+	    $line =~ s/\t:\t/\tCOLUMN\t/go;
+	    
+	    @elems = split /\t/, $line;
+
+# 	    warn "-> $line" . scalar(@elems) . "\n";
+
+
+	    if (scalar(@elems) > 3) {
+		# ambiguity in the pos tagging
+		my @tmp = split /\s\|\|\s/, $elems[2];
+		$elems[2] = shift @tmp;
+		$#elems = 2;
+	    }
+	    if (scalar(@elems)  == 3) {
+		@septags = split /:/, $elems[1];
+		my $tag;
+		if (scalar(@septags) == 2) {
+		    $tag = $septags[1];
+		} elsif (scalar(@septags) == 3) {
+		    $tag = $septags[2];
+		} else {
+		    $tag = $septags[0];
+		}
+                # if the tag is PUN(cit)
+		if ($tag eq "PUN(CIT)") {
+		    $tag = "PUN";
+		}
+                # if the tag is Sp+Da, it is transformed as SpDa
+		$tag =~ s/\+D/D/;
+		# if the word is 'une', the postag is corrected
+		if ($elems[0] eq "une") {
+		    $tag = "Da3fs---";
+		}
+		# if it's a  present participle, the postag is then Vmpp-----
+		if ($tag =~ /Vmpp/) {
+		    $tag = "Vmpp-----";
+		}
+		# if the word is 'l', the postag is corrected
+		if (lc($elems[0]) eq "l") {
+		    $tag = "Da3-s---";
+		}
+		$elems[1] = $tag;
+	    }
+	    if (scalar(@elems)  == 3) {
+		$new_block .= join("\t", @elems) . "\n";
+	    }
+	}
+	return($new_block);
+    } else {
+# 	warn "Language is $language, so nothing to do\n";
+	return($block);
+    }
+}
+
 
 sub read
 {
-    my ($this,$sentence_boundary,$document_boundary,$FS_set,$testified_set,$message_set,$display_language) = @_;
+    my ($this,$sentence_boundary,$document_boundary,$FS_set,$testified_set,$match_type,$message_set,$display_language, $language,$debug_fh) = @_;
     my $num_line = 0;
     my $fh = $this->getFileHandle;
     my $block;
   
-    local $/ = "\.\t". $sentence_boundary ."\t\.\n";
+#    local $/ = "\.\t". $sentence_boundary ."\t\.\n";
     $this->getSentenceSet->addSentence($this->getDocumentSet);
     while (! $fh->eof)
     {
-	$block = $fh->getline;
+	$block = $this->_normalizeInputCorpusLine(Encode::decode("UTF-8", $this->readSentence($fh,$sentence_boundary)), $language);
 	$this->WrapBlock(\$block);
 	$this->MarkForbiddenStructures(\$block,$FS_set);
-	$this->MarkTestifiedTerms(\$block,$testified_set);
+	$this->MarkTestifiedTerms(\$block,$testified_set,$match_type,$debug_fh);
 	$this->UnwrapBlock(\$block);
 	
 	$this->recordWords($block,$sentence_boundary,$document_boundary,\$num_line,$message_set,$display_language);
     }
 }
 
+sub readSentence {
+    my ($this, $fh, $sentence_boundary) = @_;
+
+
+#     warn "in readsentence\n";
+    my $line;
+    my $sentence;
+    if (! $fh->eof)
+    {
+	do {
+	    $line = $fh->getline;
+	    $sentence .= $line;
+	} while ((!$fh->eof) && (index($line, "\t$sentence_boundary\t") == -1));
+# 	warn "sentence: $sentence\n";
+    }
+    return($sentence);
+}
 
 
 
@@ -124,7 +212,7 @@ sub addWordFromCorpus
     my $word;
     chomp $form;
    
-    if($form =~ /[^\t]+\t[^\t]+\t[^\t]/){
+    if($form =~ /^[^\t]*\t[^\t]+\t[^\t]*$/o){
 	$word = Lingua::YaTeA::WordFromCorpus->new($form,$this->getLexicon,$this->getSentenceSet);
     }
     else{
@@ -140,7 +228,7 @@ sub addWordFromCorpus
 	    }
 	    else
 	    {
-		print STDERR $message_set->getMessage('INVALID_TOKEN')->getContent($display_language) . $$num_line . $message_set->getMessage('IN_FILE')->getContent($display_language) . $this->getPath;
+		warn $message_set->getMessage('INVALID_TOKEN')->getContent($display_language) . $$num_line . $message_set->getMessage('IN_FILE')->getContent($display_language) . $this->getPath . " ($form)";
 		die "\n";
 	    }
 	}
@@ -154,7 +242,7 @@ sub incrementCounters
 {
     my ($this,$word,$sentence_boundary,$document_boundary) = @_;
    
-    if(isa($word,'Lingua::YaTeA::WordFromCorpus'))
+    if ((blessed($word)) && ($word->isa('Lingua::YaTeA::WordFromCorpus')))
     {
 	$Lingua::YaTeA::WordFromCorpus::counter++;
 	if ($word->isSentenceBoundary($sentence_boundary))
@@ -168,9 +256,9 @@ sub incrementCounters
 	    if ($word->isDocumentBoundary($document_boundary))
 	    {
 		$this->getDocumentSet->addDocument($word);
-		Lingua::YaTeA::Sentence->resetInDocCounter;
 		Lingua::YaTeA::Sentence->resetStartChar;
 		$this->getSentenceSet->addSentence($this->getDocumentSet);
+		Lingua::YaTeA::Sentence->resetInDocCounter;
 		$word->updateSentence($this->getSentenceSet);
 		$word->updateStartChar;
 		
@@ -193,7 +281,7 @@ sub print
     my $word;
     foreach $word (@{$this->{WORDS}} )
     {
-	if(isa($word,"Lingua::YaTeA::WordFromCorpus"))
+	if ((blessed($word)) && ($word->isa("Lingua::YaTeA::WordFromCorpus")))
 	{
 	    if ($word->isSentenceBoundary($sentence_boundary))
 	    {
@@ -220,29 +308,58 @@ sub print
 
 sub selectTestifiedTerms
 {
-    my ($this,$block,$testified_set) = @_;
-
+    my ($this,$block_r,$testified_set,$match_type) = @_;
+    my @block_lines = split ("\n", $$block_r);
+    my %block_lexicon;
+    my $word;
+    my $testified;
+    my %block_testified_set;
+    foreach $word (@block_lines)
+    {
+	if ($word=~ /^([^\t]+)\t([^\t]+)\t([^\t]+)$/)
+	{
+	    if($match_type ne "strict")
+	    {
+		$block_lexicon{lc($1)}++; # record IF
+		if($match_type eq "loose")
+		{
+		    $block_lexicon{lc($3)}++; # record LF
+		}
+	    }
+	    else
+	    {
+		$block_lexicon{lc($1)."~".$2}++; # record IF + POS
+	    }
+	}	
+    }
+    foreach $testified (values %{$testified_set->getTestifiedTerms})
+    {
+	if($testified->isInLexicon(\%block_lexicon,$match_type) == 1)
+	{
+	    $block_testified_set{$testified->getID} =  $testified;
+	  
+	}
+    }
+    return \%block_testified_set;
 }
+
+
 
 
 sub MarkTestifiedTerms
 {
-    my ($this,$block_r,$testified_set) = @_;
+    my ($this,$block_r,$testified_set,$match_type,$debug_fh) = @_;
     my $testified;
     my $reg_exp;
     my $id = 0;
-    
-    #my $selected_TTs_h = $this->selectTestifiedTerms($block_r);
+  #   print $debug_fh $$block_r . "\n";
+    my $selected_TTs_h = $this->selectTestifiedTerms($block_r,$testified_set,$match_type);
 
-    if(
-	(defined $testified_set)
-	&&
-	($testified_set->size > 0)
-	)
+    if (defined $selected_TTs_h)
     {
-	foreach $testified (values %{$testified_set->getTestifiedTerms})
+	foreach $testified (values %$selected_TTs_h)
 	{
-	   
+#	    print $debug_fh $testified->getIF . "\n";
 	    $reg_exp = $testified->getRegExp;
 	    $$block_r =~ s/($reg_exp)/$this->createAnnotation($1,\$id,$testified)/gei;
 	    $$block_r =~ s/\n\n/\n/g;
@@ -326,50 +443,67 @@ sub chunk
     print STDERR "MAX_LENGTH: " .  $max_length . "\n";
     for ($i = 0; $i <= $this->size; $i++){
 	$word = $this->getWord($i);
+	if ((defined $fh) && (defined $word))
+	{
+	    $word->print($fh);
+	}
+	# if (defined $word) {
+	#     print STDERR "> ($word)";
+	#     $word->print(\*STDERR);
+	# }
 	if(
 	    ($i == $this->size) # last word of the corpus
 	    ||
 	    ($word->isChunkEnd(\$action,\$split_after,$sentence_boundary,$document_boundary,$chunking_data) == 1)
 	    )
 	{
-	    ($valid,$num_content_words,$term_frontiers_h) = $this->cleanChunk(\@words,$chunking_data,$FS_set,$option_set->getCompulsory,$tag_set);
+	    ($valid,$num_content_words,$term_frontiers_h) = $this->cleanChunk(\@words,$chunking_data,$FS_set,$option_set->getCompulsory,$tag_set,$fh);
+	    # print STDERR "====$valid\n";
+	    # foreach my $w (@words) {
+	    # 	$w->print(\*STDERR);
+	    # }
+	    # print STDERR "====\n";
 	    
 	   if ($valid == 1)
 	   {
 	       $phrase_set->recordOccurrence(\@words,$num_content_words,$tag_set,$parsing_pattern_set,$option_set,$term_frontiers_h,$testified_term_set,$this->getLexicon,$this->getSentenceSet,$fh);
 		$Lingua::YaTeA::Corpus::tt_counter = 0;
 	   }
+	   
 	   @words = ();
 	    
 	}
 	else{
 	    push @words, $word;
 	}
-	if(isa($word,'Lingua::YaTeA::WordFromCorpus'))
+
+
+#	warn "ref= " . ref($word) . "\n";
+	if((defined $word) && ((blessed($word)) && ($word->isa('Lingua::YaTeA::WordFromCorpus'))))
 	{
 	    push @clean_corpus,$word;
 	}
     }
+
     $this->{WORDS} = \@clean_corpus;
+
 }
 
 
 sub cleanChunk
 {
-    my ($this,$words_a,$chunking_data,$FS_set,$compulsory,$tag_set) = @_;
+    my ($this,$words_a,$chunking_data,$FS_set,$compulsory,$tag_set,$fh) = @_;
     my $num_content_words;
     my $term_frontiers_h;
     
-
-    if ($this->pruneFromStart($words_a,$chunking_data,$FS_set) == 1)
+    if ($this->pruneFromStart($words_a,$chunking_data,$FS_set,$fh) == 1)
     {
 	
-	if($this->pruneFromEnd($words_a,$chunking_data,$FS_set) == 1)
+	if($this->pruneFromEnd($words_a,$chunking_data,$FS_set,$fh) == 1)
 	{
-	    if($this->checkCompulsory($words_a,$compulsory) == 1)
+	    if($this->checkCompulsory($words_a,$compulsory,$fh) == 1)
 	    {
-		
-		($num_content_words,$term_frontiers_h) = $this->deleteAnnotationMarks($words_a,$tag_set);
+		($num_content_words,$term_frontiers_h) = $this->deleteAnnotationMarks($words_a,$tag_set,$fh);
 		return (1,$num_content_words,$term_frontiers_h);
 	    }
 	    return (0,0);
@@ -382,7 +516,7 @@ sub cleanChunk
 
 sub deleteAnnotationMarks
 {
-    my ($class,$words_a,$tag_set) = @_;
+    my ($class,$words_a,$tag_set,$fh) = @_;
     my $word;
     my @tmp;
     my $content_words = 0;
@@ -391,7 +525,7 @@ sub deleteAnnotationMarks
     my $frontier;
 
     foreach $word (@$words_a){
-	if(isa($word, "Lingua::YaTeA::WordFromCorpus"))
+	if ((blessed($word)) && ($word->isa("Lingua::YaTeA::WordFromCorpus")))
 	{
 	    if ($tag_set->existTag('CANDIDATES',$word->getPOS))
 	    {
@@ -402,19 +536,19 @@ sub deleteAnnotationMarks
 	}
 	else
 	{
-	    if(isa($word, "Lingua::YaTeA::TestifiedTermMark"))
+	    if ((blessed($word)) && ($word->isa("Lingua::YaTeA::TestifiedTermMark")))
 	    {
 		if($word->isOpener)
 		{
 		    $term_frontiers{$word->getID} = $word;
-		    $word->{START} = $index;
+		    $word->{START} = $index; # should use setStart
 		}
 		else
 		{
 		    if($word->isCloser)
 		    {
 			$frontier = $term_frontiers{$word->getID};
-			$frontier->{END} = $index;  
+			$frontier->{END} = $index;   # should use setEnd
 		    }
 		}
 	    }
@@ -430,37 +564,38 @@ sub deleteAnnotationMarks
 
 sub pruneFromStart
 {
-    my ($this,$words_a,$chunking_data,$FS_set) = @_;
+    my ($this,$words_a,$chunking_data,$FS_set,$fh) = @_;
     my $i =0;
     my $word;
     my $potential_FS_a;
     my $inside_testified = 0;
     my %testified_frontiers;
-   
+  
+
     while ($i < scalar @$words_a)
     {
 	$word = $words_a->[$i];
-	
-	if(isa($word,'Lingua::YaTeA::TestifiedTermMark'))
+
+	if ((blessed($word)) && ($word->isa('Lingua::YaTeA::TestifiedTermMark')))
 	{
 	    return 1;
 	}
 	else
 	{
-	    if(isa($word,'Lingua::YaTeA::WordFromCorpus'))
+	    if ((blessed($word)) && ($word->isa('Lingua::YaTeA::WordFromCorpus')))
 	    {
+		
 		if ($word->isCleaningFrontier($chunking_data))
 		{
 		    if(
 			#  ($inside_testified == 0)
 # 		    &&
-# 		    (isa($word,'Lingua::YaTeA::WordFromCorpus'))
+# 		    ($word->isa('Lingua::YaTeA::WordFromCorpus'))
 # 		    && 
 			($potential_FS_a = $word->isStartTrigger($FS_set->getTriggerSet("START")))
 			)
 		    {
-			
-			if(!$this->expandStartTriggers($potential_FS_a,$words_a))
+			if(!$this->expandStartTriggers($potential_FS_a,$words_a,$fh))
 			{
 			    last;
 			}
@@ -470,6 +605,8 @@ sub pruneFromStart
 			last;
 		    }
 		}
+		
+		
 	    }
 	    shift @$words_a; # delete element
 	}
@@ -483,25 +620,25 @@ sub pruneFromStart
 
 sub pruneFromEnd
 {
-    my ($this,$words_a,$chunking_data,$FS_set) = @_;
+    my ($this,$words_a,$chunking_data,$FS_set,$fh) = @_;
     my $i = $#$words_a;
     my $word;
     my $potential_FS_a;
     my $inside_testified = 0;
     my %testified_frontiers;
     my $deleted = 0;
-    
+  
     while ($i >= 0)
     {
 	$word = $words_a->[$i];
 
-	if(isa($word,'Lingua::YaTeA::TestifiedTermMark'))
+	if ((blessed($word)) && ($word->isa('Lingua::YaTeA::TestifiedTermMark')))
 	{
 	    return 1;
 	}
 	else
 	{
-	    if(isa($word,'Lingua::YaTeA::WordFromCorpus'))
+	    if ((blessed($word)) && ($word->isa('Lingua::YaTeA::WordFromCorpus')))
 	    {
 		if ($word->isCleaningFrontier($chunking_data))
 		    
@@ -509,12 +646,12 @@ sub pruneFromEnd
 		    if(
 			($inside_testified == 0)
 			&&
-			(isa($word,'Lingua::YaTeA::WordFromCorpus'))
+			((blessed($word)) && ($word->isa('Lingua::YaTeA::WordFromCorpus')))
 			&& 
 			($potential_FS_a = $word->isEndTrigger($FS_set->getTriggerSet("END")))
 			)
 		    {
-			if(!$this->expandEndTriggers($potential_FS_a,$words_a))
+			if(!$this->expandEndTriggers($potential_FS_a,$words_a,$fh))
 			{
 			    last;
 			}
@@ -537,15 +674,18 @@ sub pruneFromEnd
 		    }
 		}
 	    }
-	    if(isa($word,'Lingua::YaTeA::ForbiddenStructureMark'))
+	    if ((blessed($word)) && ($word->isa('Lingua::YaTeA::ForbiddenStructureMark')))
 	    {
 		my $del = pop @$words_a; # delete element
 		$i--;  
 	    }
-	    if($deleted == 0)
+	    else
 	    {
-		my $del = pop @$words_a; # delete element
-		$i--;
+		if($deleted == 0)
+		{
+		    my $del = pop @$words_a; # delete element
+		    $i--;
+		}
 	    }
 	    $deleted = 0;
 	    
@@ -564,15 +704,15 @@ sub pruneFromEnd
 
 sub checkCompulsory
 {
-    my ($this,$words_a,$compulsory) = @_;
+    my ($this,$words_a,$compulsory,$fh) = @_;
     my $word;
     foreach $word (@$words_a)
     {
-	if (!isa($word,'Lingua::YaTeA::ForbiddenStructureMark'))
+	if (!((blessed($word)) && ($word->isa('Lingua::YaTeA::ForbiddenStructureMark'))))
 	{
 	    
 	    if (
-		(isa($word,'Lingua::YaTeA::TestifiedTermMark'))
+		((blessed($word)) && ($word->isa('Lingua::YaTeA::TestifiedTermMark')))
 		||
 		($word->isCompulsory($compulsory))
 		)
@@ -601,7 +741,7 @@ sub size
 
 sub expandStartTriggers
 {
-    my ($this,$potential_FS_a,$words_a) = @_;
+    my ($this,$potential_FS_a,$words_a,$fh) = @_;
     my $FS;
     my $i;
     my $j;
@@ -621,18 +761,17 @@ sub expandStartTriggers
 	    
 	}	
     }
-
     if(defined $to_delete)
     {
-	while($to_delete != 0)
+	while($to_delete != 1)
 	{
-	    if(isa($words_a->[0],'Lingua::YaTeA::TestifiedTermMark'))
+	    if ((blessed($words_a->[0])) && ($words_a->[0]->isa('Lingua::YaTeA::TestifiedTermMark')))
 	    {
 		return 1;
 	    }
 	    else
 	    {
-		shift @$words_a;
+		my $del = shift @$words_a;
 		$to_delete--;
 	    }
 	}
@@ -644,7 +783,7 @@ sub expandStartTriggers
 
 sub expandEndTriggers
 {
-    my ($this,$potential_FS_a,$words_a) = @_;
+    my ($this,$potential_FS_a,$words_a,$fh) = @_;
     my $FS;
     my $i;
     my $j;
@@ -667,7 +806,7 @@ sub expandEndTriggers
     {
 	while($to_delete != 0)
 	{
-	    if(isa($words_a->[$#$words_a],'Lingua::YaTeA::TestifiedTermMark'))
+	    if ((blessed($words_a->[$#$words_a])) && ($words_a->[$#$words_a]->isa('Lingua::YaTeA::TestifiedTermMark')))
 	    {
 		return 1;
 	    }
@@ -698,8 +837,9 @@ sub getFileHandle
 {
     my ($this) = @_;
     my $path = $this->getPath;
-    print STDERR "corpus :" . $path . "\n";
+#    print STDERR "corpus :" . $path . "\n";
     my $fh = FileHandle->new("<$path");
+#    binmode($fh, ":utf8");
     return $fh;
 }
 
@@ -758,10 +898,13 @@ sub setOutputFiles
 	'TT-for-BioLG'=>'xml:TTforBioLG.xml',
 	'TC-for-BioLG'=>'xml:TCforBioLG.xml',
 	'termList'=>'raw:termList.txt',
+	'termAndHeadList'=>'raw:termAndHeadList.txt',
 	'printChunking'=>'html:candidatesAndUnparsedInCorpus.html',
 	'debug'=>'raw:debug,unparsable,unparsed',
 	'TTG-style-term-candidates' => 'raw:termCandidates.ttg',
-	'XML-corpus-for-BioLG' => 'xml:corpusForBioLG.xml'
+	'XML-corpus-for-BioLG' => 'xml:corpusForBioLG.xml',
+	'bootstrap' => 'raw:parsedTerms.txt',
+        'XML-corpus-raw' => 'xml:corpusRaw.xml',
 	);
     
     $output_path = $option_set->getOutputPath ."/". $this->getName . "/" . $option_set->getSuffix;
@@ -769,12 +912,13 @@ sub setOutputFiles
     if(-d $output_path)
     {
 	print STDERR $message_set->getMessage('OVER_WRITE_REP')->getContent($option_set->getDisplayLanguage) . $output_path . "/\n";
+	rmtree $output_path;
     }
-    else
-    {
+#     else
+#     {
 	mkpath $output_path;
 	print STDERR $message_set->getMessage('CREATE_REP')->getContent($option_set->getDisplayLanguage) . $output_path . "/\n";
-    }
+#     }
     $this->{OUTPUT} = Lingua::YaTeA::FileSet->new($this->getName);
   
     while (($option,$file_info) = each (%match_to_option))
@@ -924,6 +1068,7 @@ sub printXMLcorpus
     my $occurrence_set;
     
     my $fh = FileHandle->new(">" . $output_file_path);
+    binmode($fh, ":utf8");
     $this->printXMLheader($fh);
  
     for ($i=0; $i < scalar @{$this->getWords}; $i++)
@@ -1014,23 +1159,17 @@ sub printXMLcorpus
     $this->printXMLtrailer($fh);
 }
 
-
-
-
 sub printXMLheader
 {
     my ($this,$fh) = @_;
-    print $fh
-    "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n<sentences><sentence>";	
+    print $fh "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sentences><sentence>";	
 }
 
 sub printXMLtrailer
 {
     my ($this,$fh) = @_;
-    print $fh
-    "\n</sentences>\n";	
+    print $fh "\n</sentences>\n";	
 }
-
 
 sub loadLGPmappingFile
 {
@@ -1053,14 +1192,28 @@ sub loadLGPmappingFile
 
 sub printCandidatesAndUnparsedInCorpus
 {
-    my ($this,$term_candidates_h,$unparsable_a,$file,$sentence_boundary,$document_boundary,$color_blind_option) = @_;
+    my ($this,$term_candidates_h,$unparsable_a,$file,$sentence_boundary,$document_boundary,$color_blind_option, $parsed_color, $unparsed_color) = @_;
     my %ids_for_parsed;
     
-    my $fh = FileHandle->new(">".$file->getPath);
+#    my $fh = FileHandle->new(">".$file->getPath);
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+
+
     $this->printHTMLheader($fh);
     my $occurrences_h = $this->orderOccurrences($term_candidates_h,$unparsable_a,\%ids_for_parsed);
  
-    $this->printHTMLCorpus($occurrences_h,\%ids_for_parsed,$fh,$sentence_boundary,$document_boundary,$color_blind_option);
+    $this->printHTMLCorpus($occurrences_h,\%ids_for_parsed,$fh,$sentence_boundary,$document_boundary,$color_blind_option, $parsed_color, $unparsed_color);
     $this->printHTMLtrailer($fh);
 }
 
@@ -1079,10 +1232,84 @@ sub printHTMLtrailer
     "</body></html>";	
 }
 
+sub printXMLRawCorpus
+{
+    my ($this,$file,$sentence_boundary,$document_boundary) = @_;
+    my $sentence_id;
+    my $document_id;
+    my $document_name;
+    my $word;
+    my $first_sentence = 1;
+    my $in_doc = 0;
+    my $string;
+    my $last_word;
+    my $fh = FileHandle->new(">".$file->getPath);
+    binmode($fh,":utf8");
+    $this->printXMLheader($fh);
+    print $fh " <documentCollection>\n";
+    foreach $word (@{$this->getWords})
+    {
+	if($word->isDocumentBoundary($document_boundary)) # new document is started
+	{
+	    if($in_doc == 1)
+	    {
+		if(!$last_word->isSentenceBoundary($sentence_boundary)) # last word of document is not a sentence boundary
+		{
+		    $string =~ s/ $//;
+		    Lingua::YaTeA::XMLEntities::encode($string);
+		    print $fh "   <sentence id=\"" . $word->getSentence->getID . "\" inDocID=\"" . $word->getSentence->getInDocID . "\">" .  $string . "</sentence>\n";
+		    $string = "";
+		}
+		print $fh "  </document>\n";
+	    }
+	    print $fh "  <document id=\"" . $word->getDocument->getID . "\"";
+	    if($word->getDocument->getName ne 'no_name')
+	    {
+		print $fh " name=\"". $word->getDocument->getName . "\"";
+	    }
+	    print $fh ">\n";
+	    $in_doc = 1 ;
+	}
+	else
+	{
+	    # rebuild the sentence from occurrences of words from the corpus
+	    $string .= $word->getIF . " ";
+	    $last_word = $word;
+	    if($in_doc == 0) # if no explicit marker of document boundary in the input document
+	    {
+		print $fh "  <document id=\"" . $word->getDocument->getID . "\"";
+		if($word->getDocument->getName ne 'no_name')
+		{
+		    print $fh " name=\"". $word->getDocument->getName . "\"";
+		}
+		print $fh ">\n";
+		$in_doc = 1;
+	    }
+	    if (
+		($word->isSentenceBoundary($sentence_boundary)) # new sentence is started
+		||
+		($word == $this->getWords->[$#{$this->getWords}]) # last word of the corpus (no final dot)
+		)
+	    {
+		$string =~ s/ $//;
+		Lingua::YaTeA::XMLEntities::encode($string);
+		print $fh "   <sentence id=\"" . $word->getSentence->getID . "\" inDocID=\"" . $word->getSentence->getInDocID . "\">" .  $string . "</sentence>\n";
+		$string = "";
+		if($word == $this->getWords->[$#{$this->getWords}])
+		{
+		    print $fh "  </document>\n";
+		}
+	    }
+	}
+
+    }
+    print $fh " </documentCollection>\n";
+}
+
 
 sub printHTMLCorpus
 {
-    my ($this,$parsed_occurrences_h,$ids_for_parsed_h,$fh,$sentence_boundary,$document_boundary,$color_blind_option) = @_;
+    my ($this,$parsed_occurrences_h,$ids_for_parsed_h,$fh,$sentence_boundary,$document_boundary,$color_blind_option, $parsed_color, $unparsed_color) = @_;
     my $sentence_id;
     my $document_id;
     my $document_name;
@@ -1126,7 +1353,7 @@ sub printHTMLCorpus
 		# mark term candidates on the rebuilt sentence
 		foreach $occurrence (@$local_occurrences_a)
 		{
-		    $color = $this->setColor($occurrence->getID,$ids_for_parsed_h,$color_blind_option);
+		    $color = $this->setColor($occurrence->getID,$ids_for_parsed_h,$color_blind_option, $parsed_color, $unparsed_color);
 		    if(!defined $offset)
 		    {
 			die;
@@ -1155,29 +1382,45 @@ sub printHTMLCorpus
 
 sub setColor
 {
-    my ($this,$occurrence_id,$ids_for_parsed_h,$color_blind_option) = @_;
+    my ($this,$occurrence_id,$ids_for_parsed_h,$color_blind_option, $parsed_color, $unparsed_color) = @_;
     my $color;
     
     if(exists $ids_for_parsed_h->{$occurrence_id})
     {
 	if($color_blind_option->getValue eq 'yes')
 	{
-	    $color = "FF0099";
+	    if (defined $parsed_color) {
+		$color = $parsed_color->getValue;
+	    } else {
+		$color = "FF0099";
+	    }
 	}
 	else
 	{
-	    $color = "CC0066";
+	    if (defined $parsed_color) {
+		$color = $parsed_color->getValue;
+	    } else {
+		$color = "CC0066";
+	    }
 	}
     }
     else
     {
 	if($color_blind_option->getValue eq 'yes')
 	{
-	    $color = "0000CC";
+	    if (defined $unparsed_color) {
+		$color = $unparsed_color->getValue;
+	    } else {
+		$color = "0000CC";
+	    }
 	} 
 	else
 	{
-	    $color = "3366CC";
+	    if (defined $unparsed_color) {
+		$color = $unparsed_color->getValue;
+	    } else {
+		$color = "3366CC";
+	    }
 	}
     }
     return $color;
@@ -1203,7 +1446,7 @@ sub orderOccurrencesForXML
 	{
 	    # only the occurrences covering an entire phrase are selected
 	    if(
-		(isa($term,'Lingua::YaTeA::TestifiedTerm'))
+		((blessed($term)) && ($term->isa('Lingua::YaTeA::TestifiedTerm')))
 		||
 		($occurrence->isMaximal)
 		)
@@ -1270,6 +1513,23 @@ sub getWords
     return $this->{WORDS};
 }
 
+sub selectOnTermListStyle {
+    my ($this, $term_candidates_h,$term_list_style,$debug_fh) = @_;
+
+    my $tc;
+    # warn "selectOnTermListStyle ($term_list_style)\n";
+    foreach $tc (values (%$term_candidates_h))
+    {
+	# warn $tc->getIF . "\n";
+	# warn ($tc->isa('Lingua::YaTeA::MultiWordTermCandidate') * 1) . "\n";
+	if (($term_list_style ne "") && ($term_list_style ne "all") &&
+	    (($term_list_style ne "multi") || ((blessed($tc)) && ($tc->isa('Lingua::YaTeA::MultiWordTermCandidate') != 1)))) {
+		$tc->setTermStatus(0);
+	}
+	# warn "" . (1 * $tc->getTermStatus) . "\n";
+	# warn "  " . ($tc->isTerm * 1) . "\n";
+    }    
+}
 
 sub makeDDW
 {
@@ -1283,32 +1543,30 @@ sub makeDDW
     my $tc;
     my $occ;
 
+
     foreach $tc (values (%$term_candidates_h))
     {
 	%docs_for_this_tc  = ();
-#	print $fh $tc->getIF . "\n";
 	foreach $occ (@{$tc->getOccurrences})
 	{	    
 	    $docs_for_this_tc{$occ->getDocument->getID}++;
-#	    print $fh "\tdoc: ". $occ->getDocument->getID . "\n";
 	    $total_occ++;
 	}
 	$doc_by_tc{$tc->getKey} = scalar keys(%docs_for_this_tc);
-#	print $fh "\ttot doic :" . $doc_by_tc{$tc->getKey} . "\n";
     }
-    $mean_occ = $total_occ / scalar keys %$term_candidates_h;
+    if (scalar(keys(%$term_candidates_h)) > 0) {
+	$mean_occ = $total_occ / scalar keys %$term_candidates_h;
+    } else {
+	$mean_occ = 0;
+    }
     foreach $tc (values (%$term_candidates_h))
     {
-#	print $fh $tc->getIF . ": (" .  $tc->getOccurrencesNumber . "/" . $mean_occ . ") log (" . $total_doc . "/" . $doc_by_tc{$tc->getKey} . ")\n";
-	
 	##### mesure 'descriptor discriminating weight' présenté dans 'Building back-of-the-book indexes', Nazarenko, Aït El Mekki (2005)
 	##### PROBLEME: vaut 0 a chaque fois qu'il n'y a qu'un document dans le corpus (log10 de 1/1 vaut 0)
-	$tc_weight =  ($tc->getOccurrencesNumber/$mean_occ) * log10 ($total_doc/$doc_by_tc{$tc->getKey});
+	$tc_weight =  ($tc->getFrequency/$mean_occ) * log10 ($total_doc/$doc_by_tc{$tc->getKey});
 	$tc->setWeight($tc_weight);
     }
 }
-
-
 
 sub processTotalDocOccurrences
 {
@@ -1504,7 +1762,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

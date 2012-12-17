@@ -25,9 +25,13 @@ sub new
 sub setLF
 {
     my ($this,$LF,$IF) = @_;
-    if ($LF =~ /(\<unknown\>)|(\@card@)/){ # si le lemme est inconnu du tagger (TTG) : lemme = forme flechie
-	return $IF;               
-    } 
+    if (defined $LF) { 
+	if ($LF =~ /(\<unknown\>)|(\@card@)/){ # si le lemme est inconnu du tagger (TTG) : lemme = forme flechie
+	    return $IF;               
+	} 
+    } else {
+	$LF = "";
+    }
     return $LF;
 } 
 
@@ -124,56 +128,107 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::LexiconItem - Perl extension for ???
+Lingua::YaTeA::LexiconItem - Perl extension for representing word
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::LexiconItem;
-  Lingua::YaTeA::LexiconItem->();
+  Lingua::YaTeA::LexiconItem->($form);
 
 =head1 DESCRIPTION
 
+The module implements the representation of the word occuring in the
+lexicon of corpus. The word is described with its inflected form
+(field C<$IF>), its Part-of-Speech tag (field C<POS>), it lemmatised
+form (field C<LF>), the size in characters (field C<LENGTH>), its
+frequency in the corpus (field C<FREQUENCY>).
 
 =head1 METHODS
 
 =head2 new()
 
+    new($form);
+
+The method creates a new lexicon item from the form C<$form>(the
+concatenation of the inflected form, the Part-of-Speech tag, and the
+lemmatised form).
 
 =head2 setLF()
 
+    setLF($LF,$IF);
+
+The method set the field C<LF> (lemmatised form). If the C<$LF> is
+equal to C<unknown> or C<@card@> (some default lemma from TreeTagger),
+the inflected form is considered as the lemmatised form.
 
 =head2 setLength()
 
+    setLength();
+
+The method computes the size in characters of the inflected form.
 
 =head2 incrementFrequency()
 
+    incrementFrequency();
+
+The method increments the frequency of the lexicon item.
 
 =head2 getID()
 
+    getID();
+
+The method returns the identifier of the lexicon item.
 
 =head2 getIF()
 
+    getIF();
+
+The method returns the inflected form of the lexicon item.
 
 =head2 getPOS()
 
+    getPOS();
+
+The method returns the Part-of-Speech of the lexicon item.
 
 =head2 getLF()
 
+    getLF();
+
+The method returns the lemmatised form of the lexicon item.
 
 =head2 getLength()
 
+    getLength();
+
+The method returns the size, in characters, of the inflected form of
+the lexicon item.
 
 =head2 getFrequency()
 
+    getFrequency()
+
+The method returns the frequency of the lexicon item.
 
 =head2 getAny()
 
+    getAny($field);
+
+The method returns the value of the field C<$field>.
 
 =head2 isCleaningFrontier()
 
+    isCleaningFrontier($chunking_data);
+
+The method indicates if the lexicon item apprears in one of the
+cleaning frontier C<$chunking_data>.
 
 =head2 isCleaningException()
 
+    isCleaningException($chunking_data);
+
+The method indicates if the lexicon item apprears in one of the
+cleaning exception C<$chunking_data>.
 
 
 =head1 SEE ALSO
@@ -187,7 +242,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

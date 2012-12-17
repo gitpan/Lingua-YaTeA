@@ -8,9 +8,9 @@ use strict;
 use warnings;
 
 # change 'tests => 1' to 'tests => last_test_to_print';
-use Test::More tests => 2;
+use Test::More tests => 4;
 
-BEGIN { use_ok('Lingua::YaTeA') }
+BEGIN { use_ok('Lingua::YaTeA') ; use_ok('Config::General') ;}
 
 #########################
 
@@ -18,8 +18,12 @@ BEGIN { use_ok('Lingua::YaTeA') }
 # its man page ( perldoc Test::More ) for help writing this test script.
 
 # Instantiation of abstract subclass
-my $factory;
-eval { use Lingua::YaTeA; };
-ok(defined 1);
 
+# eval { use Lingua::YaTeA; use Config::General; use Lingua::YaTeA::Corpus; };
+# ok(defined 1);
 
+my %config = Lingua::YaTeA::load_config("t/yatea/yatea.rc");
+ok( (scalar(keys(%config)) > 0), 'Config loading works');
+
+my $yatea = Lingua::YaTeA->new($config{"OPTIONS"}, \%config);
+ok( defined($yatea) && ref($yatea) eq 'Lingua::YaTeA', 'new() works');

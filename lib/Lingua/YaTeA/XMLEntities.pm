@@ -8,11 +8,13 @@ our $VERSION=$Lingua::YaTeA::VERSION;
 
 sub encode
 {
-    $_[0]=~s/&/&amp;/g;
-    $_[0]=~s/\"/&quot;/g;
-    $_[0]=~s/\'/&apos;/g;
-    $_[0]=~s/</&lt;/g;
-    $_[0]=~s/>/&gt;/g;
+    $_[0]=~s/&/&amp;/go;
+    $_[0]=~s/\"/&quot;/go;
+    $_[0]=~s/\'/&apos;/go;
+    $_[0]=~s/</&lt;/go;
+    $_[0]=~s/>/&gt;/go;
+
+    return($_[0]);
 }
 
 
@@ -25,11 +27,13 @@ This method decodes XML entities corresponding to special XML characters in the 
 
 sub decode
 {
-    $_[0]=~s/&quot;/\"/g;
-    $_[0]=~s/&apos;/\'/g;
-    $_[0]=~s/&amp;/&/g;
-    $_[0]=~s/&lt;/</g;
-    $_[0]=~s/&gt;/>/g;
+    $_[0]=~s/&quot;/\"/go;
+    $_[0]=~s/&apos;/\'/go;
+    $_[0]=~s/&amp;/&/go;
+    $_[0]=~s/&lt;/</go;
+    $_[0]=~s/&gt;/>/go;
+
+    return($_[0]);
 }
 
 1;
@@ -38,8 +42,7 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::XMLEntities - Perl extension for managing characters which can not be used in a  XML
-document
+Lingua::YaTeA::XMLEntities - Perl extension for managing characters which can not be used in a XML document
 
 =head1 SYNOPSIS
 
@@ -47,7 +50,6 @@ document
 use Lingua::YaTeA::XMLEntities;
 
 Lingua::YaTeA::XMLEntities::decode($line);
-
 
 Lingua::YaTeA::XMLEntities::eecode($line);
 
@@ -62,29 +64,24 @@ This module is used to encode or decode special XML characters
 
 This method encodes special XML characters as XML entities in the line C<$line>.
 
-
-=cut
-
-
 =head1 SEE ALSO
 
-C<Alvis::NLPPlatform>
+Sophie Aubin and Thierry Hamon. Improving Term Extraction with
+Terminological Resources. In Advances in Natural Language Processing
+(5th International Conference on NLP, FinTAL 2006). pages
+380-387. Tapio Salakoski, Filip Ginter, Sampo Pyysalo, Tapio Pahikkala
+(Eds). August 2006. LNAI 4139.
 
-Alvis web site: http://www.alvis.info
+=head1 AUTHOR
 
-=head1 AUTHORS
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
-Guillaume Vauvert <guillaume.vauvert@lipn.univ-paris13.fr>
+=head1 COPYRIGHT AND LICENSE
 
-Currently maintained by Julien Deriviere <julien.deriviere@lipn.univ-paris13.fr> and Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr>
+Copyright (C) 2005 by Thierry Hamon and Sophie Aubin
 
-=head1 LICENSE
-
-Copyright (C) 2004 by Guillaume Vauvert, Thierry Hamon and Julien Deriviere
-
-This program is free software; you can redistribute it and/or modify
+This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.6 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
-

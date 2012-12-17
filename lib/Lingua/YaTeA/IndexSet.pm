@@ -1,7 +1,8 @@
 package Lingua::YaTeA::IndexSet;
 use strict;
 use warnings;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -81,9 +82,8 @@ sub searchSubIndexesSet
     for ($i = 1; $i <= $max; $i++)
     {
 	$sub_index = $this->searchSubIndexes($i,$words_a,$this->getSize,$chunking_data,$tag_set);
-	if(isa($sub_index,'Lingua::YaTeA::IndexSet')){ # the substring is valid
+	if ((blessed($sub_index)) && ($sub_index->isa('Lingua::YaTeA::IndexSet'))) { # the substring is valid
 	    push @sub_indexes_set, $sub_index;
-	    
 	}
     }
    
@@ -422,7 +422,7 @@ sub testSyntacticBreakAndRepetition
 	{
 	    while(($j+1) < $this->getIndex($i))
 	    {
-		if($tag_set->existTag('PREPOSITIONS',$words_a->[($j+1)]->getLF))
+		if($tag_set->existTag('PREPOSITIONS',$words_a->[($j+1)]->getIF)) # XXX TH 07/01/2008
 		{
 		    return;
 		}
@@ -463,7 +463,7 @@ sub testSyntacticBreak
 	{
 	    while(($j+1) < $this->getIndex($i))
 	    {
-		if($tag_set->existTag('PREPOSITIONS',$words_a->[($j+1)]->getLF))
+		if($tag_set->existTag('PREPOSITIONS',$words_a->[($j+1)]->getIF)) # XXX TH 07/01/2008
 		{
 		    return;
 		}
@@ -508,7 +508,7 @@ sub buildPOSSequence
     my $index;
     foreach $index (@{$this->getIndexes})
     {
-	if ($tag_set->existTag('PREPOSITIONS',$words_a->[$index]->getLF))
+	if ($tag_set->existTag('PREPOSITIONS',$words_a->[$index]->getIF)) # XXX TH 07/01/2008
 	{
 	    $POS .= $words_a->[$index]->getLF . " ";
 	}
@@ -721,7 +721,7 @@ sub simplifyByCurrent
 	}
 	# hack from TH
 	my $head = $node_set->getRoot->searchHead(0);
-	if(defined $head) {
+	if((ref($head) ne "SCALAR") && (defined $head)) {
 	    if ($index_partial == $head->getIndex)
 	    {
 		push  @$simplified_a, $index_partial;
@@ -1308,7 +1308,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

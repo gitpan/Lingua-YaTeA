@@ -2,6 +2,7 @@ package Lingua::YaTeA::DocumentSet;
 use strict;
 use warnings;
 use Lingua::YaTeA::Document;
+use Lingua::YaTeA::WordFromCorpus;
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -61,29 +62,56 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::DocumentSet - Perl extension for ???
+Lingua::YaTeA::DocumentSet - Perl extension for document set
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::DocumentSet;
-  Lingua::YaTeA::DocumentSet->();
+  Lingua::YaTeA::DocumentSet->new();
 
 =head1 DESCRIPTION
 
+The module implements the document set. Documents are stored in an
+array (the attribut C<DOCUMENT> is a reference to this array).
 
 =head1 METHODS
 
 =head2 new()
 
+The method creates a set of documents and returns it.
+
+=head2 getDocuments()
+
+    getDocuments();
+
+The method returns the set of document as a reference to an array.
+
 
 =head2 addDefaultDocument()
 
+    addDefaultDocument();
+
+The method initiates a new document with an empty word.
 
 =head2 addDocument()
 
+    addDocument($word);
+
+The method adds a word to the current document.
 
 =head2 getCurrent()
 
+    getCurrent();
+
+The method returns the current document (i.e. the last document).
+
+
+=head2 getDocumentNumber()
+
+    getDocumentNumber();
+
+The method returns the size of the document set (i.e. the number of
+documents in the set).
 
 
 =head1 SEE ALSO
@@ -97,7 +125,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

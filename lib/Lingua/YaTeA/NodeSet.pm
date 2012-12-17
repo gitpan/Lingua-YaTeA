@@ -1,7 +1,10 @@
 package Lingua::YaTeA::NodeSet;
-use UNIVERSAL qw(isa);
+
 use strict;
 use warnings;
+
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -37,7 +40,7 @@ sub setRoot
     my $node;
     foreach $node (@{$this->getNodes})
     {
-	if(isa($node,'Lingua::YaTeA::RootNode'))
+	if ((blessed($node)) && ($node->isa('Lingua::YaTeA::RootNode')))
 	{
 	    $this->{ROOT_NODE} =  $node;
 	    return;
@@ -84,7 +87,7 @@ sub updateRoot
 	     ||
 	     (!exists $nodes_id{$this->getRoot->getID})
 	     ||
-	     (!isa($this->getRoot,'Lingua::YaTeA::RootNode'))
+	     ((blessed($this->getRoot)) && (!$this->getRoot->isa('Lingua::YaTeA::RootNode')))
 	    )
 	{
 	    
@@ -100,8 +103,9 @@ sub copy
     my ($this) = @_;
     my $new_set = Lingua::YaTeA::NodeSet->new;
     my $node = $this->getRoot;
+    my $depth = 0;
 
-    $node->copyRecursively($new_set);
+    $node->copyRecursively($new_set, $depth);
     $this->addFreeNodes($new_set);
     return $new_set;
 }
@@ -114,8 +118,7 @@ sub addFreeNodes
     foreach $node (@{$this->getNodes})
     {
 	
-	if(
-	    (isa($node,'Lingua::YaTeA::RootNode'))
+	if ((blessed($node)) && ($node->isa('Lingua::YaTeA::RootNode'))
 	    &&
 	    ($node ne $this->getRoot)
 	    )
@@ -155,9 +158,7 @@ sub searchFreeNodes
   foreach $node (@{$this->getNodes})
   {
   #  print STDERR "sFN2\n";
-      if(
-	  (isa($node,'Lingua::YaTeA::RootNode'))
-	  )
+      if((blessed($node)) && ($node->isa('Lingua::YaTeA::RootNode')))
       {
 	  push @free_nodes, $node;	  
       }
@@ -180,10 +181,10 @@ sub removeNodes{
     {
 	if($node->getID == $root_node->getID)
 	{
-	    if(isa($node,'Lingua::YaTeA::InternalNode'))
+	    if ((blessed($node)) && ($node->isa('Lingua::YaTeA::InternalNode')))
 	    {
 		if(
-		    (isa ($node->getFather->getLeftEdge,'Lingua::YaTeA::InternalNode' )
+		    (blessed($node->getFather->getLeftEdge)) && ($node->getFather->getLeftEdge->isa('Lingua::YaTeA::InternalNode' )
 		     &&
 		     ($node->getFather->getLeftEdge->getID == $node->getID)
 		    )
@@ -195,7 +196,7 @@ sub removeNodes{
 		else
 		{
 		    if(
-			(isa ($node->getFather->getRightEdge,'Lingua::YaTeA::InternalNode' )
+			(blessed($node->getFather->getRightEdge)) && ($node->getFather->getRightEdge->isa('Lingua::YaTeA::InternalNode' )
 			 &&
 			 ($node->getFather->getRightEdge->getID == $node->getID)
 			)
@@ -206,7 +207,7 @@ sub removeNodes{
 		    }
 		}
 	    }
-	    if(isa($node->getLeftEdge,'Lingua::YaTeA::Node'))
+	    if ((blessed($node->getLeftEdge)) && ($node->getLeftEdge->isa('Lingua::YaTeA::Node')))
 	    {
 #		print $fh "rebless left:" . $node->getLeftEdge->getID . "\n";
 		undef $node->getLeftEdge->{FATHER};
@@ -219,7 +220,7 @@ sub removeNodes{
 		$node->{LEFT_EDGE} = $node->getLeftEdge->searchHead(0);
 		
 	    }
-	    if(isa($node->getRightEdge,'Lingua::YaTeA::Node'))
+	    if ((blessed($node->getRightEdge)) && ($node->getRightEdge->isa('Lingua::YaTeA::Node')))
 	    {
 #		print $fh "rebless right:" . $node->getRightEdge->getID . "\n";
 		undef $node->getRightEdge->{FATHER};
@@ -282,7 +283,7 @@ sub hitchMore
 		    }
 		}
 	
-		if(isa($hook_node,'Lingua::YaTeA::Node'))
+		if ((blessed($hook_node)) && ($hook_node->isa('Lingua::YaTeA::Node')))
 		{
 		    if($hook_node->hitch($hook_place,$added_node_set->getRoot,$words_a))
 		    {
@@ -310,11 +311,11 @@ sub findHierarchy
     foreach $node (@{$this->getNodes})
     {
 	$depth = 0;
-	if(isa($node,'Lingua::YaTeA::RootNode'))
+	if ((blessed($node)) && ($node->isa('Lingua::YaTeA::RootNode')))
 	{
 	    ($pivot_node,$pivot_place) = $node->searchLeaf($pivot,\$depth);
 	    
-	    if(isa($pivot_node,'Lingua::YaTeA::Node'))
+	    if ((blessed($pivot_node)) && ($pivot_node->isa('Lingua::YaTeA::Node')))
 	    {
 		$left_most = $node->searchLeftMostLeaf;
 		$depth = 0;
@@ -422,7 +423,7 @@ sub getNodeWithPivot
     foreach $node (@{$this->getNodes})
     {
 	if (
-	    (isa($node->getLeftEdge,'Lingua::YaTeA::TermLeaf'))
+	    (blessed($node->getLeftEdge)) && ($node->getLeftEdge->isa('Lingua::YaTeA::TermLeaf'))
 	    &&
 	    ($node->getLeftEdge->getIndex == $pivot)
 	    )
@@ -432,7 +433,7 @@ sub getNodeWithPivot
 	}
 
 	if (
-	    (isa($node->getRightEdge,'Lingua::YaTeA::TermLeaf'))
+	    (blessed($node->getRightEdge)) && ($node->getRightEdge->isa('Lingua::YaTeA::TermLeaf'))
 	    &&
 	    ($node->getRightEdge->getIndex == $pivot)
 	    )
@@ -568,7 +569,7 @@ sub fillIndexSet
     
     foreach $node (@{$this->getNodes})
     {
-	if(isa($node,'Lingua::YaTeA::RootNode'))
+	if ((blessed($node)) && ($node->isa('Lingua::YaTeA::RootNode')))
 	{
 	    $node->fillIndexSet($index_set);
 	}
@@ -581,11 +582,15 @@ sub searchHeads
     my ($this,$words_a) = @_;
     my %heads;
     my $root;
+    my $root_head;
     my $free_nodes_a = $this->searchFreeNodes($words_a);
 
     foreach $root (@$free_nodes_a)
     {
-	$heads{$root->searchHead(0)->getIndex}++;
+	$root_head = $root->searchHead(0);
+	if ((defined $root_head)&&((blessed($root_head)) && ($root_head->isa('Lingua::YaTeA::TermLeaf')))) {
+	    $heads{$root_head->getIndex}++;
+	}
     }
     return \%heads;
 }
@@ -688,7 +693,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

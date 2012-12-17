@@ -10,17 +10,15 @@
 package Lingua::YaTeA::ParsingPatternParser;
 use vars qw ( @ISA );
 use strict;
-use warnings;
 
 @ISA= qw ( Parse::Yapp::Driver );
 use Parse::Yapp::Driver;
-
-our $VERSION=$Lingua::YaTeA::VERSION;
 
 #line 12 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 
     use Lingua::YaTeA;
 #     use Data::Dumper;
+    use warnings;
 
     my $node_set;
     my $level = 0;
@@ -361,20 +359,20 @@ sub new {
 	[#Rule 2
 		 'input', 2,
 sub
-#line 33 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 34 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { # print STDERR "INPUT $_[1] \n";
 		      }
 	],
 	[#Rule 3
 		 'line', 1,
 sub
-#line 37 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 38 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[1] }
 	],
 	[#Rule 4
 		 'line', 2,
 sub
-#line 38 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 39 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { 
 # 	     print STDERR "=>$_[1]\n";
 
@@ -402,13 +400,13 @@ sub
 	[#Rule 5
 		 'line', 2,
 sub
-#line 61 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 62 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 6
 		 '@1-0', 0,
 sub
-#line 64 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 65 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { # print STDERR "START\n";
 
 		  $node_set = Lingua::YaTeA::NodeSet->new;
@@ -421,7 +419,7 @@ sub
 	[#Rule 8
 		 'parsingpattern', 2,
 sub
-#line 69 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 70 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 9
@@ -442,13 +440,13 @@ sub
 	[#Rule 14
 		 'pattern', 2,
 sub
-#line 78 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 79 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 15
 		 'OPEN', 1,
 sub
-#line 81 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 82 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "OPEN $_[1]\n";
 
 		if ($level == 0)
@@ -468,13 +466,13 @@ sub
 	[#Rule 16
 		 'OPEN', 2,
 sub
-#line 96 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 97 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 17
 		 'CANDIDATE', 2,
 sub
-#line 99 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 100 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {
 #                print STDERR "CANDIDATE $_[1] $_[2]\n";
 
@@ -492,13 +490,13 @@ sub
 	[#Rule 19
 		 'CANDIDATE', 2,
 sub
-#line 110 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 111 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 20
 		 'PREP', 1,
 sub
-#line 113 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 114 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "PREP $_[1]\n";
 		$node->{"PREP"} = $_[1]; 
 		push @pos_sequence, $_[1];
@@ -508,13 +506,13 @@ sub
 	[#Rule 21
 		 'PREP', 2,
 sub
-#line 118 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 119 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 22
 		 'DET', 1,
 sub
-#line 122 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 123 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "DET $_[1]\n";
 	      $node->{"DET"} = $_[1]; 
 	      push @pos_sequence, $_[1]; 
@@ -524,13 +522,13 @@ sub
 	[#Rule 23
 		 'DET', 2,
 sub
-#line 127 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 128 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 24
 		 'CLOSE', 1,
 sub
-#line 130 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 131 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "CLOSE_TAG $_[1]\n";
 		  pop @uncomplete;
 		  $node->linkToFather(\@uncomplete,$_[1]);
@@ -542,13 +540,13 @@ sub
 	[#Rule 25
 		 'CLOSE', 2,
 sub
-#line 137 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 138 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 26
 		 'END', 1,
 sub
-#line 140 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 141 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "END $_[1]\n"; 
 	      push @parse, $_[1];
 	      $_[1];
@@ -557,13 +555,13 @@ sub
 	[#Rule 27
 		 'END', 2,
 sub
-#line 144 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 145 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 28
 		 'priority', 1,
 sub
-#line 146 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 147 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "PRIORITY\n";
 			$priority = $_[1];
 		    }
@@ -571,13 +569,13 @@ sub
 	[#Rule 29
 		 'priority', 2,
 sub
-#line 149 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 150 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	],
 	[#Rule 30
 		 'direction', 1,
 sub
-#line 152 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 153 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 {# print STDERR "DIRECTION $_[1]\n";
 			  $direction = $_[1];
 		      }
@@ -585,7 +583,7 @@ sub
 	[#Rule 31
 		 'direction', 2,
 sub
-#line 155 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 156 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 { $_[0]->YYErrok }
 	]
 ],
@@ -593,7 +591,7 @@ sub
     bless($self,$class);
 }
 
-#line 158 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
+#line 159 "lib/Lingua/YaTeA/ParsingPatternParser.yp"
 
 
 
@@ -681,17 +679,28 @@ Lingua::YaTeA::ParsingPatternParser - Perl extension for parsing the file contai
 
 =head1 DESCRIPTION
 
+The module implements a parser for analysing parsing pattern file.  
+
+The parser takes into account several information: the file handler to
+read (field C<FH>), the list of the possible Part-of-Speech tags
+(field C<CANDIDATES>), the list of prepositions (field
+C<PREPOSITIONS>), and the list of determiners (field C<DETERMINERS>).
 
 =head1 METHODS
 
+=head2 _Error()
 
-=head2 new()
+    _Error($error_objet);
 
+The method is used to manage the parsing error and prints a message
+explaining the error.
 
 =head2 _Lexer()
 
+    _Lexer($parser_info);
 
-=head2 _Error()
+The method applies the parser on the data contains in the structure
+C<$parser_info> (field C<INPUT>).
 
 
 
@@ -706,7 +715,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

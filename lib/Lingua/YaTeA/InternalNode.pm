@@ -3,7 +3,9 @@ use strict;
 use warnings;
 use Lingua::YaTeA::Node;
 use Lingua::YaTeA::Edge;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
+
 our @ISA = qw(Lingua::YaTeA::Node Lingua::YaTeA::Edge);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
@@ -37,11 +39,11 @@ sub updateLevel
 #     warn "Debug: Level in updateLevel: $new_level \n";
 
     if ($new_level < 50) { # Temporary added by Thierry Hamon 02/02/2007
-	if(isa($this->getLeftEdge,'Lingua::YaTeA::InternalNode'))
+	if ((blessed($this->getLeftEdge)) && ($this->getLeftEdge->isa('Lingua::YaTeA::InternalNode')))
 	{
 	    $this->getLeftEdge->updateLevel($new_level);
 	}
-	if(isa($this->getRightEdge,'Lingua::YaTeA::InternalNode'))
+	if ((blessed($this->getRightEdge)) && ($this->getRightEdge->isa('Lingua::YaTeA::InternalNode')))
 	{
 	    $this->getRightEdge->updateLevel($new_level);
 	}
@@ -53,7 +55,7 @@ sub updateLevel
 sub searchRoot
 {
     my ($this) = @_;
-    if(isa($this->getFather,'Lingua::YaTeA::RootNode'))
+    if ((blessed($this->getFather)) && ($this->getFather->isa('Lingua::YaTeA::RootNode')))
     {
 	return $this->getFather;
     }
@@ -76,35 +78,60 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::InternalNode - Perl extension for ???
+Lingua::YaTeA::InternalNode - Perl extension for internal nodes
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::InternalNode;
-  Lingua::YaTeA::InternalNode->();
+  Lingua::YaTeA::InternalNode->new($level);
 
 =head1 DESCRIPTION
+
+The module implements internal syntactic node. It inherits of the
+module C<Lingua::YaTeA::Node> and C<Lingua::YaTeA::Edge>. The field
+C<FATHER> records the father node.
 
 
 =head1 METHODS
 
 =head2 new()
 
+    new($level);
+
+The method creates a new internal node and sets the level C<$level>
+inherited of the module C<Lingua::YaTeA::Node>.
 
 =head2 setFather()
 
+    setFather($father);
+
+The method sets the father C<$father> of the node.
 
 =head2 getFather()
+
+    getFather();
+
+The method returns the father of the node.
 
 
 =head2 updateLevel()
 
+    updateLevel($new_level);
+
+The method updates the level of the node to the value C<$new_level>.
 
 =head2 searchRoot()
 
+    searchRoot();
+
+The method returns the root of the tree which contains the current node. 
 
 =head2 printFather()
 
+    printFather();
+
+The method prints the father node of the current internal node, a
+C<Lingua::YaTeA::RootNode> object.
 
 
 =head1 SEE ALSO
@@ -118,7 +145,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -115,7 +115,7 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::ForbiddenStructureMark - Perl extension for ???
+Lingua::YaTeA::ForbiddenStructureMark - Perl extension for mananging the annotation marks for the forbidden structures
 
 =head1 SYNOPSIS
 
@@ -124,6 +124,15 @@ Lingua::YaTeA::ForbiddenStructureMark - Perl extension for ???
 
 =head1 DESCRIPTION
 
+This method implements the annotation marks defining the forbidden
+structures in the corpus. forbidden structure marks are
+lexico-syntactic structures defining the phrases which must not appear
+in the terms. The object inherits of the module
+Lingua::YaTea::AnnotaionMark. In addition to the annotation marks,
+each forbidden structure mark has a C<ACTION> field defining the
+action to carry out when the mark is identified (value C<split> or
+C<delete>), and a C<SPLIT_AFTER> field address the word after which
+the split action will be done.
 
 =head1 METHODS
 
@@ -131,33 +140,60 @@ Lingua::YaTeA::ForbiddenStructureMark - Perl extension for ???
 
     new($form);
 
+The method creates and retuens a new object for a forbidden structure
+mark C<$form> as it appears in the annotated corpus. C<$form> is in a
+specific internal format.
+
 =head2 parse()
 
     parse($form);
+
+The method parses the forbiddent strcuture mark C<$form>, and returns
+its identifier, the action to carry out, in the case of a split
+action, the word address which is used to split, and the type of mark
+(C<opener> if the starting mark, and C<closer> if it is the ending
+mark).
 
 =head2 isOpener()
 
     isOpener();
 
+The method indicates if the mark is an opener, that is a mark
+indicating the beginning of a forbidden structure. The method returns
+1 if the mark is an opener.
+
 =head2 isCloser()
 
     isCloser();
+
+The method indicates if the mark is a closer, that is a mark
+indicating the end of a forbidden structure. The method returns 1 if
+the mark is a closer.
+
 
 =head2 getAction()
 
     getAction();
 
+The method returns the action associated to the mark.
+
 =head2 getSplitAfter()
 
     getSplitAfter();
+
+The method returns the word address where split action will be applyied.
 
 =head2 isActionSplit()
 
     isActionSplit();
 
+The method indicates if the action is a split action (1 if yes, 0 if not).
+
 =head2 isActionDelete()
 
     isActionDelete();
+
+The method indicates if the action is a delete action (1 if yes, 0 if not).
 
 
 =head1 SEE ALSO
@@ -171,7 +207,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

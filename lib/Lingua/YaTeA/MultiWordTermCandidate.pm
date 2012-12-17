@@ -5,7 +5,8 @@ use Lingua::YaTeA::TermCandidate;
 use Lingua::YaTeA::IndexSet;
 use Data::Dumper;
 
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our @ISA = qw(Lingua::YaTeA::TermCandidate);
 our $VERSION=$Lingua::YaTeA::VERSION;
@@ -70,7 +71,9 @@ sub searchHead
 
 	    $depth++;
 
-    if(isa($this->getRootHead,'Lingua::YaTeA::MonolexicalTermCandidate'))
+    # warn "REF: " . ref($this->getRootHead) . "\n";
+    # warn "BLESSED: " . blessed($this->getRootHead) . "\n";
+    if ((blessed($this->getRootHead)) && ($this->getRootHead->isa('Lingua::YaTeA::MonolexicalTermCandidate')))
     {
 	$head = $this->getRootHead;	 
     }
@@ -91,6 +94,7 @@ sub setOccurrences
     if($maximal == 1)
     {
 	$this->{OCCURRENCES} = $phrase_occurrences_a;
+	$this->{MNP_STATUS} = 1;
     }
     else
     {
@@ -436,7 +440,7 @@ sub recordLink
 	push @$links_a, $LGP_link;
     }
     else{
-	die "Pas de mapping pour " . $link_key .  " (" .$this->getIF . ")\n";
+	warn "Pas de mapping pour " . $link_key .  " (" .$this->getIF . ")\n";
     }
 }
 
@@ -540,7 +544,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -34,7 +34,7 @@ sub ACTION_build {
 
     warn "Setting configuration variables in etc/yatea/yatea.rc\n";
     my $rcfile = $self->base_dir() . "/etc/yatea/yatea.rc";
-
+    # warn "RCFILE: $rcfile\n";
     chmod(0644, $rcfile);
     if (!( -f "$rcfile.orig") ) {
 	File::Copy::copy($rcfile, "$rcfile.orig");
@@ -46,8 +46,12 @@ sub ACTION_build {
 				   '-StoreDelimiter' => " = ",
 				   );
     my %config = $conf->getall;
+    # warn "SHARE: " .  $self->install_destination("share") . "\n";
     $config{'DefaultConfig'}->{'CONFIG_DIR'} = $self->install_destination("share") . "/YaTeA/config";
     $config{'DefaultConfig'}->{'LOCALE_DIR'} = $self->install_destination("share") . "/YaTeA/locale";
+
+    # warn $config{'DefaultConfig'}->{'CONFIG_DIR'} . "\n";
+
     $conf->save_file($rcfile,\%config);
     warn "Done\n";
 
@@ -97,15 +101,25 @@ my $build = $class->new
     (
      module_name => 'Lingua::YaTeA',
      dist_version_from => 'lib/Lingua/YaTeA.pm',
-     license => 'gpl',
+     license => 'perl',
+     configure_requires => { 'Module::Build' => 0.38,
+			     'File::chmod' => 0,
+     },
      requires => {'perl' => '5.005',
 		  Parse::Yapp => 0,
 		  Getopt::Long => 0,
 		  File::Compare => 0,
 		  Data::Dumper => 0, 
 		  Pod::Usage => 0,
-		  Config::General => 2,
+		  Config::General => 2.30,
 		  Test::More     => 0.62,
+		  NEXT => 0,
+		  Encode => 0,
+  	 	  File::Path => 0,
+		  POSIX => 0,
+		  Scalar::Util => 0,
+		  Test::Pod::Coverage => 0,
+		  Test::Pod => 0,
 		  },
 
 #      $build->add_build_element('dat');
@@ -113,6 +127,7 @@ my $build = $class->new
 
     build_requires => {
         "Module::Build"     => 0.28,
+	Test::More     => 0.62,
     },
 
 
@@ -193,7 +208,6 @@ my $build = $class->new
 		 },
      );
 
-
 $build->install_base_relpaths( conf => 'etc' );
 $build->prefix_relpaths('site', conf => 'etc' );
 $build->prefix_relpaths('core', conf => 'etc' );
@@ -216,11 +230,15 @@ $build->install_sets->{'site'}->{'share'} = '/usr/local/share';
 
 $build->install_sets->{'site'}->{'conf'} = '/usr/local/etc';
 
+$build->install_path->{'conf'} = '/etc';
+$build->install_path->{'share'} = '/usr/share';
+
 # same thing with prefix
 if (((defined $build->install_base()) && ($build->install_base() eq "/usr")) ||
     ((defined $build->prefix()) && ($build->prefix() eq "/usr")))
  {
-	$build->install_path->{conf} = '/etc';
+	$build->install_path->{'conf'} = '/etc';
+	$build->install_path->{'share'} = '/usr/share';
 }
 
 

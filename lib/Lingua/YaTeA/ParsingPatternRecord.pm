@@ -55,32 +55,52 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::ParsingPatternRecord - Perl extension for ???
+Lingua::YaTeA::ParsingPatternRecord - Perl extension for recording parsing patterns
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::ParsingPatternRecord;
-  Lingua::YaTeA::ParsingPatternRecord->();
+  Lingua::YaTeA::ParsingPatternRecord->new($name);
 
 =head1 DESCRIPTION
 
+The module records parsing patterns having the same part-Of-Speech
+sequence (C<NAME> field). Parsing patterns are stored in the array
+C<PARSING_PATTERNS>.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($name);
+
+The metehod creates a new parsing pattern record named C<$name>. The
+array where the parsing patterns are stored is empty.
 
 =head2 getName()
 
+    getName();
+
+The method returns the name of the parsing pattern.
 
 =head2 addPattern()
+
+    addPattern($pattern);
+
+The methid adds a parsing pattern to the current record.
 
 
 =head2 getPatterns()
 
+    getPatterns();
+
+the method returns the reference to the array of parsing patterns.
 
 =head2 print()
 
+    print();
+
+The method prints the parsing patterns associated to the records.
 
 
 =head1 SEE ALSO
@@ -94,7 +114,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

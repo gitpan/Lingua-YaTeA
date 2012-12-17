@@ -106,44 +106,79 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::IslandSet - Perl extension for ???
+Lingua::YaTeA::IslandSet - Perl extension for set of reliability islands
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::IslandSet;
-  Lingua::YaTeA::IslandSet->();
+  Lingua::YaTeA::IslandSet->new();
 
 =head1 DESCRIPTION
 
+The module implements a set of reliability islands. Islands are stored
+if the field C<ISLANDS> which is a reference to a hashtable.
 
 =head1 METHODS
 
 =head2 new()
 
+    new();
+
+The method creates a new island set.
 
 =head2 getIslands()
 
+    getIslands();
+
+
+The method returns the reference to the hashtable containing the islands.
 
 =head2 existIsland()
 
+    existIsland($index_set);
+
+The method returns 1 if the island referred by C<$index_set> exists in
+the current set of island, otherwise 0.
 
 =head2 getIsland()
+
+    getIsland($index_set);
+
+The method returns the island referred by C<$index_set> exists in the
+current set of island.
 
 
 =head2 existLargerIsland()
 
+    existLargerIsland($index);
+
+The method returns 1 if it exists a larger island than the island
+referred by C<$index>, otherwise 0.
 
 =head2 addIsland()
 
+    addIsland($island);
+
+The method adds the island C<$island> in the current set.
 
 =head2 removeIsland()
 
+    removeIsland($island);
+
+The method removes the island C<$island> in the current set.
 
 =head2 size()
 
+    size();
+
+The method returns the number of islands in the current set.
 
 =head2 print()
 
+    print($fh);
+
+The method prints the island of the current set in the file referred
+by C<$fh>.
 
 
 =head1 SEE ALSO
@@ -157,7 +192,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

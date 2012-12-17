@@ -3,7 +3,9 @@ use strict;
 use warnings;
 use Lingua::YaTeA::MultiWordTestifiedTerm;
 use Lingua::YaTeA::MonolexicalTestifiedTerm;
-use UNIVERSAL qw(isa);
+use Lingua::YaTeA::TestifiedTermParser;
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -31,19 +33,32 @@ sub addSubset
     {
 	$this->loadTTGformatTerminology($file_path,$filtering_lexicon_h,$sentence_boundary,$match_type,$tag_set);
     }
+    else
+    {
+	if($format eq "PARSED")
+	{
+	    $this->loadParsedTerminology($file_path,$filtering_lexicon_h,$match_type,$tag_set);
+	}
+    }
     
 }
 
 sub testTerminologyFormat
 {
     my ($this,$file_path) = @_;
-    my $fh = FileHandle->new("<$file_path");
+    warn "check $file_path\n";
+    my $fh = FileHandle->new("<$file_path") or die "\n********\nNo such file: $file_path\n********\n";
     my $line;
     while ($line= $fh->getline)
     {
 	if($line =~ /^[^\t]+\t[^\t]+\t[^\t]+$/)
 	{
 	    return "TTG";
+	}
+	else{ # format analyse parenthesee : a abandonner
+	    if ($line =~ /^\( .+<=[HM]> /){
+		return "PARSED";
+	    }
 	}
 	
     }
@@ -54,7 +69,7 @@ sub testTerminologyFormat
 sub loadTTGformatTerminology
 {
     my ($this,$file_path,$filtering_lexicon_h,$sentence_boundary,$match_type,$tag_set) = @_;
-
+    
     my $fh = FileHandle->new("<$file_path");    
     my $word;
     my $block;
@@ -68,6 +83,198 @@ sub loadTTGformatTerminology
     }
 
 }
+
+sub loadParsedTerminology
+{
+    my ($this,$file_path,$filtering_lexicon_h,$match_type,$tag_set) = @_;
+
+    my $fh = FileHandle->new("<".$file_path);    
+    print "open " . $file_path . "\n";
+    my $word;
+    my $line;
+
+     my $parser = Lingua::YaTeA::TestifiedTermParser->new();
+    $parser->YYData->{TTS} = $this;
+    $parser->YYData->{WORD} = '([^ <\t]+)';
+    $parser->YYData->{TAGSET} = $tag_set;
+    $parser->YYData->{MATCH} = $match_type;
+    $parser->YYData->{FH} = $fh;
+    $parser->YYData->{FILTERING_LEXICON} = $filtering_lexicon_h;
+     $parser->YYParse(yylex => \&Lingua::YaTeA::TestifiedTermParser::_Lexer, yyerror => \&Lingua::YaTeA::TestifiedTermParser::_Error #,yydebug=>1);
+		      );
+   #  while (! $fh->eof)
+#     {
+# 	$line = $fh->getline;
+# 	if (($line !~ /^\#/)&&($line !~ /^\s*$/)){ # if line not commented nor empty 
+# 	    $this->parseTestifiedTerm($line,$match_type,$filtering_lexicon_h,$tag_set);
+# 	   }
+#     }
+}
+
+
+# sub parseTestifiedTerm
+# {
+#     my ($this,$line,$match_type,$filtering_lexicon_h,$tag_set) = @_;
+#     my $testified_infos;
+#     my $testified;
+#     my $i;
+#     if($this->getTestifiedInfos(\$testified_infos,$line,$match_type,$filtering_lexicon_h,$tag_set) == 1)
+#     {
+# 	 if(scalar @{$testified_infos->{"WORDS"}} > 1)
+# 	 {
+# 	     $testified = Lingua::YaTeA::MultiWordTestifiedTerm->new($testified_infos->{"NUM_CONTENT_WORDS"},$testified_infos->{"WORDS"},$tag_set,$testified_infos->{"SOURCE"},$match_type);
+# 	     $testified->setForest($testified_infos->{"PARSE"});
+# 	 }
+# 	 else
+# 	 {
+# 	     if(scalar @{$testified_infos->{"WORDS"}} == 1)
+# 	     {
+# 		 $testified = Lingua::YaTeA::MonolexicalTestifiedTerm->new($testified_infos->{"NUM_CONTENT_WORDS"},$testified_infos->{"WORDS"},$tag_set,$testified_infos->{"SOURCE"},$match_type);
+# 	     }
+# 	 }
+#      }
+    
+#     if((blessed($testified)) && ($testified->isa('Lingua::YaTeA::TestifiedTerm')))
+#     {
+# 	$this->addTestified($testified);
+#     }
+
+# }
+
+
+sub getTestifiedInfos
+{
+    my ($this,$testified_infos_r,$IF_a,$POS_a,$LF_a,$src,$lex_items_a,$match_type,$filtering_lexicon_h,$tag_set) = @_;
+    my @infos;
+    my $word;
+    my $item;
+    my $i;
+
+#    print STDERR "GTI: " . join(" ", @$IF_a) . "\n";
+    for ($i=0; $i < scalar @$IF_a; $i++)
+    {
+	if($match_type eq "loose") # look at IF or LF
+	{
+	    if(
+	       (!exists $filtering_lexicon_h->{lc($IF_a->[$i])})
+	       &&
+	       (!exists $filtering_lexicon_h->{lc($LF_a->[$i])})
+	       )
+	    {
+		# current word does not appear in the corpus : testified term won't be loaded
+		return 0;
+	    }
+	}
+	else
+	{
+	    if($match_type eq "strict") # look at IF and POS
+	    {
+		if (!exists $filtering_lexicon_h->{lc($IF_a->[$i])."~".$POS_a->[$i]})
+		{
+		    # current word does not appear in the corpus : testified term won't be loaded
+		    return 0;
+		}
+		
+	    }
+	    else
+	    {
+		# default match: look at IF
+		if(!exists $filtering_lexicon_h->{lc($IF_a->[$i])})
+		{
+		    # current word does not appear in the corpus : testified term won't be loaded
+		    return 0;
+		}
+	    }		
+	    
+	}
+    }
+  #  $$testified_infos_r->{"PARSE"} = $infos[0];
+   # print STDERR $$testified_infos_r->{"PARSE"} . "\n";
+    $$testified_infos_r->{"SOURCE"} = $infos[4];
+    for ($i=0; $i < scalar @$IF_a; $i++)
+    {
+	$word = $IF_a->[$i] . "\t" . $POS_a->[$i] . "\t" . $LF_a->[$i];
+	$item = $this->getLexicon->addOccurrence($word);
+	push @$lex_items_a, $item;
+	if ($tag_set->existTag('CANDIDATES',$item->getPOS))
+	{
+	    $$testified_infos_r->{"NUM_CONTENT_WORDS"}++;
+	}
+	push @{$$testified_infos_r->{"WORDS"}}, $item;
+    }
+    
+    return 1;
+}
+# sub getTestifiedInfos
+# {
+#     my ($this,$testified_infos_r,$IF_a,$POS_a,$LF_a,$src,$lex_items_a,$match_type,$filtering_lexicon_h,$tag_set) = @_;
+# #     my ($this,$testified_infos_r,$line,$match_type,$filtering_lexicon_h,$tag_set) = @_;
+#     my @infos;
+#     my @IF;
+#     my @LF;
+#     my @POS;
+#     my $word;
+#     my $item;
+#     my $i;
+#     chomp $line;
+#     @infos = split /\t/, $line;
+#     @IF = split / /,$infos[1];
+#     @LF = split / /,$infos[3];
+#     @POS = split / /,$infos[2];
+    
+#     for ($i=0; $i < scalar @IF; $i++)
+#     {
+# 	if($match_type eq "loose") # look at IF or LF
+# 	{
+# 	    if(
+# 	       (!exists $filtering_lexicon_h->{lc($IF[$i])})
+# 	       &&
+# 	       (!exists $filtering_lexicon_h->{lc($LF[$i])})
+# 	       )
+# 	    {
+# 		# current word does not appear in the corpus : testified term won't be loaded
+# 		return;
+# 	    }
+# 	}
+# 	else
+# 	{
+# 	    if($match_type eq "strict") # look at IF and POS
+# 	    {
+# 		if (!exists $filtering_lexicon_h->{lc($IF[$i])."~".$POS[$i]})
+# 		{
+# 		    # current word does not appear in the corpus : testified term won't be loaded
+# 		    return;
+# 		}
+		
+# 	    }
+# 	    else
+# 	    {
+# 		# default match: look at IF
+# 		if(!exists $filtering_lexicon_h->{lc($IF[$i])})
+# 		{
+# 		    # current word does not appear in the corpus : testified term won't be loaded
+# 		    return;
+# 		}
+# 	    }		
+	    
+# 	}
+#     }
+#     $$testified_infos_r->{"PARSE"} = $infos[0];
+#     $$testified_infos_r->{"SOURCE"} = $infos[4];
+#     for ($i=0; $i < scalar @IF; $i++)
+#     {
+# 	$word = $IF[$i] . "\t" . $POS[$i] . "\t" . $LF[$i];
+# 	$item = $this->getLexicon->addOccurrence($word);
+# 	if ($tag_set->existTag('CANDIDATES',$item->getPOS))
+# 	{
+# 	    $$testified_infos_r->{"NUM_CONTENT_WORDS"}++;
+# 	}
+# 	push @{$$testified_infos_r->{"WORDS"}}, $item;
+#     }
+    
+#     return 1;
+# }
+
 
 sub buildTestifiedTerm
 {
@@ -148,7 +355,7 @@ sub buildTestifiedTerm
 	    $testified = Lingua::YaTeA::MonolexicalTestifiedTerm->new($num_content_words,\@lex_items,$tag_set,$source,$match_type);
 	}
     }
-    if(isa($testified,'Lingua::YaTeA::TestifiedTerm'))
+    if ((blessed($testified)) && ($testified->isa('Lingua::YaTeA::TestifiedTerm')))
     {
 	$this->addTestified($testified);
     }
@@ -263,7 +470,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

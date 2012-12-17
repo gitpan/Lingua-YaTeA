@@ -3,7 +3,9 @@ use strict;
 use warnings;
 use NEXT;
 use Data::Dumper;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
+use Lingua::YaTeA::MultiWordPhrase;
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -84,9 +86,9 @@ sub searchParsingPattern
     my $record;
     my $simplified_pos;
     my $tree;
-  
-    if ($this->{CONTENT_WORDS} <= $Lingua::YaTeA::ParsingPatternRecordSet::max_content_words)
-    {
+
+  #   if ($this->{CONTENT_WORDS} <= $Lingua::YaTeA::ParsingPatternRecordSet::max_content_words)  # commented by SA: limite l'analyse le terme a deja ete simplifie par un ilot
+#     {
 	
 	if(!defined $this->getForest)
 	{
@@ -109,7 +111,7 @@ sub searchParsingPattern
 		}
 	    }
 	}
-    }
+    #}
     return;
 }
 
@@ -189,8 +191,7 @@ sub getPatternsLeftFirst
     my $pattern;
     my $position = "LEFT";
     $pattern = $this->getPatternOnTheLeft($POS,$parsing_pattern_set,$parsing_direction);
-    if (! isa($pattern,'Lingua::YaTeA::ParsingPattern'))
-    {
+    if (!((blessed($pattern)) && ($pattern->isa('Lingua::YaTeA::ParsingPattern')))) {
 	$pattern = $this->getPatternOnTheRight($POS,$parsing_pattern_set,$parsing_direction);
 	$position = "RIGHT";
     }
@@ -204,7 +205,7 @@ sub getPatternsRightFirst
     my $position = "RIGHT";
   
     $pattern = $this->getPatternOnTheRight($POS,$parsing_pattern_set,$parsing_direction);
-    if (! isa($pattern,'Lingua::YaTeA::ParsingPattern'))
+    if (!((blessed($pattern)) && ($pattern->isa('Lingua::YaTeA::ParsingPattern'))))
     {
 	$pattern = $this->getPatternOnTheLeft($POS,$parsing_pattern_set,$parsing_direction);
 	$position = "LEFT";
@@ -343,7 +344,7 @@ sub sortPatternsByPriority
 sub setParsingMethod
 {
     my ($this,$method) = @_;
-    if(isa($this,'Lingua::YaTeA::Phrase'))
+    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::Phrase')))
     {
 	$Lingua::YaTeA::MultiWordPhrase::parsed++;
     }
@@ -399,25 +400,21 @@ sub parseProgressively
 #	    $tree->print($this->getWords,$fh);
 	    if($tree->getSimplifiedIndexSet->getSize == 1)
 	    {
-#		print $fh "on check " . $tree . "\n";
 		if($tree->check($this))
 		{
 		    $parsed = 1;
 		    $tree->setHead;
 		    $tree->setReliability(2);
 		    $this->addTree($tree);
-#		    print $fh "analyse terminee\n";
 		}
 	    }
 	    else
 	    {
-#		print $fh "on cherche un partial partern pour ";
 #		$tree->getSimplifiedIndexSet->print($fh);
 #		print $fh "\n";
 		($pattern,$position) = $this->getPartialPattern($tree->getSimplifiedIndexSet,$tag_set,$parsing_direction,$parsing_pattern_set,$fh);
 #		$tree->getSimplifiedIndexSet->print($fh);
-		if(isa($pattern,'Lingua::YaTeA::ParsingPattern'))
-		{
+		if ((blessed($pattern)) && ($pattern->isa('Lingua::YaTeA::ParsingPattern'))) {
 #		    print $fh "trouve partial pattern\n";
 		    $partial_index_set = $tree->getSimplifiedIndexSet->getPartial($pattern->getLength,$position);
 		    $node_set = $pattern->getNodeSet->copy;
@@ -435,8 +432,7 @@ sub parseProgressively
 	    }
 	}
     }
-#     $this->printDebug($fh);
-
+    #$this->printDebug($fh);
     return $parsed;
 }
 
@@ -501,6 +497,19 @@ sub printForestParenthesised
 	    print "Pas d'analyse\n";
 	}
     }
+}
+
+sub printDebug
+{
+    my ($this, $fh) = @_;
+
+    print $fh "\n\n";
+    print $fh "$this\n";
+    print $fh $this->{'IF'} . "\n";
+    $this->print($fh);
+    $this->printForestParenthesised($fh);
+    print $fh "\n\n";
+
 }
 
 
@@ -603,7 +612,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

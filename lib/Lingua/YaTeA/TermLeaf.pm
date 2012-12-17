@@ -71,10 +71,10 @@ sub searchHead
 sub print
 {
     my ($this,$words_a,$fh) = @_;
-  #   if(!defined $fh)
-#     {
-# 	$fh = \*STDERR
-#     }
+    if(!defined $fh)
+    {
+	$fh = \*STDERR
+    }
     if(defined $words_a)
     {
 	 $this->printWords($words_a,$fh) ;	
@@ -114,55 +114,114 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::TermLeaf - Perl extension for ???
+Lingua::YaTeA::TermLeaf - Perl extension for leaf node of term tree
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::TermLeaf;
-  Lingua::YaTeA::TermLeaf->();
+  Lingua::YaTeA::TermLeaf->new($index);
 
 =head1 DESCRIPTION
+
+This module implements the leaf node of a testified term represented
+as tree. Objects inherit of the module C<Lingua::YaTeA::Edge>. 
+A field C<INDEX> records the position of the associated word(s).
 
 
 =head1 METHODS
 
 =head2  new()
 
+    new($index);
+
+The method creates a new term leaf. C<$index> records the position of
+the associated word(s).
 
 =head2 getIF()
 
+    getIF($words_a);
+
+The method returns the inflected form of the term leaf. C<$words_a> is
+the array containing the associated word.
 
 =head2 getPOS()
+
+    getPOS($words_a);
+
+The method returns the Part-of-speech of the term leaf. C<$words_a> is
+the array containing the associated word.
 
 
 =head2 getLF()
 
+    getLF($words_a);
+
+The method returns the lemmatized form of the term leaf. C<$words_a>
+is the array containing the associated word.
 
 =head2 getID()
+
+    getID($words_a);
+
+The method returns the identifier of the term leaf. C<$words_a>
+is the array containing the associated word.
 
 
 =head2 getIndex()
 
+    getIndex();
+
+The method returns the position of the word associated to the term leaf.
+
 
 =head2 getLength()
 
+    getLength($words_a);
+
+The method returns the length of the word associated to the term leaf.
+C<$words_a> is the array containing the associated word.
 
 =head2 getWord()
 
+    getWord($words_a);
+
+The method returns the word associated to the term leaf. C<$words_a>
+is the array containing the associated word.
 
 =head2 searchHead()
 
+    searchHead();
+
+The method returns the head of the current term leaf, i.e. the term
+leaf itself.
 
 =head2 print()
+
+    print($words_a, $fh);
+
+The method prints the term leaf in the file
+descriptor C<$fh>.
 
 
 =head2 printWords()
 
+    printWords($words_a, $fh);
+
+The method prints the inflected form of the words associated to the
+term leaf (C<$words_a>) in the file descriptor C<$fh>.
 
 =head2 searchRightMostLeaf()
 
+    searchRightMostLeaf($depth_r);
+
+The method returns the current term leaf as the right most term leaf.
 
 =head2 searchLeftMostLeaf()
+
+    searchLeftMostLeaf();
+
+The method returns the current term leaf as the left most term leaf.
+
 
 
 =head1 SEE ALSO
@@ -176,7 +235,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

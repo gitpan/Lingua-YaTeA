@@ -1,7 +1,8 @@
 package Lingua::YaTeA::Edge;
 use strict;
 use warnings;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -21,17 +22,17 @@ sub copyRecursively
 {
     my ($this,$new_set,$father) = @_;
     my $new;
-    if (isa($this,'Lingua::YaTeA::TermLeaf'))
+    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::TermLeaf')))
     {
 	return "";
     }
     else{
-	if(isa($this,'Lingua::YaTeA::InternalNode'))
+	if ((blessed($this)) && ($this->isa('Lingua::YaTeA::InternalNode')))
 	{
 	    return $this->copyRecursively($new_set,$father);
 	}
 	else{
-	    if (isa($this,'Lingua::YaTeA::PatternLeaf'))
+	    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::PatternLeaf')))
 	    {
 		return "";
 	    }
@@ -50,7 +51,7 @@ sub update
 sub print
 {
     my ($this,$words_a,$fh) = @_;
-    if (isa($this,"Lingua::YaTeA::Node"))
+    if ((blessed($this)) && ($this->isa("Lingua::YaTeA::Node")))
     {
 	 print $fh "Node " . $this->getID;
     }
@@ -65,29 +66,46 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Edge - Perl extension for ???
+Lingua::YaTeA::Edge - Perl extension for edge between nodes
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Edge;
-  Lingua::YaTeA::Edge->();
+  Lingua::YaTeA::Edge->new();
 
 =head1 DESCRIPTION
 
+The module implements edges between any sort of nodes. It is inherited
+from several modules.
 
 =head1 METHODS
 
 =head2 new()
 
+    new();
+
+The method creates a new edge.
 
 =head2 copyRecursively()
 
+    copyRecursively($newset, $father);
+
+The method copies recursively the current node in the node set
+C<$newset> and return the copy. It also connect the copy to the father
+of the original node (C<$father>).
 
 =head2 update()
 
+    update($new_value);
+
+The method updates the edge with new edge information C<$new_value>.
 
 =head2 print()
 
+    print($words, $fh);
+
+The method prints the status of the edge or the associated words
+C<$words> in the file handler C<$fh>.
 
 
 =head1 SEE ALSO
@@ -101,7 +119,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

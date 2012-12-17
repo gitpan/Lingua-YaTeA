@@ -3,9 +3,12 @@ use strict;
 use warnings;
 use Lingua::YaTeA::TestifiedTerm;
 use Lingua::YaTeA::MultiWordUnit;
-use UNIVERSAL qw(isa);
+# use UNIVERSAL;
+# use Scalar::Util qw(blessed);
 use NEXT;
-use base qw(Lingua::YaTeA::TestifiedTerm Lingua::YaTeA::MultiWordUnit);
+use base qw(Lingua::YaTeA::TestifiedTerm Lingua::YaTeA::MultiWordPhrase);
+
+
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -208,6 +211,7 @@ sub getLinksSets
 sub sortLinks
 {
     my ($this,$link1,$link2) = @_;
+
     my $first_element_of_link1;
     my $second_element_of_link1;
     my $first_element_of_link2;
@@ -267,6 +271,7 @@ sub adjustLinksHeight
 sub recordLink
 {
     my ($this,$link_key,$first_element,$second_element,$links_a,$LGPmapping_h) = @_;
+
     my $LGP_link;
     my %first_items;
     my %second_items;
@@ -280,6 +285,12 @@ sub recordLink
     }
 }
 
+sub setForest
+{
+    my ($this,$bracketed_parse) = @_;
+    print STDERR $bracketed_parse . "\n";
+}
+
 
 1;
 
@@ -287,14 +298,20 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MultiWordTestifiedTerm - Perl extension for ???
+Lingua::YaTeA::MultiWordTestifiedTerm - Perl extension for multi-word testified terms
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MultiWordTestifiedTerm;
-  Lingua::YaTeA::MultiWordTestifiedTerm->();
+  Lingua::YaTeA::MultiWordTestifiedTerm->new($words, $match_type, $num_content_words, $tag_set);
 
 =head1 DESCRIPTION
+
+The module implements a representation of the multi-word testified
+terms, i.e. terms from a terminological resource. Those testified
+terms are used to find corresponding terms in the corpus. Each
+multi-word testified term inherits from the class
+C<Lingua::YaTeA::MultiWordUnit>.
 
 
 =head1 METHODS
@@ -302,30 +319,68 @@ Lingua::YaTeA::MultiWordTestifiedTerm - Perl extension for ???
 
 =head2 new()
 
+    new($words, $match_type, $num_content_words, $tag_set);
+
+This method creates a new object representing a multi-wordtestified
+term. C<$words_a> and C<$tag_set> are used to initialise the
+lignuistic information (C<IF>, C<POS>, C<LF>). C<$source> initialises
+the original terminology. C<$mach_type> defines the type of matching
+for finding the terms in the corpus.
+
 
 =head2 getIslandType()
+
+    getIslandType();
+
+The method returns the type of island correspoding to the multi-word
+testified terms, in that case the original terminology.
 
 
 =head2 getIfParsable()
 
+    getIfParsable($parsing_pattern_set,$tag_set,$parsing_direction);
+
+The method indicates if the mutli-word testitied term is parsable of
+not according to one of the parsing patterns C<$parsing_pattern_set>
+(and given a parsing direction C<$parsing_direction>), the
+Part-of-Speech tags C<$tag_set>.
 
 =head2 getHeadAndLinks()
 
+    getHeadAndLinks($LGPmapping_h,$chained_links);
+
+This method computes syntactic relations in the BioLG way (see
+http://mars.cs.utu.fi/biolg/).
 
 =head2 chainLinks()
 
+    chainLinks($links_a);
+
+The method is related to the output in the BioLG way. 
 
 =head2 getLinksSets()
 
+    getLinksSets($links_a);
+
+The method is related to the output in the BioLG way. 
 
 =head2 sortLinks()
 
+    sortLinks($link1,$link2);
+
+The method is related to the output in the BioLG way. 
 
 =head2 adjustLinksHeight()
 
+    adjustLinksHeight($links_a,$first_h,$second_h);
+
+The method is related to the output in the BioLG way. 
 
 =head2 recordLink()
 
+    recordLink($link_key,$first_element,$second_element,$links_a,$LGPmapping_h);
+
+The method is related to the output in the BioLG way. 
 
 =head1 SEE ALSO
 
@@ -338,7 +393,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

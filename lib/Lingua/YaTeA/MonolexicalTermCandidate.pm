@@ -80,40 +80,77 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MonolexicalTermCandidate - Perl extension for ???
+Lingua::YaTeA::MonolexicalTermCandidate - Perl extension for the monolexical term candidate
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MonolexicalTermCandidate;
-  Lingua::YaTeA::MonolexicalTermCandidate->();
+  Lingua::YaTeA::MonolexicalTermCandidate->new();
 
 =head1 DESCRIPTION
 
+The module implements the monolexical (r single word) term
+candadiate. It inheris of the module C<Lingua::YaTeA::TermCandidate>.
 
 =head1 METHODS
 
 =head2 new()
 
+    new();
+
+the methods creates a new monolexical term candidate.
 
 =head2 searchHead()
 
+    searchHead();
+
+The method returns the head component of the term candidate. As it is
+single word term candidate, the head component is the current node.
 
 =head2 setOccurrences()
 
+    setOccurrences($phrase_occurrences_a,$offset,$word_length,$maximal);
+
+The method associates a list of new occurrence, referred by
+C<$phrase_occurrences_a> to the current term candidate. C<$offset> is
+the offset of all the occurrences of the list in the document.
+C<$word_length> is the length of the word string. C<$maximal>
+indicates if the occurrence is a maximal noun phrase.
 
 =head2 getPOS()
 
+    getPOS();
+
+The method returns the Part-Of-Speech tag of the word associated to
+the term candidate.
 
 =head2 getIF()
+
+    getIF();
+
+The method returns the inflected form of the word associated to the
+term candidate.
 
 
 =head2 addMonolexicalOccurrences()
 
+    addMonolexicalOccurrences($phrase_set,$monolexical_transfer_h);
+
+The method adds a list new occurrences C<$phrase_set> to the list of
+occurrences of the current term candidate.
+
+C<$monolexical_transfer_h> is a reference to a hashtable containing
+the phrases that can not be parsed (monolexical phrase are considered
+as unparsable).
+
 
 =head2 getHeadAndLinks()
 
+    getHeadAndLinks($LGPmapping_h);
 
-
+The method returns the head of the current term candidate (the term
+candidate itself) and a reference to an empty array containing the
+syntactic relations.
 
 =head1 SEE ALSO
 
@@ -126,7 +163,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

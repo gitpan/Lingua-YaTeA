@@ -15,6 +15,7 @@ sub new
     $this->{INDEX_SET} = $index;
     $this->{TYPE} = $type;
     $this->{SOURCE} = $source;
+    $this->{INTEGRATED} = 0;
     return $this;
 }
 
@@ -23,6 +24,13 @@ sub getIndexSet
     my ($this) = @_;
     return $this->{INDEX_SET};
 }
+
+sub isIntegrated
+{
+    my ($this) = @_;
+    return $this->{INTEGRATED};
+}
+
 
 sub getType
 {
@@ -64,7 +72,6 @@ sub importNodeSets
     my $node_sets_a;
     my $tree;
     my $node_set;
-
     $node_sets_a = $this->getSource->exportNodeSets;
     
     foreach $node_set (@$node_sets_a)
@@ -124,45 +131,113 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Island - Perl extension for ???
+Lingua::YaTeA::Island - Perl extension for island of reliability
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Island;
-  Lingua::YaTeA::Island->();
+  Lingua::YaTeA::Island->new($index,$type,$source);
 
 =head1 DESCRIPTION
 
+
+This module reprensents the I<island of reliability> and provided
+related methods for manipulating if. An island of reliability is a
+subsequence (contiguous or not) of a Maximal Noun Phrase (MNP) that
+corresponds to a shorter term candidate that was parsed during the
+first step of the parsing process.
+
+An island is defined with a list of parsed  phrase (i.e. the sequence of
+Part-of-Speech tags) corresponding to the current island (field
+C<SOURCE>), the index set for the parsed phrase corresponding to the current
+island (field C<INDEX_SET>), the origin of the island (field C<TYPE> ;
+value C<endogenous> if issued from the parsing of the current text,
+C<exogenous> if issued fom an input resource or previous text
+parsing).
+
+An identifier (recorded in the field C<ID> is associated to the
+isalnd. the information that the island is used in the parsing of a
+wider parsed phrase or island, is recorded in the field C<INTEGRATED> (the
+default value is 0).
 
 =head1 METHODS
 
 
 =head2 new()
 
+    new($index,$type,$source);
+
+The method defined a new island. C<$source> is the list of parsed phrase 
+(i.e. the concatenation of Part-of-Speech tags or the key of the
+pharses) corresponding to the island. C<$index> is the index set for
+the parsed phrase corresponding to the current island. C<$type> is the
+origin of the island (value C<endogenous> if issued from the parsing
+of the current text, C<exogenous> if issued fom an input resource or
+previous text parsing).
 
 =head2 getIndexSet()
 
+    getIndexSet();
+
+The method returns the index set for the parsed phrase corresponding to the
+current island.
 
 =head2 getType()
 
+    getType();
+
+The method returns the origin of the island (C<endogenous> or
+C<exogenous>).
 
 =head2 getParsingMethod()
 
+     getParsingMethod();
+
+The method return the parsing methods associated to the parsed phrase
+corresponding to the island of reliability.
 
 =head2 getIF()
+
+    getIF();
+
+The method returns the inflected form of the parsed phrase
+corresponding to the island of reliability.
 
 
 =head2 getSource()
 
+    getSource();
+
+The method return the parsed phrase (i.e. the sequence of
+Part-of-Speech tags) corresponding to the island of reliability.
+
 
 =head2 getID()
+
+    getID();
+
+The method returns the identifier of the island.
 
 
 =head2 importNodeSets()
 
+    importNodeSets();
+
+This method returns a copu of the node sets corresponding to the
+island. The methods also updates the index set of the island.
+
+=head2 gapSize()
+
+    gapSize();
+
+The method returns the number of words into the word sequence
+delimited by the island island but not appearing in the island.
 
 =head2 print()
 
+    print($fh);
+
+The pethod prints the island into the stream C<$fh>.
 
 =head1 SEE ALSO
 
@@ -175,7 +250,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

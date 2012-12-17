@@ -70,33 +70,53 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MessageSet - Perl extension for ???
+Lingua::YaTeA::MessageSet - Perl extension for message set
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MessageSet;
-  Lingua::YaTeA::MessageSet->();
+  Lingua::YaTeA::MessageSet->new($file, $language);
 
 =head1 DESCRIPTION
 
+The module is dedicated to the management of the message set acccoding
+to the language. Messages are stored in the C<MESSAGES> field, a
+hashtables.
 
 =head1 METHODS
 
 =head2 new()
 
+    new($file, $language);
+
+The method creates a new message set for the language C<$language> and
+loads the messages stored in the file C<$file>.
 
 =head2 loadMessages()
 
+    loadMessages($file, $language);
+
+
+the method loads the messages stored in the file C<$file>, for the
+language C<$language>.
 
 =head2 addMessage()
 
+    addMessage($message);
+
+The method adds a message in the message set. 
 
 =head2 getMessage()
 
+    getMessage($name);
+
+The method returns the message named C<$name>.
 
 =head2 getMessages()
 
+    getMessages();
 
+The method returns the reference to the hashtable containing the messages.
 
 =head1 SEE ALSO
 
@@ -109,7 +129,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

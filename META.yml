@@ -1,27 +1,24 @@
 ---
-name: Lingua-YaTeA
-version: 0.5
+abstract: 'Perl extension for extracting terms from a corpus and providing a syntactic analysis in a head-modifier format.'
 author:
-  - 'Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>'
-abstract: Perl extension for extracting terms from a corpus and providing a syntactic analysis in a head-modifier format.
-license: gpl
-resources:
-  license: http://www.opensource.org/licenses/gpl-license.php
-requires:
-  Config::General: 2
-  Data::Dumper: 0
-  File::Compare: 0
-  Getopt::Long: 0
-  Parse::Yapp: 0
-  Pod::Usage: 0
-  Test::More: 0.62
-  perl: 5.005
+  - 'Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>'
 build_requires:
   Module::Build: 0.28
+  Test::More: 0.62
+configure_requires:
+  File::chmod: 0
+  Module::Build: 0.38
+dynamic_config: 1
+generated_by: 'Module::Build version 0.4003, CPAN::Meta::Converter version 2.110440'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: Lingua-YaTeA
 provides:
   Lingua::YaTeA:
     file: lib/Lingua/YaTeA.pm
-    version: 0.5
+    version: 0.6
   Lingua::YaTeA::AnnotationMark:
     file: lib/Lingua/YaTeA/AnnotationMark.pm
     version: 0
@@ -63,9 +60,6 @@ provides:
     version: 0
   Lingua::YaTeA::ForbiddenStructureStartOrEnd:
     file: lib/Lingua/YaTeA/ForbiddenStructureStartOrEnd.pm
-    version: 0
-  Lingua::YaTeA::Hierarchy:
-    file: lib/Lingua/YaTeA/Hierarchy.pm
     version: 0
   Lingua::YaTeA::IndexSet:
     file: lib/Lingua/YaTeA/IndexSet.pm
@@ -124,9 +118,6 @@ provides:
   Lingua::YaTeA::NodeSet:
     file: lib/Lingua/YaTeA/NodeSet.pm
     version: 0
-  Lingua::YaTeA::ObjectCounters:
-    file: lib/Lingua/YaTeA/ObjectCounters.pm
-    version: 0
   Lingua::YaTeA::Occurrence:
     file: lib/Lingua/YaTeA/Occurrence.pm
     version: 0
@@ -181,6 +172,9 @@ provides:
   Lingua::YaTeA::TestifiedTermMark:
     file: lib/Lingua/YaTeA/TestifiedTermMark.pm
     version: 0
+  Lingua::YaTeA::TestifiedTermParser:
+    file: lib/Lingua/YaTeA/TestifiedTermParser.pm
+    version: 0
   Lingua::YaTeA::TestifiedTermSet:
     file: lib/Lingua/YaTeA/TestifiedTermSet.pm
     version: 0
@@ -202,7 +196,22 @@ provides:
   Lingua::YaTeA::XMLEntities:
     file: lib/Lingua/YaTeA/XMLEntities.pm
     version: 0
-generated_by: Module::Build version 0.2808
-meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+requires:
+  Config::General: 2.3
+  Data::Dumper: 0
+  Encode: 0
+  File::Compare: 0
+  File::Path: 0
+  Getopt::Long: 0
+  NEXT: 0
+  POSIX: 0
+  Parse::Yapp: 0
+  Pod::Usage: 0
+  Scalar::Util: 0
+  Test::More: 0.62
+  Test::Pod: 0
+  Test::Pod::Coverage: 0
+  perl: 5.005
+resources:
+  license: http://dev.perl.org/licenses/
+version: 0.6

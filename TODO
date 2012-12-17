@@ -44,7 +44,7 @@ sub openunicode {
 - rewrite the method
   Lingua::YaTeA::ForbiddenStructureAny::setSplitAfter and its calls
 
-Check the XML conformity, especially < and > 
+Check the XML conformity, especially < and > and &
 
 
 - Check the computing of the offset. it is assumed that every token
@@ -54,3 +54,23 @@ Check the XML conformity, especially < and >
 - Check that special XML characters are well encoded as XML entities
 
 - Homogenize the output of the file and file handler (print / debug -> file handler, printUnparseable -> file name)
+
+- remove the dtd line in the output (to check ?)
+
+- UTF-8
+
+- tests : loading a corpus
+	  loading  a testified term list
+          chunking
+          progressively parsing
+	  displaying results
+	  process English corpus
+          process French corpus (tagged with TreeTagger)
+          process French corpus (tagged with Flemm)
+	  process English corpus with testified terms
+
+- to check that Edge.pm is useful
+
+- review WordFromcorpus and LexiconItem (the word form is concated and then split !)
+
+- integrate message display in submodule (for instance TestifiedTermSet)

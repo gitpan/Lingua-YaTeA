@@ -5,7 +5,9 @@ use Lingua::YaTeA::Occurrence;
 use Lingua::YaTeA::Island;
 use Lingua::YaTeA::IslandSet;
 use NEXT;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
+
 use Data::Dumper;
 our $counter = 0;
 
@@ -56,7 +58,7 @@ sub buildLinguisticInfos
     
     foreach $word (@$words_a)
     {
-	if(isa($word, "Lingua::YaTeA::WordFromCorpus"))
+	if ((blessed($word)) && ($word->isa("Lingua::YaTeA::WordFromCorpus")))
 	{
 	    $lex  = $word->getLexItem;
 	    $IF .= $lex->getIF . " " ;
@@ -73,7 +75,7 @@ sub buildLinguisticInfos
 	}
 	else
 	{ # update existing linguistic info for a phrase
-	    if(isa($word, "Lingua::YaTeA::LexiconItem"))
+	    if((blessed($word)) && ($word->isa("Lingua::YaTeA::LexiconItem")))
 	    {
 		$IF .= $word->getIF . " " ;
 		if ($tag_set->existTag('PREPOSITIONS',$word->getIF))
@@ -89,9 +91,9 @@ sub buildLinguisticInfos
 	    
 	}
     }
-    $IF =~ s/\s+$//;
-    $POS =~ s/\s+$//;
-    $LF =~ s/\s+$//;
+    $IF =~ s/\s+$//o;
+    $POS =~ s/\s+$//o;
+    $LF =~ s/\s+$//o;
     $this->setIF($IF);
     $this->setPOS($POS);
     $this->setLF($LF);
@@ -101,7 +103,7 @@ sub buildLinguisticInfos
 
 sub addOccurrence
 {
-    my ($this,$words_a,$maximal) = @_;
+    my ($this,$words_a,$maximal,$fh) = @_;
     my $testified;
     my $testified_set_a;
     my $key;
@@ -115,7 +117,7 @@ sub addOccurrence
 	{
 	    foreach $testified (@{$testified_set_a})
 	    {
-		$testified->addOccurrence($occurrence,$this,$key);
+		$testified->addOccurrence($occurrence,$this,$key,$fh);
 	    }
 	}
     }
@@ -216,7 +218,7 @@ sub addTermCandidates
     my $offset = 0;
     
    
-    if(isa($this,'Lingua::YaTeA::MultiWordPhrase'))
+    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::MultiWordPhrase')))
     {
 	$max_tc = $this->getTree(0)->getRoot->buildTermList(\@term_candidates,$this->getWords,$this->getOccurrences,$this->getIslandSet,\$offset,1);
     }
@@ -244,7 +246,7 @@ sub addTermCandidates
 	       $tc->setHead;
 	       # TODO: changer le critere de pertinence du terme
 	       # actuellement: un tc reçoit le taux de confiance du groupe dont il est extrait
-	       if(isa($this,'Lingua::YaTeA::MultiWordTermCandidate'))
+	       if ((blessed($this)) && ($this->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	       {
 		   $tc->setReliability($this->getTree(0)->getReliability);
 	       }
@@ -263,17 +265,17 @@ sub addTermCandidates
 		    &&
 		    ($option_set->getOption('monolexical-included')->getValue() == 1)
 		    &&
-		    (isa($tc,'Lingua::YaTeA::MonolexicalTermCandidate'))
+		    ((blessed($tc)) && ($tc->isa('Lingua::YaTeA::MonolexicalTermCandidate')))
 		    &&
 		    (
 		     (!defined $option_set->getOption('monolexical-all'))
 		     ||
 		     ($option_set->getOption('monolexical-all')->getValue() == 0)
-		     )
 		    )
+		   )
 	       {
 		   $tc->addMonolexicalOccurrences($phrase_set,$monolexical_transfer_h)
-		   }
+	       }
 	   }
 	   else
 	   {
@@ -313,7 +315,7 @@ sub getTestifiedTerms
 
 sub addTestifiedTerms
 {
-    my ($this,$term_frontiers_h,$testified_term_set) = @_;
+    my ($this,$term_frontiers_h,$testified_term_set,$fh) = @_;
     my $testified;
     my @index;
     my $index;
@@ -322,6 +324,7 @@ sub addTestifiedTerms
     foreach my $tt_mark (values (%$term_frontiers_h))
     {
 	$index = $tt_mark->getStart;
+	
 	if (defined $index) {
 	    while ($index < $tt_mark->getEnd)
 	    {
@@ -349,8 +352,13 @@ sub addOccurrences
 {
     my ($this,$occurrences_a) = @_;
     my $occurrence;
+  
     foreach $occurrence (@$occurrences_a)
     {
+	if($occurrence->isMaximal)
+	{
+	    $this->{MNP_STATUS} = 1;  # added by SA 13/02/2009:: if at least one occurrence is a MNP, Phrase is a MNP
+	}
 	$this->addExistingOccurrence($occurrence);
     }
 }
@@ -363,15 +371,17 @@ sub adjustReferences
     
     foreach $term_candidate (@$term_candidates_a)
     {
-	if(isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
+	if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	{
 	    if($term_candidate->getRootHead->getID == $current->getID)
 	    {
 		$term_candidate->{ROOT_HEAD} = $reference;
+		$reference->setROOT($term_candidate);
 	    }
 	    if($term_candidate->getRootModifier->getID == $current->getID)
 	    {
 		$term_candidate->{ROOT_MODIFIER} = $reference;
+		$reference->setROOT($term_candidate);
 	    }
 	}
     }
@@ -384,18 +394,36 @@ sub addExistingOccurrence
     my ($this,$occurrence) = @_;
     push @{$this->{OCCURRENCES}}, $occurrence;
 }
+
+
+sub getWordIndex
+{
+    my ($this,$word) = @_;
+    my $w;
+    my $i = 0;
+    foreach $w (@{$this->getWords})
+    {
+	if($w == $word)
+	{
+	    return $i;
+	}
+	$i++;
+    }
+}
+
+
 1;
 
 __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Phrase - Perl extension for ???
+Lingua::YaTeA::Phrase - Perl extension for phrases corresponding to the parsed terms
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Phrase;
-  Lingua::YaTeA::Phrase->();
+  Lingua::YaTeA::Phrase->new($num_content_words,$words_a,$tag_set);
 
 =head1 DESCRIPTION
 
@@ -404,77 +432,111 @@ Lingua::YaTeA::Phrase - Perl extension for ???
 
 =head2 new()
 
+    new($num_content_words,$words_a,$tag_set);
 
 =head2 setTC()
+
+    setTC($status);
 
 
 =head2 buildLinguisticInfos()
 
+    buildLinguisticInfos($words_a,$tag_set);
+
 
 =head2 addOccurrence()
 
+    addOccurrence($words_a,$maximal,$fh);
 
 =head2 incrementFrequency()
 
+    incrementFrequency();
 
 =head2 getWords()
+
+    getWords();
 
 
 =head2 setIF()
 
+    setIF($newIF);
 
 =head2 setPOS()
 
+    setPOS($newPOS)
 
 =head2 setLF()
+
+    setLF($newLemma);
 
 
 =head2 getIF()
 
+    getIF();
 
 =head2 getPOS()
 
+    getPOS();
 
 =head2 getLF()
 
+    getLF();
 
 =head2 buildKey()
 
+    buildKey();
 
 =head2 getWord()
 
+    getWord($index);
 
 =head2 isTC()
 
+    isTC();
 
 =head2 getFrequency()
 
+    getFrequency();
 
 =head2 getOccurrences()
 
+    getOccurrences();
 
 =head2 addTermCandidates()
 
+    addTermCandidates($term_candidates_h,$mapping_from_phrases_to_TCs_h,$tc_max_length,$option_set,$phrase_set,$monolexical_transfer_h);
 
 =head2 getID()
 
+    getID();
 
 =head2 getTestifiedTerms()
 
+    getTestifiedTerms();
 
 =head2 addTestifiedTerms()
 
+    addTestifiedTerms($term_frontiers_h,$testified_term_set,$fh);
 
 =head2 getIndexSet()
 
+    getIndexSet();
 
 =head2 addOccurrences()
 
+    addOccurrences($occurrences_a);
+
+=head2 adjustReferences()
+
+    adjustReferences($term_candidates_a,$current,$reference);
 
 =head2 addExistingOccurrence()
 
+    addExistingOccurrence($occurrence);
 
-=head2 adjustReferences()
+=head2 getWordIndex
+
+    getWordIndex($word);
 
 
 =head1 SEE ALSO
@@ -488,7 +550,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

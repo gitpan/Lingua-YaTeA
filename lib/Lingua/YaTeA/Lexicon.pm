@@ -69,36 +69,65 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::LexiconItem - Perl extension for ???
+Lingua::YaTeA::LexiconItem - Perl extension for lexicon of the corpus.
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::LexiconItem;
-  Lingua::YaTeA::LexiconItem->();
+  Lingua::YaTeA::LexiconItem->new();
 
 =head1 DESCRIPTION
 
+The module manages the lexicon of the corpus, i.e. the list of the
+words appearing in the corpus. Each word, or lexicon unit is stores in
+the field C<ITEM> (a reference to a hashtable). The key of the lexicon
+unit is the concatenation of the inflected form, Part-Of-Speech tag,
+and lemmatized form.
 
 =head1 METHODS
 
 =head2 new()
 
+    new();
+
+The method creates a new lexicon objet.
+
 
 =head2 addItem()
 
+    addItem($item,$key);
+
+The method adds a lexicon unit (or item) C<$item> to the lexicon. The
+associated key C<$key> is provided.
 
 =head2 addOccurrence()
 
+    addOccurrence($form);
+
+the method adds an new occurrrence of the lexicon unit having the form
+C<$form>. If the unit doesn't already exist, the lexicon item is
+created, otherwise its frequency is incremented.
 
 =head2 getItem()
 
+    getItem($key);
+
+The method returns the lexicon item given the key C<$key>.
 
 =head2 itemExists()
+
+    itemExists($key);
+
+The method checks if the lexicon item exists given the key C<$key>. If
+the item exists it returns 1, otherwise 0.
 
 
 =head2 buildKey()
 
+    buildKey($item);
 
+
+The method builds the key of the lexicon item C<$item>.
 
 =head1 SEE ALSO
 
@@ -111,7 +140,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -45,15 +45,17 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::Option - Perl extension for ???
+Lingua::YaTeA::Option - Perl extension for option of the term extraction process
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::Option;
-  Lingua::YaTeA::Option->();
+  Lingua::YaTeA::Option->new($name, $value);
 
 =head1 DESCRIPTION
 
+The module implements the option used by the term extractor. Options
+are used to define the term extraction process.
 
 =head1 METHODS
 
@@ -99,7 +101,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

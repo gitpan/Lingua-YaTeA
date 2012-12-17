@@ -24,6 +24,11 @@ sub getHeadAndLinks
     return ($head,0,\@links);
 }
 
+sub getLength
+{
+    my ($this) = @_;
+    return 1;
+}
 
 
 1;
@@ -32,24 +37,48 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MonolexicalTestifiedTerm - Perl extension for ???
+Lingua::YaTeA::MonolexicalTestifiedTerm - Perl extension for monolexical testified terms
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MonolexicalTestifiedTerm;
-  Lingua::YaTeA::MonolexicalTestifiedTerm->();
+  Lingua::YaTeA::MonolexicalTestifiedTerm->new($num_content_words,$words_a,$tag_set,$source,$match_type);
 
 =head1 DESCRIPTION
 
+This module implements monolexical testified terms (i.e. single word
+terms). The objects inherit of the module
+Lingua::YaTeA::TestifiedTerm.
 
 =head1 METHODS
 
 
 =head2 new()
 
+    new($num_content_words,$words_a,$tag_set,$source,$match_type);
+
+This method creates a monolexical testified term. C<$words_a> is the
+reference to an array of words. C<$num_content_words> is the number of
+content words. C<$tag_set> is the reference to the tag set used in the
+term extractor. C<$source> is the file name from which the testifed
+term is issued. C<$match_type> indicates if the term matches inflected
+or lemmatized form (value is C<loose>) of if the term matches
+inflected form and Part-Of-Speech tag).
 
 =head2 getHeadAndLinks()
 
+    getHeadAndLinks($LGPmapping_h);
+
+This method returns the head of the term (in the case of monolexical
+term, the word itself) and the reference to an array of syntactic
+relations (in the current case, the array is empty).
+
+
+=head2 getLength
+
+    getLength();
+
+This method returns the length of the monolexical term, i.e. always 1.
 
 =head1 SEE ALSO
 
@@ -62,7 +91,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

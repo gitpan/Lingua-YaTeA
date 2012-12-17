@@ -33,7 +33,7 @@ sub matchesWord
     {
 	return 1;
     }
-    return;
+    return 0;
 }
 1;
 
@@ -41,14 +41,19 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::LinguisticItem - Perl extension for ???
+Lingua::YaTeA::LinguisticItem - Perl extension for the linguistic item of the forbiddent structures
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::LinguisticItem;
-  Lingua::YaTeA::LinguisticItem->();
+  Lingua::YaTeA::LinguisticItem->new($type, $form);
 
 =head1 DESCRIPTION
+
+This module implements the linguistic items. Each linguistic item is
+composed of a form (a word or a Part-of-Speech tag) and the type of
+the form (C<IF> for inflected form, C<LF> for lemma or C<POS> for
+Part-of-Speech tag).
 
 
 =head1 METHODS
@@ -56,15 +61,29 @@ Lingua::YaTeA::LinguisticItem - Perl extension for ???
 
 =head2 new()
 
+    new ($type, $form);
+
+The method creates a new linguistic item having the type C<$type> and the form C<form>.
+
 
 =head2 getForm()
 
+    getForm();
 
-=head2 getType()
+The methods returns the form of the linguistic item.
 
+=head2 getType())
+
+    getType();
+
+The methods returns the type of the linguistic item.
 
 =head2 matchesWord()
 
+    matchesWord($word)
+
+The method checks if the word C<$word> matches the form of the
+linguistic item. It returns 1 if the word matches, otherwise 0.
 
 =head1 SEE ALSO
 
@@ -77,7 +96,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

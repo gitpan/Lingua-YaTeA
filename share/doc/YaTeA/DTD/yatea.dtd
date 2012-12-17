@@ -12,7 +12,8 @@
 <!ELEMENT  TERM_CANDIDATE
                         (ID,FORM, LEMMA?, MORPHOSYNTACTIC_FEATURES?,
                          HEAD, NUMBER_OCCURRENCES, LIST_OCCURRENCES,
-                         TERM_CONFIDENCE, LIST_RELIABLE_ANCHORS?,
+                         TERM_CONFIDENCE, TERM_WEIGHTS, 
+			 LIST_RELIABLE_ANCHORS?,
                          LOG_INFORMATION,
                          (SYNTACTIC_ANALYSIS|
                          SYNTACTIC_ANALYSIS_COORD)?) >
@@ -181,6 +182,18 @@
 <!--                    Confidence of the term                     -->
 <!ELEMENT  TERM_CONFIDENCE
                         (#PCDATA)                                    >
+<!--              Weight associated to the term                    -->
+<!ELEMENT  TERM_WEIGHTS
+                        (WEIGHT+)                                    >
+
+<!--                    one of the term wieght                     -->
+<!ELEMENT  WEIGHT        
+                        (#PCDATA)                                    >
+
+<!--                   name of the term wieght                     -->
+<!ATTLIST  WEIGHT
+             name       CDATA                             #REQUIRED  >
+
 <!--                    List of the confidence slots               -->
 <!ELEMENT  LIST_RELIABLE_ANCHORS
                         (RELIABLE_ANCHOR+)                           >

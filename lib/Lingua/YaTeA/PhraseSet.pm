@@ -3,10 +3,14 @@ use strict;
 use warnings;
 use Lingua::YaTeA::MultiWordPhrase;
 use Lingua::YaTeA::MonolexicalPhrase;
-use UNIVERSAL qw(isa);
+use Lingua::YaTeA::XMLEntities;
+use UNIVERSAL;
 use Data::Dumper;
+use Scalar::Util qw(blessed);
 
 our $VERSION=$Lingua::YaTeA::VERSION;
+
+use Encode qw(:fallbacks);;
 
 sub new
 {
@@ -28,7 +32,7 @@ sub recordOccurrence
     my $phrase;
     my $key;
     my $complete = 0;
-    my $corrected;
+    my $corrected = 0;
     if(scalar @$words_a != 0)
     {
 	if(scalar @$words_a > 0)
@@ -55,11 +59,11 @@ sub recordOccurrence
 		    # add testified terms here
 		    
 		{
-		    $phrase->addTestifiedTerms($term_frontiers_h,$testified_term_set);
+		    $phrase->addTestifiedTerms($term_frontiers_h,$testified_term_set,$fh);
 		  
 		    
 		}
-		if (isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+		if ((blessed($phrase)) && ($phrase->isa('Lingua::YaTeA::MultiWordPhrase')))
 		{
 		    if(!$phrase->checkMaximumLength($option_set->getMaxLength))
 		    {
@@ -75,12 +79,13 @@ sub recordOccurrence
 			    if(defined $phrase->getIslandSet)
 			    {
 			#	($complete,$corrected) = $phrase->integrateIslands($chunking_data,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
-				
 				($complete,$corrected) = $phrase->integrateIslands($tag_set,$lexicon,$option_set->getParsingDirection,$sentence_set,$fh);
-			     }
+			    }
 			    if($corrected == 1)
 			    {
 # 				print "reengistre\n";
+				$phrase->{LF} = $phrase->getIndexSet->buildLFSequence($phrase->getWords,$tag_set);
+				$phrase->{POS} = $phrase->getIndexSet->buildPOSSequence($phrase->getWords,$tag_set);
 			    }
 			    if($complete == 1)
 			    {
@@ -101,6 +106,7 @@ sub recordOccurrence
 			    else
 			    {
 				$this->addToUnparsed($phrase);
+				# $this->addToUnparsable($phrase);
 			    }
 			}
 		    }
@@ -126,7 +132,7 @@ sub recordOccurrence
 		# debaptiser le phrase qui vient d'etre construit
 		$phrase = $this->getPhrases->{$key};
 	    }
-	    $phrase->addOccurrence($words_a,1);
+	    $phrase->addOccurrence($words_a,1,$fh);
 	}
     }
 }
@@ -139,7 +145,7 @@ sub addPhrase
     my ($this,$key,$phrase) = @_;
     $this->getPhrases->{$key} = $phrase;
     $Lingua::YaTeA::Phrase::counter++;
-    if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+    if ((blessed($phrase)) && ($phrase->isa('Lingua::YaTeA::MultiWordPhrase')))
     {
 	$Lingua::YaTeA::MultiWordPhrase::counter++;
     }
@@ -199,6 +205,9 @@ sub addToUnparsed
 sub addToUnparsable
 {
     my ($this,$phrase) = @_;
+
+#    print STDERR "$phrase\n";
+
     push @{$this->{UNPARSABLE}},$phrase;
 }
 
@@ -245,9 +254,9 @@ sub parseProgressively
 	while ($phrase = pop @{$this->getUnparsed})
 	{ 
 	    $counter++;
-# 	    print $fh "\n\n";
+	    #print $fh "\n\n";
  	    #print $fh "COUNTER: " . $counter . " \t" . $phrase->{'IF'} . "\n";
-#   	   $phrase->print($fh);
+	    #$phrase->print($fh);
  
 #  	    if (($phrase->{'IF'} eq "fonction ventriculaire gauche globale") || ($phrase->{'IF'} eq "fonction ventriculaire gauche systolique globale")) {
 # 		print STDERR Dumper($phrase);
@@ -257,32 +266,26 @@ sub parseProgressively
 	    $phrase->searchEndogenousIslands($this,$chunking_data,$tag_set,$lexicon,$sentence_set,$fh);
 	    if(defined $phrase->getIslandSet)
 	    {
-#		$phrase->printIslands($fh);
+		#$phrase->printIslands($fh);
 #		($complete,$corrected) = $phrase->integrateIslands($chunking_data,$tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
 		
 		($complete,$corrected) = $phrase->integrateIslands($tag_set,$lexicon,$parsing_direction,$sentence_set,$fh);
-#		print $fh "apres\n";
-#		$phrase->printIslands($fh);
 	    }
 	    if($corrected == 1)
 	    {
 		$this->updateRecord($phrase,$tag_set);
-
 	    }
 	   if($complete == 1)
 	   {
 	       $phrase->setParsingMethod('PROGRESSIVE');
 	       $phrase->setTC(1);
 	       $this->giveAccess($phrase);
-#	       $phrase->print($fh);
-	       
 	   }
 	    else
 	    {
-	       $phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set,$fh);
+		$phrase->plugInternalFreeNodes($parsing_pattern_set,$parsing_direction,$tag_set,$fh);
 	       
-	       
-	       if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$fh))
+		if($phrase->parseProgressively($tag_set,$parsing_direction,$parsing_pattern_set,$fh))
 	       {
 		   $phrase->setParsingMethod('PROGRESSIVE');
 		   $phrase->setTC(1);
@@ -292,6 +295,8 @@ sub parseProgressively
 	       {
 		   $phrase->setTC(0);
 		   $this->addToUnparsable($phrase);
+		   # $phrase->print($fh);
+
 	       }
 	       #	    $phrase->printForestParenthesised($fh);
 	       #  print $fh "\n\n";
@@ -324,6 +329,7 @@ sub updateRecord
     {
 	$reference = $this->getPhrases->{$key};
 	$reference->addOccurrences($phrase->getOccurrences);
+	
     }
     else
     {
@@ -356,7 +362,7 @@ sub addTermCandidates
     my %mapping_from_phrases_to_TCs_h;
     my %monolexical_transfer;
    
-    print STDERR "TC_MAX_LENGTH:" . $tc_max_length . "\n";
+  
     if(defined $this->getIFaccess)
     {
 	foreach $phrase_set (values (%{$this->getIFaccess}))
@@ -370,7 +376,7 @@ sub addTermCandidates
 	{
 	
 	if(
-	    (isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
+	    ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	    &&
 	    ($term_candidate->containsIslands)
 	    )
@@ -398,7 +404,7 @@ sub adjustMonolexicalPhrasesSet
 	{
 	    if
 		(
-		 (isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+		 (((blessed($phrase)) && ($phrase->isa('Lingua::YaTeA::MultiWordPhrase'))))
 		 ||
 		 (!exists $monolexical_transfer_h->{$phrase->getID})
 		)
@@ -417,45 +423,322 @@ sub getTermCandidates
 }
 
 
-sub printTermList
+sub printBootstrapList
 {
-    my ($this,$file,$term_list_style) = @_;
-    my $fh = FileHandle->new(">".$file->getPath);
+    my ($this,$file,$source) = @_;
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	$fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
     my $term_candidate;
-    
-    #print $fh "# Inflected form\tDDW\tFrequency\n";
-    print $fh "# Inflected form\tFrequency\n";
-    foreach $term_candidate ( sort ({&sortTermCandidates($a,$b)} values(%{$this->getTermCandidates})))
+    my $tree;
+    my $parse;
+     foreach $term_candidate ( sort ({&sortTermCandidates($a,$b, "Freq")} values(%{$this->getTermCandidates})))
    {
+       $parse = "";
+       if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))) {
 
-       if(
-	   ($term_list_style eq "")
-	   ||
-	   ($term_list_style eq "all")
-	   ||
-	   (
-	    ($term_list_style eq "multi") 
-	    &&
-	    (isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate')) 
-	   )
-           )
+	   $parse = $term_candidate->getKey;
+	   #print STDERR "B :: " . $parse. "\n";
+	   $parse =~ s/(<=[MH])=[^>]+(>)/$1$2/g;
+	   $parse =~ s/<=(IN|TO)=[^>]+>/<=P>/g;
+#	   $parse =~ s/<=IN=[^>]+>/<=P>/g;
+	   $parse =~ s/<=[A-Z\$]+=[^>]+>/<=D>/g;
+	   print $fh $parse;
+	   print $fh "\t" . $term_candidate->getIF;
+	   print $fh "\t" . $term_candidate->getPOS;
+	   print $fh "\t" . $term_candidate->getLF;
+	   print $fh "\t" . $source . "\n";
 	   
-       {
-	   print $fh $term_candidate->getIF. "\t" .  $term_candidate->getFrequency . "\t\t\n";
-	   #print $fh $term_candidate->getIF. "\t" . $term_candidate->getWeight. "\t" . $term_candidate->getFrequency . "\t\t\n";
        }
    }
 }
 
 
+sub printTermList
+{
+    my ($this,$file,$term_list_style, $sorted_weight) = @_;
+
+    my $term_candidate;
+    my $mes;
+    my @Measures;
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+    warn "(tL) term_list_style: $term_list_style\n";
+    if (!defined $sorted_weight) {
+	$sorted_weight = "Freq";
+    }
+
+    my @term_candidates = values(%{$this->getTermCandidates});
+
+    my $header = "Inflected form\tFrequency"; 
+
+    if (scalar(@term_candidates) > 0) {
+	@Measures = sort {lc($a) cmp lc($b)} keys %{$term_candidates[0]->getWeights};
+	foreach $mes (@Measures) {
+	    $header .= "\t$mes";
+	}
+    } 
+    print $fh "# $header\n";
+   
+#     warn "term_list_style: $term_list_style\n";
+    my $printLine;
+    foreach $term_candidate ( sort ({&sortTermCandidates($a,$b, $sorted_weight)} @term_candidates))
+    {
+	
+# 	warn ($term_candidate->isTerm * 1) . "\n";
+# 	warn "term_list_style: $term_list_style\n";
+# 	warn $term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate') . "\n";
+	if(
+	    (
+	     ($term_list_style eq "")
+	     ||
+	     ($term_list_style eq "all")
+	     ||
+	     (
+	      ($term_list_style eq "multi") 
+	      &&
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))) 
+	     )
+	    )
+	    )
+	{
+	    $printLine = $term_candidate->getIF. "\t" .  $term_candidate->getFrequency;
+	    foreach $mes (@Measures) {
+		if (defined $term_candidate->getWeight($mes)) {
+		    $printLine .= "\t" . $term_candidate->getWeight($mes);
+		}
+	    }
+	    print $fh "$printLine\n";
+	}
+    }
+}
+
+sub printTermAndHeadList
+{
+    my ($this,$file,$term_list_style, $sorted_weight) = @_;
+
+    my $term_candidate;
+    my $mes;
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+    warn "(tL) term_list_style: $term_list_style\n";
+    if (!defined $sorted_weight) {
+	$sorted_weight = "Freq";
+    }
+
+    my @term_candidates = values(%{$this->getTermCandidates});
+
+    my $header = "Inflected form\tFrequency"; 
+
+    my @Measures = keys %{$term_candidates[0]->getWeights};
+    foreach $mes (@Measures) {
+	$header .= "\t$mes";
+    }
+    print $fh "# $header\n";
+
+    my $printLine;
+    foreach $term_candidate ( sort ({&sortTermCandidates($a,$b, $sorted_weight)} @term_candidates))
+    {
+	if(
+	    (
+	     ($term_list_style eq "")
+	     ||
+	     ($term_list_style eq "all")
+	     ||
+	     (
+	      ($term_list_style eq "multi") 
+	      &&
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
+	     )
+	    )
+	    )
+	    
+	{
+	    $printLine = $term_candidate->getIF. "\t" .  $term_candidate->getHead->getIF;
+# 	    foreach $mes (@Measures) {
+# 		if (defined $term_candidate->getWeight($mes)) {
+# 		    $printLine .= "\t" . $term_candidate->getWeight($mes);
+# 		}
+# 	    }
+	    print $fh "$printLine\n";
+	}
+    }
+}
+
+sub printTermAndRootHeadList
+{
+    my ($this,$file,$term_list_style, $sorted_weight) = @_;
+
+    my $term_candidate;
+    my $mes;
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+    warn "(tL) term_list_style: $term_list_style\n";
+    if (!defined $sorted_weight) {
+	$sorted_weight = "Freq";
+    }
+
+    my @term_candidates = values(%{$this->getTermCandidates});
+
+    my $header = "Inflected form\tFrequency"; 
+
+    my @Measures = keys %{$term_candidates[0]->getWeights};
+    foreach $mes (@Measures) {
+	$header .= "\t$mes";
+    }
+    print $fh "# $header\n";
+
+    my $printLine;
+    foreach $term_candidate ( sort ({&sortTermCandidates($a,$b, $sorted_weight)} @term_candidates))
+    {
+	if(
+	    (
+	     ($term_list_style eq "")
+	     ||
+	     ($term_list_style eq "all")
+	     ||
+	     (
+	      ($term_list_style eq "multi") 
+	      &&
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
+	     )
+	    )
+	    )
+	    
+	{
+	    $printLine = $term_candidate->getIF. "\t" .  $term_candidate->getRootHead->getIF;
+# 	    foreach $mes (@Measures) {
+# 		if (defined $term_candidate->getWeight($mes)) {
+# 		    $printLine .= "\t" . $term_candidate->getWeight($mes);
+# 		}
+# 	    }
+	    print $fh "$printLine\n";
+	}
+    }
+}
+
+sub printTermCandidatesAndComponents {
+    my ($this,$file,$term_list_style, $tagset) = @_;
+
+    my $term_candidate;
+    my $mes;
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+    # warn "(tL) term_list_style: $term_list_style\n";
+    # if (!defined $sorted_weight) {
+    # 	$sorted_weight = "Freq";
+    # }
+    
+    my @term_candidates = values(%{$this->getTermCandidates});
+
+    # my $header = "Inflected form\tFrequency"; 
+
+    # my @Measures = keys %{$term_candidates[0]->getWeights};
+    # foreach $mes (@Measures) {
+    # 	$header .= "\t$mes";
+    # }
+    # print $fh "# $header\n";
+
+    my $header = "Term inflected form\tTerm lemmatised form\tTerm frequency\t"; 
+    $header .= "Head inflected form\tHead lemmatised form\tHead frequency\t"; 
+    $header .= "Modifier inflected form\tModifier lemmatised form\tModifier frequency\t"; 
+    print $fh "# $header\n";
+
+    my $printLine;
+    # foreach $term_candidate ( sort ({&sortTermCandidates($a,$b, $sorted_weight)} @term_candidates))
+    foreach $term_candidate (@term_candidates) {
+	if(
+	    (
+	     ($term_list_style eq "")
+	     ||
+	     ($term_list_style eq "all")
+	     ||
+	     (
+	      ($term_list_style eq "multi") 
+	      &&
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
+	     )
+	    )
+	    ) {
+	    $printLine = $term_candidate->getIF . "\t" . $term_candidate->getLF . "\t" .  $term_candidate->getFrequency . "\t" ;
+	    if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))) {
+		$printLine .= $term_candidate->getRootHead->getIF . "\t" . $term_candidate->getRootHead->getLF . "\t" .  $term_candidate->getRootHead->getFrequency . "\t" ;
+		$printLine .= $term_candidate->getRootModifier->getIF . "\t" . $term_candidate->getRootModifier->getLF . "\t" .  $term_candidate->getRootModifier->getFrequency . "\t" ;
+	    } else {
+		$printLine .= "\t\t\t\t";
+	    }
+# 	    foreach $mes (@Measures) {
+# 		if (defined $term_candidate->getWeight($mes)) {
+# 		    $printLine .= "\t" . $term_candidate->getWeight($mes);
+# 		}
+# 	    }
+	    print $fh "$printLine\n";
+	}
+    }
+}
+
 sub sortTermCandidates
 {
-    my ($a,$b) = @_;
-    if($b->getWeight == $a->getWeight)
+    my ($a,$b, $weight) = @_;
+
+    if (!defined $b->getWeight($weight)) {
+	return($b->getFrequency <=> $a->getFrequency);
+    }
+
+    if($b->getWeight($weight) == $a->getWeight($weight))
     {
 	if($b->getReliability == $a->getReliability)
 	{
-	    return $b->getOccurrencesNumber <=> $a->getOccurrencesNumber;
+	    return $b->getFrequency <=> $a->getFrequency;
 	}
 	else
 	{
@@ -464,7 +747,7 @@ sub sortTermCandidates
     }
     else
     {
-	return $b->getWeight <=> $a->getWeight;
+	return $b->getWeight($weight) <=> $a->getWeight($weight);
     }
 }
 
@@ -472,33 +755,66 @@ sub printUnparsable
 {
     my ($this,$file) = @_;
     my $phrase;
-    my $fh = FileHandle->new(">".$file->getPath);
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+#	    warn $file->getPath . "\n";
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+#    binmode($fh, ":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
 
     # We should test if there are unparsable or not.
     if (defined $this->getUnparsable) {
 	foreach $phrase (@{$this->getUnparsable})
 	{
-	    if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+	    if ((blessed($phrase)) && ($phrase->isa('Lingua::YaTeA::MultiWordPhrase')))
 	    {
-		print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+		print $fh Lingua::YaTeA::XMLEntities::encode(Encode::encode("UTF-8", $phrase->getIF . "\t" . $phrase->getPOS . "\n"));
 	    }
 	}
     }
+    if (($file ne 'stdout') && ($file ne 'stderr')) {
+	$fh->close;
+    }
 }
+
+
 
 sub printUnparsed
 {
     my ($this,$file) = @_;
     my $phrase;
-    my $fh = FileHandle->new(">".$file->getPath);
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    # binmode($fh, ":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
 
     # We should test if there are unparsable or not.
-    foreach $phrase (@{$this->getUnparsed})
-    {
-	if(isa($phrase,'Lingua::YaTeA::MultiWordPhrase'))
+    if (defined $this->getUnparsed) {
+	foreach $phrase (@{$this->getUnparsed})
 	{
-	    print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+	    if ((blessed($phrase)) && ($phrase->isa('Lingua::YaTeA::MultiWordPhrase')))
+	    {
+		print $fh $phrase->getIF . "\t" . $phrase->getPOS . "\n";
+	    }
 	}
+    }
+    if (($file ne 'stdout') && ($file ne 'stderr')) {
+	$fh->close;
     }
 }
 
@@ -506,7 +822,18 @@ sub printTermCandidatesTTG
 {
     my ($this,$file,$ttg_style) = @_;
     
-    my $fh = FileHandle->new(">".$file->getPath);
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
     my $term_candidate;
     my $word;
     
@@ -521,7 +848,7 @@ sub printTermCandidatesTTG
 	     (
 	      ($ttg_style eq "multi")
 	      &&
-	      (isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate')) 
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	     )
 	    )
 	{
@@ -530,6 +857,58 @@ sub printTermCandidatesTTG
 		print $fh $word->getIF . "\t" . $word->getPOS . "\t" . $word->getLF . "\n";
 	    }
 	    print $fh "\.\tSENT\t\.\n";
+	}
+    }
+}
+
+sub printTermCandidatesFFandTTG
+{
+    my ($this,$file,$ttg_style,$tagset) = @_;
+    
+    my $if;
+    my $pos;
+    my $lf;
+
+    my $fh;
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh, ":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
+    my $term_candidate;
+    my $word;
+    
+    foreach $term_candidate (values(%{$this->getTermCandidates}))
+    {
+	if
+	    (
+	     ($ttg_style eq "")
+	     ||
+	     ($ttg_style eq "all")
+	     ||
+	     (
+	      ($ttg_style eq "multi")
+	      &&
+	      ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
+	     )
+	    )
+	{
+	    ($if,$pos,$lf) = $term_candidate->buildLinguisticInfos($tagset);
+	    Lingua::YaTeA::XMLEntities::encode($if);
+	    Lingua::YaTeA::XMLEntities::encode($pos);
+	    Lingua::YaTeA::XMLEntities::encode($lf);
+	    print $fh "$if\t$lf\t$pos\n";
+# 	    foreach $word (@{$term_candidate->getWords})
+# 	    {
+# 		print $fh $word->getIF . "\t" . $word->getPOS . "\t" . $word->getLF . "\n";
+# 	    }
+# 	    print $fh "\.\tSENT\t\.\n";
 	}
     }
 }
@@ -543,8 +922,13 @@ sub printTermCandidatesXML
     if ($file eq "stdout") {
 	$fh = \*STDOUT;
     } else {
-	$fh = FileHandle->new(">".$file->getPath);
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
     }
+    binmode($fh,":utf8");
     my $term_candidate;
     my $if;
     my $pos;
@@ -554,16 +938,54 @@ sub printTermCandidatesXML
     my $position;
 
     # header
-    print $fh "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
-    print $fh "<!DOCTYPE TERM_EXTRACTION_RESULTS SYSTEM \"extracteurDeTermes.dtd\">\n";
+    print $fh "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    print $fh "<!DOCTYPE TERM_EXTRACTION_RESULTS SYSTEM \"yatea.dtd\">\n";
     print $fh "\n";
     print $fh "<TERM_EXTRACTION_RESULTS>\n";
+
+    $this->printListTermCandidatesXML($file, $tagset, $fh);
+
+    print $fh "</TERM_EXTRACTION_RESULTS>\n";
+   
+}
+
+
+sub printListTermCandidatesXML {
+    my ($this,$file,$tagset, $fh) = @_;
+
+    if (!defined $fh) {
+	if ($file eq "stdout") {
+	    $fh = \*STDOUT;
+	} else {
+	    if ($file eq "stderr") {
+		$fh = \*STDERR;
+	    } else {
+		$fh = FileHandle->new(">".$file->getPath);
+	    }
+	}
+    }
+    binmode($fh,":utf8");
+#     my $fh = FileHandle->new(">".$file->getPath);
+    my $term_candidate;
+    my $word;
+    my $if;
+    my $pos;
+    my $lf;
+    my $occurrence;
+    my $island;
+    my $position;
+
+
     print $fh "  <LIST_TERM_CANDIDATES>\n";
 
     foreach $term_candidate (values(%{$this->getTermCandidates}))
     {
 	($if,$pos,$lf) = $term_candidate->buildLinguisticInfos($tagset);
-	print $fh "    <TERM_CANDIDATE>\n";
+	Lingua::YaTeA::XMLEntities::encode($if);
+	Lingua::YaTeA::XMLEntities::encode($pos);
+	Lingua::YaTeA::XMLEntities::encode($lf);
+	print $fh "    <TERM_CANDIDATE MNP_STATUS=\"" . $term_candidate->getMNPStatus . "\">\n";  # added by SA 13/02/2009
+# 	print $fh "    <TERM_CANDIDATE>\n";
 	print $fh "      <ID>term" . $term_candidate->getID . "</ID>\n";
 	print $fh "      <FORM>" . $if . "</FORM>\n";
 	print $fh "      <LEMMA>" . $lf . "</LEMMA>\n";
@@ -579,7 +1001,7 @@ sub printTermCandidatesXML
 	{
 	    print $fh "      <OCCURRENCE>\n";
 	    print $fh "        <ID>occ" . $occurrence->getID . "</ID>\n";
-	    print $fh "        <MNP>" . (($occurrence->isMaximal && isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate')) * 1) .  "</MNP>\n";
+	    print $fh "        <MNP>" . (($occurrence->isMaximal) * 1) .  "</MNP>\n"; #  && $term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate') -- remove by Thierry Hamon 29/09/2008
 	    print $fh "        <DOC>" .$occurrence->getDocument->getID . "</DOC>\n";
 	    print $fh "        <SENTENCE>" .$occurrence->getSentence->getInDocID . "</SENTENCE>\n";
 	    print $fh "        <START_POSITION>";
@@ -592,10 +1014,17 @@ sub printTermCandidatesXML
 	}
 	print $fh "      </LIST_OCCURRENCES>\n";
 	print $fh "      <TERM_CONFIDENCE>" . $term_candidate->getReliability . "</TERM_CONFIDENCE>\n"; 
+	print $fh "      <TERM_WEIGHTS>\n";
+	foreach my $weight ($term_candidate->getWeightNames) {
+	    print $fh "            <WEIGHT name=\"$weight\">";
+	    print $fh $term_candidate->getWeight($weight);
+	    print $fh "</WEIGHT>\n";
+	}
+	print $fh "      </TERM_WEIGHTS>\n"; 
 
 	# islands of reliability
 	if(
-	    (isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
+	    ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	    &&
 	    ($term_candidate->containsIslands)
 	    )
@@ -604,7 +1033,7 @@ sub printTermCandidatesXML
 	    foreach $island (@{$term_candidate->getIslands})
 	    {
 		print $fh "        <RELIABLE_ANCHOR>\n";
-		if(isa($island,'Lingua::YaTeA::TermCandidate'))
+		if((blessed($island)) && ($island->isa('Lingua::YaTeA::TermCandidate')))
 		{
 		    print $fh "          <ID>term";
 		    print $fh $island->getID;
@@ -616,7 +1045,9 @@ sub printTermCandidatesXML
 		}
 		print $fh "</ID>\n";
 		print $fh "          <FORM>";
-		print $fh $island->getIF;
+		$if = $island->getIF;
+		Lingua::YaTeA::XMLEntities::encode($if);
+		print $fh $if;
 		print $fh "</FORM>\n";
 		print $fh "          <ORIGIN>";
 		print $fh $island->getIslandType;
@@ -626,7 +1057,7 @@ sub printTermCandidatesXML
 	    print $fh "      </LIST_RELIABLE_ANCHORS>\n";
 	}
 	print $fh "      <LOG_INFORMATION>YaTeA</LOG_INFORMATION>\n";
-	if(isa($term_candidate,'Lingua::YaTeA::MultiWordTermCandidate'))
+	if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	{
 	    print $fh "      <SYNTACTIC_ANALYSIS>\n";
 	    print $fh "        <HEAD>\n        term";
@@ -654,14 +1085,485 @@ sub printTermCandidatesXML
 	print $fh "    </TERM_CANDIDATE>\n";
     }
     print $fh "  </LIST_TERM_CANDIDATES>\n";
-    print $fh "</TERM_EXTRACTION_RESULTS>\n";
+    
+
+}
+
+sub printTermCandidatesDot2
+{
+    my ($this,$file,$tagset) = @_;
+    
+    my $fh;
+
+    if ($file eq "stdout") {
+	$fh = \*STDOUT;
+    } else {
+	if ($file eq "stderr") {
+	    $fh = \*STDERR;
+	} else {
+	    $fh = FileHandle->new(">".$file->getPath);
+	}
+    }
+    binmode($fh,":utf8");
+    my $term_candidate;
+    my $if;
+    my $pos;
+    my $lf;
+    my $occurrence;
+    my $island;
+    my $position;
+
+    # header
+    print $fh "graph Terms {\n\n";
+    print $fh "label=\"Full set of terms\"\n";
+    print $fh "overlap=false\n";
+
+    $this->printListTermCandidatesDot2($file, $tagset, $fh);
+
+    print $fh "}\n";
    
 }
 
 
+sub printListTermCandidatesDot {
+    my ($this,$tagset) = @_;
+
+    my %term2CC;
+    my %termLabel;
+    my %CC2terms;
+    my %CC2relations;
+    my %relationLabel;
+    my %relationLabelH;
+    my $term;
+    my $CC;
+    my $fh;
+    my $rel;
+    my $oldCC;
+
+    warn "Making dot files\n";
+#     my $fh = FileHandle->new(">".$file->getPath);
+    my $term_candidate;
+    my $word;
+    my $if;
+    my $pos;
+    my $lf;
+    my $occurrence;
+    my $island;
+    my $position;
+
+    foreach $term_candidate (values(%{$this->getTermCandidates}))
+    {
+	($if,$pos,$lf) = $term_candidate->buildLinguisticInfos($tagset);
+	Lingua::YaTeA::XMLEntities::encode($if);
+	Lingua::YaTeA::XMLEntities::encode($pos);
+	Lingua::YaTeA::XMLEntities::encode($lf);
+
+	if (!exists $term2CC{$term_candidate->getID}) {
+	    $term2CC{$term_candidate->getID} = 'CC' . $term_candidate->getID;
+	    $CC2terms{$term2CC{$term_candidate->getID}} = {$term_candidate->getID => 1};
+	    $CC2relations{$term2CC{$term_candidate->getID}} = {};
+# 	} else {
+# 	    # merge
+# 	    foreach $term (@{$CC2terms{$term_candidate->getID}}) {
+# 		    $term2CC{$term} = $term_candidate->getID;
+# 		    push @{$CC2terms{$term_candidate->getID}}, $term;
+# 		    delete $term2CC{$term};
+# 		}
+# 		delete $CC2terms{$term_candidate->getHead->getID};
+	}
+	$termLabel{$term_candidate->getID} = "[label=\"" . $if . '\n(' . $term_candidate->getFrequency . ")\"]";
+# 	print $fh $term_candidate->getID ;
+# 	print $fh " [label=\"" . $if . "\"];\n";
+	
+ 	if ($term_candidate->getID ne $term_candidate->getHead->getID) {
+# # 	    print $fh $term_candidate->getID . " -- " . $term_candidate->getHead->getID . "[label=\"main head\" color=\"red\"];\n";
+# 	    if (exists $term2CC{$term_candidate->getHead->getID}) {
+# 		# merge
+# # 		$oldCC = $term2CC{$term_candidate->getHead->getID};
+# # 		foreach $term (keys %{$CC2terms{$oldCC}}) {
+# # 		    $term2CC{$term} = $term2CC{$term_candidate->getID};
+# # 		    $CC2terms{$term2CC{$term_candidate->getID}}->{$term}++;
+# # 		    delete $term2CC{$term};
+# # 		}
+# # 		delete $CC2terms{$oldCC};
+
+# # 		if (defined $CC2relations{$oldCC}) {
+# # 		    foreach $rel (keys %{$CC2relations{$oldCC}}) {
+# # 			$CC2relations{$oldCC}->{$rel}++;
+# # 		    }
+# # 		    delete $CC2relations{$oldCC};
+# # 		}
+# 	    } else {
+# 		$term2CC{$term_candidate->getHead->getID} = $term2CC{$term_candidate->getID};
+# 		$CC2terms{$term_candidate->getID}->{$term_candidate->getHead->getID}++;
+# # 		if (defined $CC2relations{$term_candidate->getHead->getID}) {
+# # 		    foreach $rel (keys %{$CC2relations{$term_candidate->getHead->getID}}) {
+# # 			$CC2relations{$term2CC{$term_candidate->getID}}->{$rel}++;
+# # 		    }
+# # 		    delete $CC2relations{$term_candidate->getHead->getID};
+# # 		}
+# 	    }
+	    $CC2relations{$term_candidate->getID}->{$term_candidate->getID . " -- " . $term_candidate->getHead->getID}++;
+	    $relationLabelH{$term_candidate->getID . " -- " . $term_candidate->getHead->getID} = "[label=\"main head\" weight=1 color=\"yellow\"];";
+ 	}
+
+	# occurrences
+# 	print $fh "      <NUMBER_OCCURRENCES>". $term_candidate->getFrequency . "</NUMBER_OCCURRENCES>\n";
+# 	print $fh "      <LIST_OCCURRENCES>\n";
+# 	foreach $occurrence (@{$term_candidate->getOccurrences})
+# 	{
+# 	    print $fh "      <OCCURRENCE>\n";
+# 	    print $fh "        <ID>occ" . $occurrence->getID . "</ID>\n";
+# 	    print $fh "        <MNP>" . (($occurrence->isMaximal) * 1) .  "</MNP>\n"; #  && $term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate') -- remove by Thierry Hamon 29/09/2008
+# 	    print $fh "        <DOC>" .$occurrence->getDocument->getID . "</DOC>\n";
+# 	    print $fh "        <SENTENCE>" .$occurrence->getSentence->getInDocID . "</SENTENCE>\n";
+# 	    print $fh "        <START_POSITION>";
+# 	    print $fh $occurrence->getStartChar;
+# 	    print $fh "</START_POSITION>\n";
+# 	    print $fh "        <END_POSITION>";
+# 	    print $fh $occurrence->getEndChar;
+# 	    print $fh "</END_POSITION>\n";
+# 	    print $fh "        </OCCURRENCE>\n";
+# 	}
+# 	print $fh "      </LIST_OCCURRENCES>\n";
+# 	print $fh "      <TERM_CONFIDENCE>" . $term_candidate->getReliability . "</TERM_CONFIDENCE>\n"; 
+# 	print $fh "      <TERM_WEIGHTS>\n";
+# 	foreach my $weight ($term_candidate->getWeightNames) {
+# 	    print $fh "            <WEIGHT name=\"$weight\">";
+# 	    print $fh $term_candidate->getWeight($weight);
+# 	    print $fh "</WEIGHT>\n";
+# 	}
+# 	print $fh "      </TERM_WEIGHTS>\n"; 
+
+	# islands of reliability
+# 	if(
+# 	    ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))
+# 	    &&
+# 	    ($term_candidate->containsIslands)
+# 	    )
+# 	{
+# 	    print $fh "      <LIST_RELIABLE_ANCHORS>\n";
+# 	    foreach $island (@{$term_candidate->getIslands})
+# 	    {
+# 		print $fh "        <RELIABLE_ANCHOR>\n";
+# 		if($island->isa('Lingua::YaTeA::TermCandidate'))
+# 		{
+# 		    print $fh "          <ID>term";
+# 		    print $fh $island->getID;
+# 		}
+# 		else
+# 		{
+# 		    print $fh "          <ID>testified_term";
+# 		    print $fh $island->getID;
+# 		}
+# 		print $fh "</ID>\n";
+# 		print $fh "          <FORM>";
+# 		$if = $island->getIF;
+# 		Lingua::YaTeA::XMLEntities::encode($if);
+# 		print $fh $if;
+# 		print $fh "</FORM>\n";
+# 		print $fh "          <ORIGIN>";
+# 		print $fh $island->getIslandType;
+# 		print $fh "</ORIGIN>\n";
+# 		print $fh "        </RELIABLE_ANCHOR>\n";
+# 	    }
+# 	    print $fh "      </LIST_RELIABLE_ANCHORS>\n";
+# 	}
+# 	print $fh "      <LOG_INFORMATION>YaTeA</LOG_INFORMATION>\n";
+	if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))) {
+# 	    print $fh "      <SYNTACTIC_ANALYSIS>\n";
+#	    print $fh "        <HEAD>\n        term";
+
+	    if ((exists $term2CC{$term_candidate->getRootHead->getID}) && ($term2CC{$term_candidate->getRootHead->getID} ne $term2CC{$term_candidate->getID})) {
+		# merge
+		$oldCC = $term2CC{$term_candidate->getRootHead->getID};
+		foreach $term (keys %{$CC2terms{$term2CC{$term_candidate->getRootHead->getID}}}) {
+		    $term2CC{$term} = $term2CC{$term_candidate->getID};
+		    $CC2terms{$term2CC{$term_candidate->getID}}->{$term}++;
+		}
+		delete $CC2terms{$oldCC};
+		if (defined $CC2relations{$oldCC}) {
+		    foreach $rel (keys %{$CC2relations{$oldCC}}) {
+			$CC2relations{$term2CC{$term_candidate->getID}}->{$rel}++;
+		    }
+		    delete $CC2relations{$oldCC};
+
+# 		    push @{$CC2relations{$term_candidate->getID}},  @{$CC2relations{$term_candidate->getRootHead->getID}};
+# 		    delete $CC2relations{$term_candidate->getRootHead->getID};
+		}
+	    } else {
+		$term2CC{$term_candidate->getRootHead->getID} = $term2CC{$term_candidate->getID};
+		$CC2terms{$term2CC{$term_candidate->getID}}->{$term_candidate->getRootHead->getID}++;
+# 		if (defined $CC2relations{$term2CC{$term_candidate->getRootHead->getID}}) {
+# 		    foreach $rel (keys %{$CC2relations{$term2CC{$term_candidate->getRootHead->getID}}}) {
+# 			$CC2relations{$term2CC{$term_candidate->getID}}->{$rel}++;
+# 		    }
+# 		    delete $CC2relations{$term2CC{$term_candidate->getRootHead->getID}};
+
+# # 		    push @{$CC2relations{$term_candidate->getID}},  @{$CC2relations{$term_candidate->getRootHead->getID}};
+# # 		    delete $CC2relations{$term_candidate->getRootHead->getID};
+# 		}
+	    }
+
+	    if ((exists $term2CC{$term_candidate->getRootModifier->getID}) && ($term2CC{$term_candidate->getRootModifier->getID} ne $term2CC{$term_candidate->getID})) {
+		# merge
+# 		warn "merge " . $term2CC{$term_candidate->getRootModifier->getID} . "\n";
+		$oldCC = $term2CC{$term_candidate->getRootModifier->getID};
+		foreach $term (keys %{$CC2terms{$term2CC{$term_candidate->getRootModifier->getID}}}) {
+# 		    warn"\t$term\n";
+		    $term2CC{$term} = $term2CC{$term_candidate->getID};
+		    $CC2terms{$term2CC{$term_candidate->getID}}->{$term}++;
+		}
+		delete $CC2terms{$oldCC};
+		if (defined $CC2relations{$oldCC}) {
+		    foreach $rel (keys %{$CC2relations{$oldCC}}) {
+			$CC2relations{$term2CC{$term_candidate->getID}}->{$rel}++;
+		    }
+		    delete $CC2relations{$term_candidate->getRootModifier->getID};
+
+# 		    push @{$CC2relations{$term_candidate->getID}},  @{$CC2relations{$term_candidate->getRootModifier->getID}};
+# 		    delete $CC2relations{$term_candidate->getRootModifier->getID};
+		}
+	    } else  {
+		$term2CC{$term_candidate->getRootModifier->getID} = $term2CC{$term_candidate->getID};
+		$CC2terms{$term2CC{$term_candidate->getID}}->{$term_candidate->getRootModifier->getID}++;
+# 		if (defined $CC2relations{$term2CC{$term_candidate->getRootModifier->getID}}) {
+# 		    foreach $rel (keys %{$CC2relations{$term2CC{$term_candidate->getRootModifier->getID}}}) {
+# 			$CC2relations{$term2CC{$term_candidate->getID}}->{$rel}++;
+# 		    }
+# 		    delete $CC2relations{$term2CC{$term_candidate->getRootModifier->getID}};
+
+# # 		    push @{$CC2relations{$term_candidate->getID}},  @{$CC2relations{$term_candidate->getRootModifier->getID}};
+# # 		    delete $CC2relations{$term_candidate->getRootModifier->getID};
+# 		}
+	    }
+# XX
+
+# XX
+ 	    $CC2relations{$term2CC{$term_candidate->getID}}->{$term_candidate->getRootHead->getID . " -- " . $term_candidate->getRootModifier->getID}++;
+	    $relationLabel{$term_candidate->getRootHead->getID . " -- " . $term_candidate->getRootModifier->getID} = "[label=\"head / modifier\" color=\"black\" weight=1]";
 
 
+# 	    print $fh $term_candidate->getRootHead->getID;
+# # 	    print $fh "\n        </HEAD>\n";
+# 	    print $fh " -- ";
+# # 	    print $fh $term_candidate->getModifierPosition;	
+# 	    print $fh $term_candidate->getRootModifier->getID;
+# 	    print $fh "[label=\"Head / Modifier\" color=\"black\" weight=1]\n";
 
+ 	    $CC2relations{$term2CC{$term_candidate->getID}}->{$term_candidate->getID . " -- " . $term_candidate->getRootHead->getID}++;
+	    $relationLabel{$term_candidate->getID . " -- " . $term_candidate->getRootHead->getID} = "[label=\"term / head\" color=\"black\" weight=3]";
+# 	    print $fh $term_candidate->getID ;
+# 	    print $fh " -- ";
+# 	    print $fh $term_candidate->getRootHead->getID;
+# 	    print $fh "[label=\"Term / Head\" color=\"black\" weight=2]\n";
+
+# XX
+ 	    $CC2relations{$term2CC{$term_candidate->getID}}->{$term_candidate->getID . " -- " . $term_candidate->getRootModifier->getID}++;
+	    $relationLabel{$term_candidate->getID . " -- " . $term_candidate->getRootModifier->getID} = "[label=\"term / modifier\" color=\"black\" weight=3]";
+
+# 	    print $fh $term_candidate->getID ;
+# 	    print $fh " -- ";
+# 	    print $fh $term_candidate->getRootModifier->getID;
+# 	    print $fh "[label=\"Term / Modifier\" color=\"black\" weight=2]\n";
+
+# 	    print $fh "\n        </MODIFIER>\n";
+# 	    if(defined $term_candidate->getPreposition)
+# 	    {
+# 		print $fh "        <PREP>\n        ";
+# 		print $fh $term_candidate->getPreposition->getIF;
+# 		print $fh "\n        </PREP>\n";
+# 	    }
+# 	    if(defined $term_candidate->getDeterminer)
+# 	    {
+# 		print $fh "        <DETERMINER>\n        ";
+# 		print $fh $term_candidate->getDeterminer->getIF;
+# 		print $fh "\n        </DETERMINER>\n";
+# 	    }
+# 	    print $fh "      </SYNTACTIC_ANALYSIS>\n";
+ 	}
+# 	print $fh "    </TERM_CANDIDATE>\n";
+    }
+#     print $fh "  </LIST_TERM_CANDIDATES>\n";
+
+    foreach $CC (keys %CC2terms) {
+	# my $filename = $file->getPath;
+	# $filename =~ s/.xml//;
+	# $fh = FileHandle->new(">" . $filename . "/$CC" . ".dot");
+	$fh = FileHandle->new(">$CC" . ".dot");
+	binmode($fh,":utf8");
+
+	print $fh "graph Terms {\n\n";
+	print $fh "label=\"Full set of terms $CC\"\n";
+	print $fh "overlap=false\n";
+	foreach $term (keys %{$CC2terms{$CC}}) {
+	    print $fh $term . " " . $termLabel{$term} . "\n";
+	}
+	foreach $rel (keys %{$CC2relations{$CC}}) {
+	    if (exists $relationLabel{$rel}) {
+		print $fh $rel . " " . $relationLabel{$rel} . "\n";
+	    }
+	    if (exists $relationLabelH{$rel}) {
+		print $fh $rel . " " . $relationLabelH{$rel} . "\n";
+	    }
+	}
+
+	print $fh "}\n";
+    }
+
+}
+
+sub printListTermCandidatesDot2 {
+    my ($this,$file,$tagset, $fh) = @_;
+
+    if (!defined $fh) {
+	if ($file eq "stdout") {
+	    $fh = \*STDOUT;
+	} else {
+	    if ($file eq "stderr") {
+		$fh = \*STDERR;
+	    } else {
+		$fh = FileHandle->new(">".$file->getPath);
+	    }
+	}
+	binmode($fh,":utf8");
+    }
+#     my $fh = FileHandle->new(">".$file->getPath);
+    my $term_candidate;
+    my $word;
+    my $if;
+    my $pos;
+    my $lf;
+    my $occurrence;
+    my $island;
+    my $position;
+
+
+#     print $fh "  <LIST_TERM_CANDIDATES>\n";
+
+    foreach $term_candidate (values(%{$this->getTermCandidates}))
+    {
+	($if,$pos,$lf) = $term_candidate->buildLinguisticInfos($tagset);
+	Lingua::YaTeA::XMLEntities::encode($if);
+	Lingua::YaTeA::XMLEntities::encode($pos);
+	Lingua::YaTeA::XMLEntities::encode($lf);
+# 	print $fh "    <TERM_CANDIDATE MNP_STATUS=\"" . $term_candidate->getMNPStatus . "\">\n";  # added by SA 13/02/2009
+# 	print $fh "    <TERM_CANDIDATE>\n";
+	print $fh $term_candidate->getID ;
+	print $fh " [label=\"" . $if . "\"];\n";
+# 	print $fh "      <LEMMA>" . $lf . "</LEMMA>\n";
+# 	print $fh "      <MORPHOSYNTACTIC_FEATURES>\n";
+# 	print $fh "	    <SYNTACTIC_CATEGORY>" .$pos  . "</SYNTACTIC_CATEGORY>\n"; 
+# 	print $fh "      </MORPHOSYNTACTIC_FEATURES>\n";
+	
+	if ($term_candidate->getID ne $term_candidate->getHead->getID) {
+	    print $fh $term_candidate->getID . " -- " . $term_candidate->getHead->getID . "[label=\"main head\" weight=1 color=\"yellow\"];\n";
+	}
+	# occurrences
+# 	print $fh "      <NUMBER_OCCURRENCES>". $term_candidate->getFrequency . "</NUMBER_OCCURRENCES>\n";
+# 	print $fh "      <LIST_OCCURRENCES>\n";
+# 	foreach $occurrence (@{$term_candidate->getOccurrences})
+# 	{
+# 	    print $fh "      <OCCURRENCE>\n";
+# 	    print $fh "        <ID>occ" . $occurrence->getID . "</ID>\n";
+# 	    print $fh "        <MNP>" . (($occurrence->isMaximal) * 1) .  "</MNP>\n"; #  && $term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate') -- remove by Thierry Hamon 29/09/2008
+# 	    print $fh "        <DOC>" .$occurrence->getDocument->getID . "</DOC>\n";
+# 	    print $fh "        <SENTENCE>" .$occurrence->getSentence->getInDocID . "</SENTENCE>\n";
+# 	    print $fh "        <START_POSITION>";
+# 	    print $fh $occurrence->getStartChar;
+# 	    print $fh "</START_POSITION>\n";
+# 	    print $fh "        <END_POSITION>";
+# 	    print $fh $occurrence->getEndChar;
+# 	    print $fh "</END_POSITION>\n";
+# 	    print $fh "        </OCCURRENCE>\n";
+# 	}
+# 	print $fh "      </LIST_OCCURRENCES>\n";
+# 	print $fh "      <TERM_CONFIDENCE>" . $term_candidate->getReliability . "</TERM_CONFIDENCE>\n"; 
+# 	print $fh "      <TERM_WEIGHTS>\n";
+# 	foreach my $weight ($term_candidate->getWeightNames) {
+# 	    print $fh "            <WEIGHT name=\"$weight\">";
+# 	    print $fh $term_candidate->getWeight($weight);
+# 	    print $fh "</WEIGHT>\n";
+# 	}
+# 	print $fh "      </TERM_WEIGHTS>\n"; 
+
+	# islands of reliability
+# 	if(
+# 	    ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate'))
+# 	    &&
+# 	    ($term_candidate->containsIslands)
+# 	    )
+# 	{
+# 	    print $fh "      <LIST_RELIABLE_ANCHORS>\n";
+# 	    foreach $island (@{$term_candidate->getIslands})
+# 	    {
+# 		print $fh "        <RELIABLE_ANCHOR>\n";
+# 		if($island->isa('Lingua::YaTeA::TermCandidate'))
+# 		{
+# 		    print $fh "          <ID>term";
+# 		    print $fh $island->getID;
+# 		}
+# 		else
+# 		{
+# 		    print $fh "          <ID>testified_term";
+# 		    print $fh $island->getID;
+# 		}
+# 		print $fh "</ID>\n";
+# 		print $fh "          <FORM>";
+# 		$if = $island->getIF;
+# 		Lingua::YaTeA::XMLEntities::encode($if);
+# 		print $fh $if;
+# 		print $fh "</FORM>\n";
+# 		print $fh "          <ORIGIN>";
+# 		print $fh $island->getIslandType;
+# 		print $fh "</ORIGIN>\n";
+# 		print $fh "        </RELIABLE_ANCHOR>\n";
+# 	    }
+# 	    print $fh "      </LIST_RELIABLE_ANCHORS>\n";
+# 	}
+# 	print $fh "      <LOG_INFORMATION>YaTeA</LOG_INFORMATION>\n";
+	if ((blessed($term_candidate)) && ($term_candidate->isa('Lingua::YaTeA::MultiWordTermCandidate')))
+	{
+# 	    print $fh "      <SYNTACTIC_ANALYSIS>\n";
+#	    print $fh "        <HEAD>\n        term";
+	    print $fh $term_candidate->getRootHead->getID;
+# 	    print $fh "\n        </HEAD>\n";
+	    print $fh " -- ";
+# 	    print $fh $term_candidate->getModifierPosition;	
+	    print $fh $term_candidate->getRootModifier->getID;
+	    print $fh "[label=\"Head / Modifier\" color=\"black\" weight=1]\n";
+
+	    print $fh $term_candidate->getID ;
+	    print $fh " -- ";
+	    print $fh $term_candidate->getRootHead->getID;
+	    print $fh "[label=\"Term / Head\" color=\"black\" weight=3]\n";
+
+	    print $fh $term_candidate->getID ;
+	    print $fh " -- ";
+	    print $fh $term_candidate->getRootModifier->getID;
+	    print $fh "[label=\"Term / Modifier\" color=\"black\" weight=3]\n";
+
+# 	    print $fh "\n        </MODIFIER>\n";
+# 	    if(defined $term_candidate->getPreposition)
+# 	    {
+# 		print $fh "        <PREP>\n        ";
+# 		print $fh $term_candidate->getPreposition->getIF;
+# 		print $fh "\n        </PREP>\n";
+# 	    }
+# 	    if(defined $term_candidate->getDeterminer)
+# 	    {
+# 		print $fh "        <DETERMINER>\n        ";
+# 		print $fh $term_candidate->getDeterminer->getIF;
+# 		print $fh "\n        </DETERMINER>\n";
+# 	    }
+# 	    print $fh "      </SYNTACTIC_ANALYSIS>\n";
+ 	}
+# 	print $fh "    </TERM_CANDIDATE>\n";
+    }
+#     print $fh "  </LIST_TERM_CANDIDATES>\n";
+    
+
+}
 
 
 
@@ -691,7 +1593,8 @@ sub printPhrases
     {
 	$fh = \*STDERR;
     }
-    
+#    binmode($fh,":utf8");
+
     foreach $phrase (values(%{$this->getPhrases}))
     {
 	$phrase->print($fh);
@@ -824,7 +1727,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

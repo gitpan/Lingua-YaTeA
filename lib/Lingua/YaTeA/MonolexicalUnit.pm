@@ -3,7 +3,9 @@ use strict;
 use warnings;
 use NEXT;
 use Data::Dumper;
-use UNIVERSAL qw(isa);
+use UNIVERSAL;
+use Scalar::Util qw(blessed);
+use Lingua::YaTeA::MonolexicalPhrase;
 
 our $VERSION=$Lingua::YaTeA::VERSION;
 
@@ -22,7 +24,7 @@ sub new
 sub setParsingMethod
 {
     my ($this,$method) = @_;
-    if(isa($this,'Lingua::YaTeA::Phrase'))
+    if ((blessed($this)) && ($this->isa('Lingua::YaTeA::Phrase')))
     {
 	$Lingua::YaTeA::MonolexicalPhrase::parsed++;
     }
@@ -36,25 +38,38 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::MonolexicalUnit - Perl extension for ???
+Lingua::YaTeA::MonolexicalUnit - Perl extension for monolexical word
 
 =head1 SYNOPSIS
 
   use Lingua::YaTeA::MonolexicalUnit;
-  Lingua::YaTeA::MonolexicalUnit->();
+  Lingua::YaTeA::MonolexicalUnit->new($num_content_words,$words_a);
 
 =head1 DESCRIPTION
+
+This module implements monolexical unit or single word. The unit is
+described by the number of content words (field C<CONTENT_WORDS>), the
+length of the unit (field C<LENGTH>), i.e. the number of words
+(including stop words and content words), and the parsing methods
+(field C<PARSING_METHOD> -- a reference to an array).
 
 
 =head1 METHODS
 
 =head2 new()
 
+    new($num_content_words,$words_a);
+
+The method creates a monolexical word. C<$words_a> is the
+reference to an array of words. C<$num_content_words> is the
+number of content words. 
 
 =head2 setParsingMethod()
 
+    setParsingMethod($method)
 
-
+The method sets the parsing method (values are C<USER>,
+C<PATTERN_MATCHING>, C<PROGRESSIVE>, C<MONOLEXICAL>). 
 
 =head1 SEE ALSO
 
@@ -67,7 +82,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 

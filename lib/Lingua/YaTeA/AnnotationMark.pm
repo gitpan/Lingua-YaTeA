@@ -35,7 +35,7 @@ __END__
 
 =head1 NAME
 
-Lingua::YaTeA::AnnotationMark - Perl extension for ???
+Lingua::YaTeA::AnnotationMark - Perl extension for annotation marks
 
 =head1 SYNOPSIS
 
@@ -44,24 +44,33 @@ Lingua::YaTeA::AnnotationMark - Perl extension for ???
 
 =head1 DESCRIPTION
 
+The module implements annotation marks in the corpus. Objects inherit
+of the module Lingua::YaTeA::WordOccurrence. Each annotation mark is
+composed of a form, a identifier and a type ( its values are C<closer>
+or C<opener>).
 
 =head1 METHODS
+
 
 =head2 new()
 
     new($form, $id, $type);
+
+The method creates a new annotation mark having the form C<$form>, the
+identifier C<$id> and the type C<$type>.
 
 
 =head2 getType()
 
     getType();
 
-This method 
+This method returns the type of the annotation mark.
 
 =head2 getID()
 
     getID();
 
+This method returns the identifier of the annotation mark.
 
 
 =head1 SEE ALSO
@@ -75,7 +84,7 @@ Terminological Resources. In Advances in Natural Language Processing
 
 =head1 AUTHOR
 
-Thierry Hamon <thierry.hamon@lipn.univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
+Thierry Hamon <thierry.hamon@univ-paris13.fr> and Sophie Aubin <sophie.aubin@lipn.univ-paris13.fr>
 
 =head1 COPYRIGHT AND LICENSE
 
