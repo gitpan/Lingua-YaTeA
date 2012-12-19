@@ -6,7 +6,7 @@ Lingua::YaTeA - Perl extension for extracting terms from a corpus and providing 
 
 =head1 SYNOPSIS
 
-use Lingua::YaTeA::YaTeA;
+use Lingua::YaTeA;
 
 my %config = Lingua::YaTeA::load_config($rcfile);
 
@@ -429,7 +429,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.6';
+our $VERSION='0.6.1';
 
 our $process_counter = 1;
 

@@ -478,7 +478,7 @@ sub append
 # 	warn "<<<<\n";
 	if(defined $mode)
 	{
-#	    print $fh "mùode :" .$mode. "\n";
+#	    print $fh "mode :" .$mode. "\n";
 	    #  print STDERR "$mode\n";
 
 	    if($mode eq "DISJUNCTION")

@@ -1561,8 +1561,8 @@ sub makeDDW
     }
     foreach $tc (values (%$term_candidates_h))
     {
-	##### mesure 'descriptor discriminating weight' présenté dans 'Building back-of-the-book indexes', Nazarenko, Aït El Mekki (2005)
-	##### PROBLEME: vaut 0 a chaque fois qu'il n'y a qu'un document dans le corpus (log10 de 1/1 vaut 0)
+	##### measure 'descriptor discriminating weight' described in 'Building back-of-the-book indexes', Nazarenko, Ait El Mekki (2005)
+	##### PROBLEM: each time there is only one document in the corpus, the value is 0 (log10(1/1) = 0)
 	$tc_weight =  ($tc->getFrequency/$mean_occ) * log10 ($total_doc/$doc_by_tc{$tc->getKey});
 	$tc->setWeight($tc_weight);
     }

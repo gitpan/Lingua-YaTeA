@@ -244,8 +244,8 @@ sub addTermCandidates
 	   if(!exists $term_candidates_h->{$tc->getKey})
 	   {	   
 	       $tc->setHead;
-	       # TODO: changer le critere de pertinence du terme
-	       # actuellement: un tc reçoit le taux de confiance du groupe dont il est extrait
+	       # TODO: change the criteria for the relevance of the term
+	       # currently: a tc receives the confidence rate of the groupe for which it is extracted
 	       if ((blessed($this)) && ($this->isa('Lingua::YaTeA::MultiWordTermCandidate')))
 	       {
 		   $tc->setReliability($this->getTree(0)->getReliability);
@@ -283,7 +283,7 @@ sub addTermCandidates
 	       $reference->addOccurrences($tc->getOccurrences);
 	       $this->adjustReferences(\@term_candidates,$tc,$reference); 
 	       
-	       # ajouter un critere de frequence au taux de confiance des tc
+	       # add a frequency creteria for the confidence rate of the tcs
 	   }
 	   
 	   # record the link between this phrase and the TC that covers it completely

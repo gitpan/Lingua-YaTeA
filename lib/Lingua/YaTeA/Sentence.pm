@@ -98,13 +98,13 @@ document.
 
     resetStartChar()
 
-The method resets the C<ùstart_char> offset.
+The method resets the C<$start_char> offset.
 
 =head2 updateStartChar()
 
     updateStartChar($word);
 
-The method updates the C<ùstart_char> offset given the length of the
+The method updates the C<$start_char> offset given the length of the
 inflected form of the word C<$word>.
 
 

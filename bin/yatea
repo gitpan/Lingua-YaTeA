@@ -315,7 +315,7 @@ at your option, any later version of Perl 5 you may have available.
 
 #######################################################################
 #
-# Last Update: 20/11/2012 (mm/dd/yyyy date format)
+# Last Update: 19/12/2012 (mm/dd/yyyy date format)
 # 
 # Copyright (C) 2004 Thierry Hamon, Sophie Aubin
 #
@@ -330,6 +330,7 @@ at your option, any later version of Perl 5 you may have available.
 
 use strict;
 use warnings;
+use utf8;
 
 use Getopt::Long;
 use Config::General;
