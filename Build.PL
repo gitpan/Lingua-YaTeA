@@ -100,7 +100,8 @@ SUBCLASS
 my $build = $class->new
     (
      module_name => 'Lingua::YaTeA',
-     dist_version_from => 'lib/Lingua/YaTeA.pm',
+#     dist_version_from => 'lib/Lingua/YaTeA.pm',
+     "dist_version" => '0.6.1',
      license => 'perl',
      configure_requires => { 'Module::Build' => 0.38,
 			     'File::chmod' => 0,
