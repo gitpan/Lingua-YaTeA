@@ -429,7 +429,7 @@ use Lingua::YaTeA::ForbiddenStructureSet;
 use Lingua::YaTeA::PhraseSet;
 use Lingua::YaTeA::TestifiedTermSet;
 
-our $VERSION='0.6.1';
+our $VERSION='0.61';
 
 our $process_counter = 1;
 
