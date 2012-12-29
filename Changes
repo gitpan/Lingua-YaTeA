@@ -1,5 +1,13 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.62    - better management of argument in the script yatea
+	- Correction in utf8 use directive to avoid failure with CPAN
+          tests
+
+0.61    - Add use utf8 in the script yatea to avoid failure with CPAN
+          tests
+        - Minor correction in the documentation of the main module
+
 0.6     
         - Add of installation tests 
         - Add of examples for French

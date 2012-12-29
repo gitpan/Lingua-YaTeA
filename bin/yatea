@@ -1,5 +1,9 @@
 #!/usr/bin/perl -w
 
+use strict;
+use warnings;
+use utf8;
+
 =head1 NAME
 
 yatea - Perl script for extracting terms from a corpus of texts and
@@ -13,13 +17,13 @@ yatea [-help] [-man] [--rcfile=file] file
 
 =over 4
 
-=item    B<--help>            brief help message
+=item    B<--help>, B<-h>, B<-?>     brief help message
 
-=item    B<--man>             full documentation
+=item    B<--man>, B<-m>          full documentation
 
-=item    B<--rcfile=file>     load the given configuration file
+=item    B<--rcfile=file>      load the given configuration file
 
-=item    I<file>              corpus of texts in Flemm or TreeTagger output format
+=item    I<file>               corpus of texts in Flemm or TreeTagger output format
 
 
 =back
@@ -328,10 +332,6 @@ at your option, any later version of Perl 5 you may have available.
 ########################################################################
 
 
-use strict;
-use warnings;
-use utf8;
-
 use Getopt::Long;
 use Config::General;
 use Pod::Usage;
@@ -347,9 +347,9 @@ my $man = 0;
 my $help = 0;
 my $rcfile = "";
 
-GetOptions('help|?' => \$help, man => \$man, "rcfile=s" => \$rcfile) or pod2usage(2);
-pod2usage(1) if $help;
+GetOptions('help|?|h' => \$help, 'man|m' => \$man, "rcfile=s" => \$rcfile) or pod2usage(2);
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
+pod2usage(1) if $help or (scalar(@ARGV) == 0);
 
 my %config = Lingua::YaTeA::load_config($rcfile);
 

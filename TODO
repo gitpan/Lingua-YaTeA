@@ -1,3 +1,8 @@
+defined(@array) is deprecated at C:\Users\solimanod\Desktop\strawberry-perl-5.16.2.1-64bit-portable\cpan\build\Lingua-YaTeA-0.61-heRiiY\blib\lib/Lingua/YaTeA/IndexSet.pm line 934.
+	(Maybe you should just omit the defined()?)
+
+------------------------------------------------------------------------
+
 - Delete the Options_EN and Options_FR. 
 
   Replace it by the loading of the file share/YaTeA/yatea.conf

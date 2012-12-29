@@ -931,7 +931,7 @@ sub defineAppendMode
 #     print $fh $to_append->getLast . "\n";
 # }
 
-    if (defined @{$this->getIndexes}) {
+    if (scalar(@{$this->getIndexes}) > 0) {
 	if(
 	   ($this->getLast < $to_append->getFirst)
 	   ||
