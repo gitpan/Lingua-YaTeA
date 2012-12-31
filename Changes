@@ -1,8 +1,14 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.621   - Add the installation of the FR-Flemm files (which have been
+          forgot before:-(
+        - Add pod directive "=encoding utf8" to manage utf8 encoding
+
+
 0.62    - better management of argument in the script yatea
 	- Correction in utf8 use directive to avoid failure with CPAN
           tests
+	- correction deprecated code in IndexSet (defined @array)
 
 0.61    - Add use utf8 in the script yatea to avoid failure with CPAN
           tests

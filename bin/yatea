@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use utf8;
 
+=encoding utf8
+
 =head1 NAME
 
 yatea - Perl script for extracting terms from a corpus of texts and

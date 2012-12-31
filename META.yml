@@ -18,7 +18,7 @@ name: Lingua-YaTeA
 provides:
   Lingua::YaTeA:
     file: lib/Lingua/YaTeA.pm
-    version: 0.62
+    version: 0.621
   Lingua::YaTeA::AnnotationMark:
     file: lib/Lingua/YaTeA/AnnotationMark.pm
     version: 0
@@ -214,4 +214,4 @@ requires:
   perl: 5.005
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.62
+version: 0.621

@@ -49,7 +49,7 @@
    "provides" : {
       "Lingua::YaTeA" : {
          "file" : "lib/Lingua/YaTeA.pm",
-         "version" : "0.62"
+         "version" : "0.621"
       },
       "Lingua::YaTeA::AnnotationMark" : {
          "file" : "lib/Lingua/YaTeA/AnnotationMark.pm",
@@ -294,5 +294,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.62"
+   "version" : "0.621"
 }

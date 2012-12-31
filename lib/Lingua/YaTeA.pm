@@ -1,5 +1,11 @@
 package Lingua::YaTeA;
 
+use strict;
+use warnings;
+use utf8;
+
+=encoding utf8
+
 =head1 NAME
 
 Lingua::YaTeA - Perl extension for extracting terms from a corpus and providing a syntactic analysis in a head-modifier format.
@@ -415,8 +421,6 @@ at your option, any later version of Perl 5 you may have available.
 
 =cut
 
-use strict;
-use warnings;
 use Data::Dumper;
 use Lingua::YaTeA::ParsingPatternRecordSet;
 use Lingua::YaTeA::OptionSet;
@@ -431,7 +435,7 @@ use Lingua::YaTeA::TestifiedTermSet;
 
 use Config::General;
 
-our $VERSION='0.62';
+our $VERSION='0.621';
 
 our $process_counter = 1;
 
