@@ -16,7 +16,7 @@
     annotate-only = 0
 </OPTIONS>
 <DefaultConfig>
-    CONFIG_DIR = /usr/share/YaTeA/config
+    CONFIG_DIR = /usr/usr/share/YaTeA/config
     RESULT_DIR = \$PWD/RESULTS
-    LOCALE_DIR = /usr/share/YaTeA/locale
+    LOCALE_DIR = /usr/usr/share/YaTeA/locale
 </DefaultConfig>

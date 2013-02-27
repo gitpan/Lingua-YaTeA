@@ -144,7 +144,43 @@ sub _normalizeInputCorpusLine {
 	return($new_block);
     } else {
 # 	warn "Language is $language, so nothing to do\n";
-	return($block);
+
+	# foreach $line (split /\n/, $block) {
+	#     $line =~ s/</INF/go;
+	#     $line =~ s/>/SUP/go;
+	#     $line =~ s/\t:\t/\tCOLUMN\t/go;
+	#     $line =~ s/\t\t+/\t/go;
+	#     if($line !~ /^[^\t]*\t[^\t]+\t[^\t]*$/o){	    
+	# 	# warn "***********************************\n";
+	# 	# warn "Start correction of the line: $line\n";
+	# 	@elems = split /\t/, $line;
+	# 	if (scalar(@elems) > 3) {
+	# 	    # ambiguity in the pos tagging
+	# 	    # my @tmp = split /\s\|\|\s/, $elems[2];
+	# 	    # $elems[2] = shift @tmp;
+	# 	    $#elems = 2;
+	# 	} else {
+	# 	    if (defined $elems[0]) {
+	# 		$elems[2] = $elems[0];
+	# 		if (!defined $elems[1]) {
+	# 		#     $elems[1] = 'SYM';
+	# 		    $elems[1] = $elems[0];
+	# 		}
+	# 	    } else {
+	# 		@elems =();
+	# 	    }
+
+	# 	}
+	# 	if (scalar(@elems)  == 3) {
+	# 	    $new_block .= join("\t", @elems) . "\n";
+	# 	}
+	#     } else {
+	# 	$new_block .= $line . "\n"; 
+	#     }
+	# }
+	# $new_block .= join("\t", @elems) . "\n";
+	# return($new_block);
+ 	return($block);
     }
 }
 
@@ -173,22 +209,73 @@ sub read
 sub readSentence {
     my ($this, $fh, $sentence_boundary) = @_;
 
-
 #     warn "in readsentence\n";
     my $line;
     my $sentence;
-    if (! $fh->eof)
-    {
+    if (! $fh->eof) {
 	do {
 	    $line = $fh->getline;
-	    $sentence .= $line;
+	    # warn "line: $line;\n";
+	    $sentence .= $this->correctInputLine($line);
+	    # $sentence .= $line;
 	} while ((!$fh->eof) && (index($line, "\t$sentence_boundary\t") == -1));
 # 	warn "sentence: $sentence\n";
     }
     return($sentence);
 }
 
+sub correctInputLine {
+    my ($line, $this) = reverse(@_);
+    
+    my @elems;
+    my $tail = "";
+    if ($line =~ /(\n+)$/) {
+	$tail = $1;
+    }
+    chomp $line;
 
+    $line =~ s/</INF/go;
+    $line =~ s/>/SUP/go;
+    $line =~ s/\t:\t/\tCOLUMN\t/go;
+    $line =~ s/\t\t+/\t/go;
+    if($line !~ /^[^\t]*\t[^\t]+\t[^\t]*$/o){	    
+	# warn "***********************************\n";
+	# my $line2 = $line;
+	# $line2 =~ s/\t/\\t/go;
+	# warn "Start correction of the line: " . $line2 . "\n";
+	@elems = split /\t/, $line;
+	if (scalar(@elems) > 3) {
+	    # ambiguity in the pos tagging
+	    # my @tmp = split /\s\|\|\s/, $elems[2];
+	    # $elems[2] = shift @tmp;
+	    $#elems = 2;
+	} else {
+	    if ((defined $elems[0]) && (length($elems[0])>0)) {
+		$elems[2] = $elems[0];
+		if (!defined $elems[1]) {
+		    #     $elems[1] = 'SYM';
+		    $elems[1] = $elems[0];
+		}
+	    } else {
+		@elems =();
+	    }
+	    
+	}
+	if (scalar(@elems)  == 3) {
+	    # warn "Corrected line: " . join('\t', @elems). "\n";
+	    # warn "***********************************\n";
+	    return(join("\t", @elems) . $tail);
+	} else {
+	    # warn "Removing line\n";
+	    # warn "***********************************\n";
+	    return("");
+	}
+    } else {
+	return($line . $tail); 
+    }
+     
+    return($line . $tail); 
+}
 
 sub recordWords
 {
@@ -306,38 +393,32 @@ sub print
 }
 
 
-sub selectTestifiedTerms
-{
+sub selectTestifiedTerms {
     my ($this,$block_r,$testified_set,$match_type) = @_;
     my @block_lines = split ("\n", $$block_r);
     my %block_lexicon;
     my $word;
     my $testified;
     my %block_testified_set;
-    foreach $word (@block_lines)
-    {
-	if ($word=~ /^([^\t]+)\t([^\t]+)\t([^\t]+)$/)
-	{
-	    if($match_type ne "strict")
-	    {
-		$block_lexicon{lc($1)}++; # record IF
-		if($match_type eq "loose")
-		{
-		    $block_lexicon{lc($3)}++; # record LF
+
+    if((defined $testified_set)	&& ($testified_set->size > 0)) {
+	foreach $word (@block_lines) {
+	    if ($word=~ /^([^\t]+)\t([^\t]+)\t([^\t]+)$/) {
+		if($match_type ne "strict") {
+		    $block_lexicon{lc($1)}++; # record IF
+		    if($match_type eq "loose") {
+			$block_lexicon{lc($3)}++; # record LF
+		    }
 		}
+		else {
+		    $block_lexicon{lc($1)."~".$2}++; # record IF + POS
+		}
+	    }	
+	}
+	foreach $testified (values %{$testified_set->getTestifiedTerms}) {
+	    if($testified->isInLexicon(\%block_lexicon,$match_type) == 1) {
+		$block_testified_set{$testified->getID} =  $testified;
 	    }
-	    else
-	    {
-		$block_lexicon{lc($1)."~".$2}++; # record IF + POS
-	    }
-	}	
-    }
-    foreach $testified (values %{$testified_set->getTestifiedTerms})
-    {
-	if($testified->isInLexicon(\%block_lexicon,$match_type) == 1)
-	{
-	    $block_testified_set{$testified->getID} =  $testified;
-	  
 	}
     }
     return \%block_testified_set;

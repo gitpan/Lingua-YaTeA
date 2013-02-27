@@ -1,5 +1,12 @@
 Revision history for Perl extension Lingua::YaTeA.
 
+0.622   - Correction of the input if the format is not correct (either
+          incorrect lines are removed, either they are corrected)
+        - Correction in the processing of the testified terms (if the
+          option "TT-for-BioLG" is not set, yatea is usuable).
+        - Add a module dependency for the configuration
+        - Take into account the prefix for the configuration file
+
 0.621   - Add the installation of the FR-Flemm files (which have been
           forgot before:-(
         - Add pod directive "=encoding utf8" to manage utf8 encoding

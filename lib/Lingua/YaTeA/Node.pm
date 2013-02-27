@@ -1817,10 +1817,10 @@ sub isDiscontinuous
 
     if ((blessed($this->getRightEdge)) && ($this->getRightEdge->isa('Lingua::YaTeA::TermLeaf')))
     {
-	print $fh "right : TermLeaf\n"; 
-	print $fh $this->getRightEdge . " -" ;
-	print $fh $this->getRightEdge->getIndex . "_ ";
-	print $fh $$previous_r . "\n";
+	# print $fh "right : TermLeaf\n"; 
+	# print $fh $this->getRightEdge . " -" ;
+	# print $fh $this->getRightEdge->getIndex . "_ ";
+	# print $fh $$previous_r . "\n";
 	if(
 	    ($$previous_r != -1)
 	    &&

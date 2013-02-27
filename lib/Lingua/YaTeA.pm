@@ -435,7 +435,7 @@ use Lingua::YaTeA::TestifiedTermSet;
 
 use Config::General;
 
-our $VERSION='0.621';
+our $VERSION='0.622';
 
 our $process_counter = 1;
 
@@ -447,7 +447,7 @@ sub load_config
 # Read de configuration file
 
     if ((! defined $rcfile) || ($rcfile eq "")) {
-	$rcfile = "/etc/yatea/yatea.rc";    
+	$rcfile = "/usr/etc/yatea/yatea.rc";    
     }
     
     my $conf = new Config::General('-ConfigFile' => $rcfile,
@@ -665,10 +665,10 @@ sub loadTestifiedTerms
 # (($this->getOptionSet->getOption('TT-for-BioLG')->getValue() == 1) &&
  	# creation of an empty set of Testified Terms
 	# TTforLGp can be used to build a XML version of the corpus compatible with BioLG, even if no testified terms are provided
-	if ($this->getOptionSet->optionExists('TT-for-BioLG'))
-	{
+	# if ($this->getOptionSet->optionExists('TT-for-BioLG'))
+	# {
 	    $this->{TESTIFIED_SET} = Lingua::YaTeA::TestifiedTermSet->new; 
-	}
+	# }
     }
 }
 

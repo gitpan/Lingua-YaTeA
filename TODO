@@ -1,7 +1,6 @@
-defined(@array) is deprecated at C:\Users\solimanod\Desktop\strawberry-perl-5.16.2.1-64bit-portable\cpan\build\Lingua-YaTeA-0.61-heRiiY\blib\lib/Lingua/YaTeA/IndexSet.pm line 934.
-	(Maybe you should just omit the defined()?)
+- Correcting the Input (TreeTagger Output) to be always conformed (use a method defined in YaTeA - todo)
 
-------------------------------------------------------------------------
+- Add POD directive =encoding in each file
 
 - Delete the Options_EN and Options_FR. 
 
@@ -12,8 +11,6 @@ defined(@array) is deprecated at C:\Users\solimanod\Desktop\strawberry-perl-5.16
   use of Config::General for config management
 
 - in ParsingPatterns_EN, take into account to the tag NP (?)
-
-- wrtite tests for CPAN installation
 
 - Add a prefix while making RESULTS directory
 

@@ -120,6 +120,7 @@ my $build = $class->new
 		  Scalar::Util => 0,
 		  Test::Pod::Coverage => 0,
 		  Test::Pod => 0,
+		  'Module::Build::Compat' => 0,
 		  },
 
 #      $build->add_build_element('dat');
@@ -238,16 +239,16 @@ $build->install_sets->{'site'}->{'share'} = '/usr/local/share';
 
 $build->install_sets->{'site'}->{'conf'} = '/usr/local/etc';
 
-$build->install_path->{'conf'} = '/etc';
-$build->install_path->{'share'} = '/usr/share';
+$build->install_path->{'conf'} = $build->prefix() . '/etc';
+$build->install_path->{'share'} = $build->prefix() .  '/usr/share';
 
-# same thing with prefix
-if (((defined $build->install_base()) && ($build->install_base() eq "/usr")) ||
-    ((defined $build->prefix()) && ($build->prefix() eq "/usr")))
- {
-	$build->install_path->{'conf'} = '/etc';
-	$build->install_path->{'share'} = '/usr/share';
-}
+# # same thing with prefix
+# if (((defined $build->install_base()) && ($build->install_base() eq "/usr")) ||
+#     ((defined $build->prefix()) && ($build->prefix() eq "/usr")))
+#  {
+# 	$build->install_path->{'conf'} = '/etc';
+# 	$build->install_path->{'share'} = '/usr/share';
+# }
 
 
 $build->create_build_script;
